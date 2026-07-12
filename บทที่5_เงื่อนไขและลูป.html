@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 5 — เงื่อนไขและลูป | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 2 · บทที่ 5</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ทางแยก+สายพาน</a>
+      <a href="#code" class="lvl1">2. Quiz โต้ตอบได้แล้ว</a>
+      <a href="#switch" class="lvl2">— switch หลายแพร่ง</a>
+      <a href="#loops" class="lvl2">— for / while</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง</a>
+      <a href="#clean" class="lvl1">5. Clean Code: Guard Clause</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 2 · บทที่ 5</span>
+      <h1>เงื่อนไขและลูป: สอนโปรแกรมให้ตัดสินใจและทำซ้ำ</h1>
+      <p>เกม Quiz จะรับคำตอบจริงจากคีย์บอร์ดและตรวจถูกผิดได้ในบทนี้</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 4 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">โปรแกรมที่ไม่มีเงื่อนไขและลูป เหมือนรถไฟที่วิ่งเส้นตรงเส้นเดียว — จากบนลงล่าง จบ บทนี้เราจะเพิ่ม "ทางแยก" และ "วงเวียน" ให้ราง แล้วเกม Quiz จะเริ่มมีชีวิต</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">if / else</span><span class="pill">switch</span><span class="pill">for</span><span class="pill">while</span><span class="pill">break / continue</span><span class="pill">guard clause</span><span class="pill">stdin</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: ทางแยกและสายพาน</h2>
+      <div class="ascii">   ▶ โปรแกรมวิ่งมาถึง...ทางแยก (if)          ▶ ...และวงเวียน (loop)
+
+        คำตอบถูกไหม?                          เหลือคำถามอีกไหม?
+        ┌────┴────┐                          ┌──────────┐
+      ใช่ ✓       ไม่ ✗                      │  ถามข้อถัดไป │◄──┐
+        │         │                          │  ตรวจคำตอบ  │   │ ยังเหลือ → วนต่อ
+   score + 1   บอกเฉลย                       └──────┬─────┘   │
+        └────┬────┘                                 ├─────────┘
+             ▼                                      ▼ หมดแล้ว
+        ไปข้อถัดไป                              สรุปคะแนน</div>
+      <p><strong>ภาพจำ:</strong> เงื่อนไข = <strong>ทางแยกที่มีป้ายคำถาม</strong> ตอบใช่ไปทางหนึ่ง ตอบไม่ไปอีกทาง · ลูป = <strong>สายพานโรงงาน</strong> ที่วนทำงานเดิมกับของชิ้นถัดไปเรื่อยๆ จนกว่าของจะหมด</p>
+      <div class="box why">
+        <div class="t">🤔 ทำไมสองเรื่องนี้ต้องมาคู่กัน</div>
+        <p>โปรแกรมเกือบทั้งหมดในโลกคือ "วนดูข้อมูลทีละชิ้น (ลูป) แล้วตัดสินใจกับแต่ละชิ้น (เงื่อนไข)" — ฟีดโซเชียลคือลูปที่วนโพสต์+เงื่อนไขว่าโพสต์ไหนควรโชว์, แอปธนาคารคือลูปวนรายการ+เงื่อนไขจัดหมวดรายรับรายจ่าย</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: Quiz โต้ตอบได้แล้ว!</h2>
+      <p>อัปเกรด <code class="inline">quiz.dart</code> — คราวนี้รับคำตอบจากผู้เล่นจริงผ่านคีย์บอร์ด:</p>
+      <pre><code class="language-dart">import 'dart:io'; // ชุดเครื่องมือคุยกับ Terminal (stdin = รับข้อความที่ผู้ใช้พิมพ์)
+
+void main() {
+  final String question = 'Flutter ใช้ภาษาอะไรเขียน?';
+  final String correctAnswer = 'dart';
+  int score = 0;
+
+  print('คำถาม: $question');
+  // stdin.readLineSync() = หยุดรอให้ผู้ใช้พิมพ์แล้วกด Enter
+  // ผลลัพธ์เป็น String? (อาจว่าง!) เลยต้องมี ?? — ความรู้บทที่แล้วมาใช้จริง
+  final String userAnswer = stdin.readLineSync() ?? '';
+
+  // ทางแยก: ตัดสินใจจากคำตอบ (.toLowerCase() = แปลงเป็นตัวเล็ก กันตอบ DART แล้วผิด)
+  if (userAnswer.toLowerCase() == correctAnswer) {
+    score += 1;   // ย่อมาจาก score = score + 1
+    print('ถูกต้อง! 🎉 (+1 คะแนน)');
+  } else {
+    print('ยังไม่ถูก เฉลยคือ: $correctAnswer');
+  }
+
+  print('คะแนนรวม: $score');
+}</code></pre>
+      <p>รัน <code class="inline">dart run quiz.dart</code> แล้วลองตอบทั้งถูกและผิด — <strong>นี่คือครั้งแรกที่โปรแกรมของคุณโต้ตอบกับมนุษย์!</strong></p>
+      <h3 id="switch">switch — ทางแยกหลายแพร่ง</h3>
+      <p>ถ้าทางแยกมีมากกว่า 2 ทาง ใช้ <code class="inline">switch</code> อ่านง่ายกว่า if ซ้อนกันยาวๆ:</p>
+      <pre><code class="language-dart">// ให้เกรดจากคะแนน (สมมติเต็ม 5)
+final String grade = switch (score) {
+  5 => 'ยอดเยี่ยม! 🏆',
+  4 => 'เก่งมาก 🥈',
+  3 => 'ผ่าน 🙂',
+  _ => 'ลองใหม่อีกครั้งนะ 💪',  // _ = กรณีอื่นๆ ทั้งหมด (ต้องมีเสมอ)
+};
+print(grade);</code></pre>
+      <h3 id="loops">ลูป — ถามหลายข้อโดยไม่ก็อปโค้ด</h3>
+      <pre><code class="language-dart">// for: รู้จำนวนรอบแน่นอน — "ทำ 3 รอบ"
+for (int i = 1; i <= 3; i++) {
+  print('กำลังถามข้อที่ $i จาก 3');
+}
+
+// while: ไม่รู้จำนวนรอบ — "ทำจนกว่าจะสำเร็จ"
+String answer = '';
+while (answer.toLowerCase() != 'dart') {
+  print('ตอบผิดได้ไม่จำกัด! Flutter ใช้ภาษาอะไร?');
+  answer = stdin.readLineSync() ?? '';
+}
+print('ในที่สุดก็ถูก! 🎉');
+
+// break = ออกจากลูปทันที · continue = ข้ามรอบนี้ ไปรอบถัดไป</code></pre>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — เลือกลูปจากคำถาม "รู้จำนวนรอบไหม?"</h3>
+      <p>รู้แน่ (ถาม 10 ข้อ, วาด 5 ดาว) → <code class="inline">for</code> · ไม่รู้ (รอจนตอบถูก, รอจนผู้ใช้พิมพ์ "exit") → <code class="inline">while</code> — เลือกถูกโค้ดจะเล่าเรื่องเอง</p>
+      <h3>เทคนิคที่ 2 — normalize ข้อมูลก่อนเปรียบเทียบเสมอ</h3>
+      <p>ผู้ใช้พิมพ์ <code class="inline">Dart</code>, <code class="inline">DART</code>, <code class="inline"> dart </code> (มีช่องว่าง) — ทั้งหมดควรถือว่าถูก: <code class="inline">userAnswer.trim().toLowerCase()</code> คือท่ามาตรฐานที่แอปจริงใช้กับ input มนุษย์ทุกจุด</p>
+      <h3>เทคนิคที่ 3 — เงื่อนไขซับซ้อน ให้ตั้งชื่อก่อน</h3>
+      <p><code class="inline">if (age >= 18 && hasIdCard && !isBanned)</code> อ่านยาก → ตั้งชื่อก่อน: <code class="inline">final bool canRegister = ...;</code> แล้ว <code class="inline">if (canRegister)</code> — เงื่อนไขกลายเป็นประโยคภาษาคน</p>
+      <h3>เทคนิคที่ 4 — กันลูปไม่มีที่สิ้นสุดด้วย "ตัวนับฉุกเฉิน"</h3>
+      <p>ตอนฝึก <code class="inline">while</code> ใหม่ๆ เพิ่มตัวนับรอบไว้ก่อน: ถ้าวนเกิน 100 รอบให้ <code class="inline">break</code> — โปรแกรมค้างเพราะลูปไม่จบคือประสบการณ์ที่มือใหม่ทุกคนต้องเจอ (กด <code class="inline">Ctrl+C</code> เพื่อหยุดโปรแกรมที่ค้าง)</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "ระบบสมาชิก 3 ระดับ"</div>
+        <p>แอปอีคอมเมิร์ซเกือบทุกเจ้ามีสมาชิกหลายระดับ ได้สิทธิ์ต่างกัน — นี่คือ switch ในชีวิตจริง</p>
+      </div>
+      <pre><code class="language-dart">// โค้ดสไตล์เดียวกับที่ใช้ในแอปอีคอมเมิร์ซจริง
+double discountRate(String memberTier) {
+  return switch (memberTier) {
+    'platinum' => 0.20,  // ลด 20%
+    'gold'     => 0.10,
+    'silver'   => 0.05,
+    _          => 0.0,   // ไม่เป็นสมาชิก = ไม่มีส่วนลด
+  };
+}</code></pre>
+      <p><strong>และลูปในชีวิตจริง: "คิดเงินตะกร้าสินค้า"</strong> — ทุกครั้งที่คุณกดสั่งซื้อ ที่หลังบ้านคือลูปวนสินค้าทุกชิ้น เช็คเงื่อนไข (ของหมดไหม? มีโปรไหม?) แล้วรวมราคา ถ้าเจอของหมดสต๊อกก็ <code class="inline">break</code> ออกมาแจ้งเตือนทันที — โค้ดที่คุณเพิ่งเขียนในบทนี้คือโครงเดียวกันเป๊ะ แค่เปลี่ยนจากคำถาม quiz เป็นสินค้า</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: Guard Clause — ปราการหน้าประตู</h2>
+      <p>ปัญหาคลาสสิกของมือใหม่คือ <strong>"ปิรามิดแห่งความหายนะ"</strong> — if ซ้อน if ซ้อน if จนโค้ดเลื้อยไปทางขวา:</p>
+      <pre><code class="language-dart">// ❌ if ซ้อนลึก — ต้องไล่อ่านทุกชั้นถึงรู้ว่าเกิดอะไร
+void submitAnswer(String? answer) {
+  if (answer != null) {
+    if (answer.isNotEmpty) {
+      if (answer.length <= 100) {
+        print('ตรวจคำตอบ: $answer');   // ใจความจริงอยู่ลึกสุด!
+      } else {
+        print('คำตอบยาวเกินไป');
+      }
+    } else {
+      print('กรุณาพิมพ์คำตอบ');
+    }
+  } else {
+    print('ไม่ได้รับคำตอบ');
+  }
+}</code></pre>
+      <pre><code class="language-dart">// ✅ Guard clause — เช็คเงื่อนไข "ไม่ผ่าน" แล้วออกทันที เหมือน รปภ. หน้าประตู
+void submitAnswer(String? answer) {
+  // รปภ. 3 ด่าน: ใครไม่ผ่านเกณฑ์ เชิญกลับตั้งแต่หน้าประตู (return = จบฟังก์ชันทันที)
+  if (answer == null) { print('ไม่ได้รับคำตอบ'); return; }
+  if (answer.isEmpty) { print('กรุณาพิมพ์คำตอบ'); return; }
+  if (answer.length > 100) { print('คำตอบยาวเกินไป'); return; }
+
+  // ผ่านทุกด่าน = โค้ดหลักอยู่ระดับนอกสุด อ่านง่าย ไม่ต้องนับวงเล็บ
+  print('ตรวจคำตอบ: $answer');
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>ยิ่งใจความสำคัญอยู่ "ตื้น" เท่าไหร่ โค้ดยิ่งอ่านง่ายเท่านั้น — guard clause คือเทคนิคที่ทีมระดับโลกใช้กันเป็นมาตรฐาน และ code reviewer จะยิ้มให้คุณ</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① โปรแกรมค้าง ไม่ตอบสนอง (Infinite Loop)</div>
+        <p><strong>สาเหตุ:</strong> เงื่อนไขของ while ไม่มีวันเป็นเท็จ เช่น ลืมรับ answer ใหม่ในลูป<br>
+        <strong>วิธีแก้:</strong> กด <code class="inline">Ctrl+C</code> หยุดโปรแกรม แล้วเช็คว่า "ในลูปมีอะไรที่ทำให้เงื่อนไขเปลี่ยนได้ไหม" — ทุก while ต้องมีบรรทัดที่ขยับเข้าใกล้จุดจบเสมอ</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② ลูปเกิน/ขาด 1 รอบ (Off-by-one)</div>
+        <p><strong>สาเหตุ:</strong> สับสนระหว่าง <code class="inline">&lt;</code> กับ <code class="inline">&lt;=</code> เช่น <code class="inline">for (int i = 1; i &lt; 3; i++)</code> ได้แค่ 2 รอบ (1, 2)<br>
+        <strong>วิธีแก้:</strong> ท่องว่า "เริ่ม 1 ใช้ &lt;= จำนวนรอบ" หรือ "เริ่ม 0 ใช้ &lt; จำนวนรอบ" · ไม่แน่ใจ? <code class="inline">print(i)</code> ดูเลยว่าวนกี่รอบ</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ "Conditions must have a static type of 'bool'"</div>
+        <p><strong>สาเหตุ:</strong> ใส่สิ่งที่ไม่ใช่ จริง/เท็จ ในวงเล็บ if เช่น <code class="inline">if (score)</code> แทน <code class="inline">if (score > 0)</code><br>
+        <strong>วิธีแก้:</strong> เขียนการเปรียบเทียบให้ครบ: <code class="inline">if (score > 0)</code>, <code class="inline">if (name.isNotEmpty)</code></p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ทางแยก</div>
+        <p>เขียน <code class="inline">grade.dart</code> รับคะแนน (สมมติค่าในตัวแปร) แล้วใช้ if/else if/else แปลงเป็นเกรด A (≥80), B (≥70), C (≥60), F — จากนั้นลองเขียนใหม่ด้วย <code class="inline">switch</code> เทียบกันว่าแบบไหนอ่านง่ายกว่า</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — สายพาน</div>
+        <p>ใช้ <code class="inline">for</code> พิมพ์สูตรคูณแม่ที่ผู้ใช้พิมพ์เข้ามา (รับด้วย stdin + <code class="inline">int.parse</code>) และใช้ <code class="inline">while</code> ทำเมนู "พิมพ์เลขแม่สูตรคูณ หรือพิมพ์ exit เพื่อจบ" วนจนกว่าผู้ใช้จะพิมพ์ exit</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — Quiz 3 ข้อ + ชีวิต 3 ครั้ง</div>
+        <p>อัปเกรด quiz.dart: มีคำถาม 3 ข้อ (ใช้ตัวแปรแยกก่อน — บทที่ 7 จะสอนวิธีเก็บเป็น List ที่ดีกว่า) ผู้เล่นมี "ชีวิต" 3 ครั้ง ตอบผิดเสียชีวิต 1 ชีวิตหมด = <code class="inline">break</code> จบเกมทันที จบเกมสรุปคะแนน + เกรดด้วย switch — commit ด้วยข้อความ <code class="inline">feat: add interactive questions with lives system</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>เขียน if/else และ switch ได้โดยไม่เปิดตัวอย่าง</li>
+        <li>ตอบได้ว่าเมื่อไหร่ใช้ for เมื่อไหร่ใช้ while</li>
+        <li>อธิบาย guard clause ได้ว่าดีกว่า if ซ้อนยังไง</li>
+        <li>เคยเจอ (และแก้) infinite loop ด้วยตัวเองแล้ว</li>
+        <li>Quiz รับคำตอบจริง ตรวจถูกผิด และมีระบบชีวิตแล้ว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">if</code> / <code class="inline">else</code></td><td>ทางแยก 2 ทาง</td><td>ป้ายคำถามที่ทางแยก</td></tr>
+        <tr><td><code class="inline">switch</code></td><td>ทางแยกหลายแพร่ง</td><td>วงเวียนหลายทางออก</td></tr>
+        <tr><td><code class="inline">for</code></td><td>วนซ้ำแบบรู้จำนวนรอบ</td><td>สายพานนับชิ้น</td></tr>
+        <tr><td><code class="inline">while</code></td><td>วนซ้ำจนกว่าเงื่อนไขเป็นเท็จ</td><td>สายพานวนจนของหมด</td></tr>
+        <tr><td><code class="inline">break</code> / <code class="inline">continue</code></td><td>ออกจากลูป / ข้ามรอบ</td><td>ปุ่มหยุดฉุกเฉิน / ปุ่มข้าม</td></tr>
+        <tr><td>guard clause</td><td>เช็คไม่ผ่านแล้วออกทันที</td><td>รปภ. หน้าประตู</td></tr>
+        <tr><td><code class="inline">stdin</code></td><td>รับข้อความที่ผู้ใช้พิมพ์ใน Terminal</td><td>ไมโครโฟนของโปรแกรม</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>เงื่อนไข = ทางแยก ลูป = สายพาน สองอย่างนี้คือโครงของโปรแกรมเกือบทั้งโลก · normalize input ก่อนเทียบเสมอ · guard clause ช่วยให้โค้ดตื้นและอ่านง่าย</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่4_ตัวแปรและNullSafety.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 4: ตัวแปรและ Null Safety</div>
+        </a>
+        <a href="บทที่6_ฟังก์ชัน.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 6: ฟังก์ชัน</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 2 · บทที่ 5<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

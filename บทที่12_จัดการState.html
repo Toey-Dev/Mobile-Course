@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 12 — จัดการ State เชิงลึก | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 3 · บทที่ 12</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: กระดานคะแนน</a>
+      <a href="#code" class="lvl1">2. Task Model + ติ๊กเสร็จ</a>
+      <a href="#callback" class="lvl2">— แยกลูก + callback</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: ตะกร้าสินค้า</a>
+      <a href="#clean" class="lvl1">5. Clean Code: ห้ามมีสำเนา</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 3 · บทที่ 12</span>
+      <h1>จัดการ State เชิงลึก: ติ๊กงานเสร็จ และคำถาม "state ควรอยู่ที่ใคร"</h1>
+      <p>สร้าง model Task จริงจัง (OOP บทที่ 8 กลับมาทำงาน) และเรียนแนวคิดสำคัญ: ข้อมูลอยู่ที่แม่ ลูกส่งข่าวผ่าน callback</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 11 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 6 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">To-Do ของเราเพิ่มงานได้แล้ว แต่ยัง "ติ๊กเสร็จ" ไม่ได้ — บทนี้จะทำให้ได้ พร้อมตอบคำถามที่สำคัญที่สุดเรื่อง state ในแอปที่โตขึ้นเรื่อยๆ: <strong>ข้อมูลควรอยู่ที่ Widget ตัวไหน?</strong></p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (6 คำ)</div>
+        <p><span class="pill">callback</span><span class="pill">lifting state up</span><span class="pill">Checkbox</span><span class="pill">ValueChanged</span><span class="pill">initState</span><span class="pill">single source of truth</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: กระดานคะแนนสนามกีฬา</h2>
+      <p>นึกภาพสนามฟุตบอลที่มีจอทีวีย่อยกระจายอยู่ 20 จุดทั่วสนาม — คะแนนบนทุกจอต้องตรงกันเสมอ ทำยังไง?</p>
+      <div class="ascii">        ❌ แบบที่พัง: ทุกจอจดคะแนนเอง          ✅ แบบที่ใช้จริง: กระดานกลางอันเดียว
+
+     จอ A: 2-1     จอ B: 2-2                        🏟️ กระดานกลาง: 2-1
+     จอ C: 1-1     จอ D: 2-1                     (single source of truth)
+     😱 ใครถูก?? คนดูตีกัน                    ┌──────┬──────┬──────┬──────┐
+     (แต่ละจอมีข้อมูล "สำเนา" ของตัวเอง          จอ A    จอ B    จอ C    จอ D
+      พอมีประตูใหม่ อัปเดตไม่ครบทุกจอ)           ทุกจอ "อ่านจาก" กระดานกลางเสมอ
+                                              กระดานเปลี่ยน → ทุกจอตรงกันอัตโนมัติ</div>
+      <h3>แล้วถ้ากรรมการอยู่ขอบสนามอยากแก้คะแนนล่ะ? — ฉากที่สอง: ส่งข่าวหาเจ้าของกระดาน</h3>
+      <div class="ascii">   กรรมการ (Widget ลูก)                    เจ้าของกระดาน (Widget แม่ที่ถือ state)
+   เห็นเหตุการณ์ประตูเข้า!                          │
+        │                                          │
+        │  📣 "มีประตูที่นาทีที่ 88!"                 │
+        └────────── callback ────────────►  แก้กระดาน (setState)
+                                                   │
+             กรรมการไม่แก้กระดานเอง                  ▼
+             แค่ "ส่งข่าว" ขึ้นไป            ทุกจอวาดใหม่ตรงกันหมด</div>
+      <div class="box why">
+        <div class="t">🤔 นี่คือ pattern ชื่อ "lifting state up" (ยก state ขึ้นไปไว้ที่แม่)</div>
+        <p>ข้อมูลอยู่ที่ Widget แม่ตัวเดียว → ลูกรับข้อมูลมา "แสดง" และรับ callback มา "ส่งข่าว" — ลูกไม่มีสำเนาข้อมูลของตัวเอง จึงไม่มีทางที่จอจะไม่ตรงกัน คุณจะใช้ pattern นี้ไปตลอดชีวิต Flutter (Provider ในเฟส 4 ก็คือแนวคิดนี้เวอร์ชันขยาย)</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: Task Model + ติ๊กเสร็จได้จริง</h2>
+      <h3>ขั้นที่ 1 — สร้างพิมพ์เขียว Task (ความรู้บทที่ 8 + โครงสร้างโฟลเดอร์บทที่ 2)</h3>
+      <p>สร้างไฟล์ใหม่ <code class="inline">lib/models/task.dart</code>:</p>
+      <pre><code class="language-dart">/// พิมพ์เขียวของงาน 1 ชิ้น — จาก List&lt;String&gt; ธรรมดา อัปเกรดเป็น model จริง
+/// เพราะงานหนึ่งชิ้นมีข้อมูลมากกว่าชื่อ: ต้องรู้ด้วยว่า "เสร็จหรือยัง"
+class Task {
+  Task({required this.title, this.isDone = false});
+
+  final String title;
+  bool isDone;          // ตั้งใจไม่ใส่ final — สถานะเสร็จ/ไม่เสร็จต้องเปลี่ยนได้
+
+  void toggle() =&gt; isDone = !isDone;   // ความรู้เรื่องงาน อยู่กับตัวงาน (บทที่ 8)
+}</code></pre>
+      <h3>ขั้นที่ 2 — เปลี่ยน state เป็น List&lt;Task&gt; และเพิ่ม Checkbox</h3>
+      <pre><code class="language-dart">import 'package:flutter/material.dart';
+import 'models/task.dart';                 // ดึงพิมพ์เขียวจากบ้านของมัน
+
+class _HomeScreenState extends State&lt;HomeScreen&gt; {
+  // อัปเกรดจาก List&lt;String&gt; → List&lt;Task&gt; (กระดานกลางของทั้งหน้า)
+  final List&lt;Task&gt; _tasks = [
+    Task(title: 'อ่านบทเรียนที่ 12'),
+    Task(title: 'ทำแบบฝึกหัด 3 ระดับ'),
+  ];
+
+  void _toggleTask(Task task) {
+    setState(() =&gt; task.toggle());        // แก้กระดาน + ประกาศให้วาดใหม่
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('To-Do List')),
+      body: Column(
+        children: _tasks.map((task) {
+          return CheckboxListTile(
+            value: task.isDone,                       // จออ่านจากกระดานกลาง
+            onChanged: (_) =&gt; _toggleTask(task),      // ติ๊ก = ส่งข่าวหาเจ้าของ
+            title: Text(
+              task.title,
+              style: TextStyle(
+                // เสร็จแล้ว = ขีดฆ่า + สีจาง (UI วาดจาก state เสมอ!)
+                decoration: task.isDone ? TextDecoration.lineThrough : null,
+                color: task.isDone ? Colors.grey : null,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}</code></pre>
+      <p>รันแล้ว<strong>ติ๊กดู</strong>: เครื่องหมายถูกขึ้น + ข้อความถูกขีดฆ่า — สังเกตว่าทุกอย่างไหลตามสมการ UI = f(state): เราแก้ <code class="inline">task.isDone</code> แล้วหน้าตา (ขีดฆ่า, สีจาง, เครื่องหมายถูก) เปลี่ยนตามเองทั้งหมด</p>
+      <h3 id="callback">ขั้นที่ 3 — แยกลูกออกไป แล้วคุยกันผ่าน callback</h3>
+      <pre><code class="language-dart">/// แถวงาน 1 แถว — Stateless! ไม่ถือข้อมูลเอง รับทุกอย่างมาจากแม่
+class TaskTile extends StatelessWidget {
+  const TaskTile({super.key, required this.task, required this.onToggle});
+
+  final Task task;              // ข้อมูล: อ่านจากกระดานกลาง (ส่งผ่านแม่)
+  final VoidCallback onToggle;  // ช่องทางส่งข่าว: "มีคนติ๊กฉันนะ!"
+
+  @override
+  Widget build(BuildContext context) {
+    return CheckboxListTile(
+      value: task.isDone,
+      onChanged: (_) =&gt; onToggle(),   // ไม่แก้ข้อมูลเอง — ส่งข่าวขึ้นไป
+      title: Text(task.title),
+    );
+  }
+}
+
+// ฝั่งแม่ ใช้แบบนี้:
+TaskTile(task: task, onToggle: () =&gt; _toggleTask(task))</code></pre>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — ตัดสินว่า state อยู่ที่ใคร ด้วยคำถาม "ใครต้องใช้บ้าง?"</h3>
+      <p>ข้อมูลที่ใช้ใน Widget เดียว → เก็บใน Widget นั้น (เช่น <code class="inline">_isLiked</code> ของปุ่มหัวใจบทที่ 10) · ข้อมูลที่หลาย Widget ต้องเห็นตรงกัน (รายการงาน — ทั้ง header card และรายการใช้) → ยกขึ้นไปที่แม่ร่วมที่ใกล้ที่สุด</p>
+      <h3>เทคนิคที่ 2 — ตั้งชื่อ callback ว่า onXxx เสมอ</h3>
+      <p><code class="inline">onToggle</code>, <code class="inline">onDelete</code>, <code class="inline">onSubmit</code> — ตรงกับที่ Flutter ใช้เอง (<code class="inline">onPressed</code>, <code class="inline">onChanged</code>) คนอ่านเห็นปุ๊บรู้ว่า "นี่คือช่องเสียบเหตุการณ์" ส่วนฝั่งแม่ตั้งชื่อ handler ว่า <code class="inline">_handleXxx</code> หรือ <code class="inline">_toggleTask</code> ตามงานที่ทำ</p>
+      <h3>เทคนิคที่ 3 — initState คือที่ตั้งค่าเริ่มต้นของ state</h3>
+      <p>อยากให้หน้าเริ่มมาพร้อมข้อมูล (เช่น โหลดงานตัวอย่าง) ให้ทำใน <code class="inline">initState()</code> — method พิเศษที่ Flutter เรียก <strong>ครั้งเดียว</strong> ตอน State ถูกสร้าง (ห้ามทำใน build เพราะ build ถูกเรียกซ้ำตลอด)</p>
+      <h3>เทคนิคที่ 4 — callback ที่อยากส่งข้อมูลกลับ ใช้ ValueChanged&lt;T&gt;</h3>
+      <p><code class="inline">VoidCallback</code> = ส่งข่าวเปล่าๆ ("มีคนกด!") · <code class="inline">ValueChanged&lt;String&gt;</code> = ส่งข่าวพร้อมพัสดุ ("มีคนพิมพ์คำนี้!") — บทที่ 16 (Form) จะใช้ตัวหลังหนักมาก รู้จักไว้ก่อน</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "ปุ่มบวก-ลบในตะกร้าสินค้า"</div>
+        <p>หน้าตะกร้าของแอปช้อปปิ้ง: การ์ดสินค้าแต่ละใบมีปุ่ม + / − แต่ <strong>ยอดรวมด้านล่าง</strong> ต้องเปลี่ยนตามทันที — ถ้าการ์ดแต่ละใบเก็บจำนวนของตัวเอง ยอดรวมจะรู้ได้ยังไง?</p>
+      </div>
+      <div class="ascii">   CartScreen (แม่ — ถือกระดานกลาง: รายการสินค้า + จำนวน)
+   ├── ProductCard(item, onAdd, onRemove)   ← ลูกส่งข่าว ไม่แก้เอง
+   ├── ProductCard(item, onAdd, onRemove)
+   └── TotalBar(total: _calculateTotal())   ← คำนวณสดจากกระดานกลาง
+
+   กด + ที่การ์ดใบแรก → callback ขึ้นไปหาแม่ → setState แก้กระดาน
+   → การ์ดวาดจำนวนใหม่ + ยอดรวมล่างจอเปลี่ยน พร้อมกัน เป๊ะกันเสมอ</div>
+      <p>นี่คือเหตุผลที่ทีมจริงเข้มงวดเรื่อง lifting state up: <strong>บั๊กประเภท "จอสองจุดแสดงไม่ตรงกัน" เกือบทั้งหมดเกิดจากมีข้อมูลสำเนาซ้ำสองที่</strong> — ออกแบบให้มีกระดานเดียวตั้งแต่แรก = ตัดบั๊กทั้งตระกูลทิ้ง</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: สำเนาข้อมูล คือบ่อเกิดของบั๊ก</h2>
+      <pre><code class="language-dart">// ❌ ลูกเก็บ state สำเนาเอง — กระดานสองอัน รอวันไม่ตรงกัน
+class _TaskTileState extends State&lt;TaskTile&gt; {
+  bool _isDone = false;   // 😱 สำเนาของ task.isDone — ตอนนี้มีความจริง 2 ชุด!
+
+  @override
+  Widget build(BuildContext context) {
+    return CheckboxListTile(
+      value: _isDone,
+      onChanged: (_) =&gt; setState(() =&gt; _isDone = !_isDone),
+      // ติ๊กแล้วแถวนี้เปลี่ยน... แต่ header card นับจำนวนเสร็จจาก task.isDone
+      // ซึ่งไม่เคยถูกแก้ → ตัวเลขบนจอโกหกผู้ใช้ทันที
+      title: Text(widget.task.title),
+    );
+  }
+}</code></pre>
+      <pre><code class="language-dart">// ✅ ลูก Stateless รับข้อมูล + callback — ความจริงมีชุดเดียว
+class TaskTile extends StatelessWidget {
+  const TaskTile({super.key, required this.task, required this.onToggle});
+  final Task task;              // อ่านจากกระดานกลางเท่านั้น
+  final VoidCallback onToggle;  // อยากเปลี่ยน? ส่งข่าวหาเจ้าของกระดาน
+
+  @override
+  Widget build(BuildContext context) {
+    return CheckboxListTile(
+      value: task.isDone,
+      onChanged: (_) =&gt; onToggle(),
+      title: Text(task.title),
+    );
+  }
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>ก่อนพิมพ์ StatefulWidget ให้ถามว่า "ข้อมูลนี้มีเจ้าของอยู่แล้วหรือเปล่า?" — ถ้ามี (อยู่ในกระดานของแม่) ลูกควรเป็น Stateless ที่รับของมาแสดง อย่าสร้างสำเนา</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "setState() or markNeedsBuild() called during build"</div>
+        <p><strong>สาเหตุ:</strong> เผลอเรียกฟังก์ชันทันทีแทนที่จะส่งฟังก์ชันให้ปุ่ม: <code class="inline">onPressed: _addTask()</code> ← มีวงเล็บ = เรียกเลยระหว่างวาดจอ!<br>
+        <strong>วิธีแก้:</strong> ส่ง "ตัวฟังก์ชัน" ไม่ใช่ "ผลของฟังก์ชัน": <code class="inline">onPressed: _addTask</code> (ไม่มีวงเล็บ) หรือห่อ: <code class="inline">onPressed: () =&gt; _addTask(task)</code> เมื่อต้องส่ง argument</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② Checkbox เป็นสีเทา กดไม่ได้</div>
+        <p><strong>สาเหตุ:</strong> onChanged เป็น null — ใน Flutter การส่ง null ให้ onChanged/onPressed มีความหมายพิเศษ: "ปิดการใช้งาน (disabled)"<br>
+        <strong>วิธีแก้:</strong> ใส่ฟังก์ชันให้ onChanged เสมอเมื่ออยากให้กดได้ — ความรู้นี้ใช้ทำปุ่ม disabled แบบตั้งใจได้ด้วย (เช่น ปุ่ม submit ที่กดไม่ได้จนกว่าจะกรอกครบ)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ ติ๊กแล้วเด้งกลับ / ติ๊กแถวหนึ่ง อีกจุดไม่อัปเดต</div>
+        <p><strong>สาเหตุ:</strong> อาการคลาสสิกของ "ความจริงสองชุด" — มีสำเนา state ซ้ำ หรือ setState อยู่ผิดตัว (ลูกเรียก setState ของตัวเอง แต่ข้อมูลจริงอยู่ที่แม่ → จอแม่ไม่วาดใหม่)<br>
+        <strong>วิธีแก้:</strong> ไล่หาว่า "กระดานกลางตัวจริงอยู่ไหน" แล้วให้ setState เกิดที่เจ้าของกระดานผ่าน callback — ลูกห้ามถือสำเนา</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ติ๊กได้จริง</div>
+        <p>ทำตามหัวข้อ 2 ให้ครบ: สร้าง <code class="inline">lib/models/task.dart</code>, เปลี่ยน state เป็น <code class="inline">List&lt;Task&gt;</code>, ติ๊กเสร็จแล้วข้อความขีดฆ่า+สีจาง — ทดสอบ: ติ๊กแล้ว hot reload หน้าจอต้องคงสถานะติ๊กไว้ (ทำไมถึงคง? กลับไปดูตาราง Hot Reload บทที่ 3)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — แยกลูก ส่งข่าวผ่าน callback</div>
+        <p>แยก <code class="inline">TaskTile</code> เป็น StatelessWidget ตามขั้นที่ 3 (ไฟล์ใหม่ <code class="inline">lib/widgets/task_tile.dart</code> — โครงสร้างโฟลเดอร์จากบทที่ 2) เพิ่มปุ่มถังขยะท้ายแถวพร้อม callback <code class="inline">onDelete</code> ให้ลบงานได้ — commit ด้วย <code class="inline">refactor: extract TaskTile with callbacks</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — กระดานกลางโชว์พลัง</div>
+        <p>ทำให้ header card จากบทที่ 11 แสดง "เสร็จแล้ว x / ทั้งหมด y" โดยคำนวณสดจาก <code class="inline">_tasks.where((t) =&gt; t.isDone).length</code> (ห้ามเก็บตัวนับแยก! — เทคนิคบทที่ 10) และเพิ่มปุ่ม "ล้างงานที่เสร็จแล้ว" ที่ใช้ <code class="inline">.where()</code> กรองงานค้างเก็บไว้ — ติ๊กงานแล้วดูตัวเลขบนการ์ดเปลี่ยนพร้อมกันทันที นั่นคือ single source of truth ทำงาน — commit ด้วย <code class="inline">feat: live done counter and clear-completed button</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบาย lifting state up ด้วยภาพกระดานคะแนนสนามกีฬาได้</li>
+        <li>ตอบได้ว่า state ก้อนหนึ่งควรอยู่ที่ Widget ไหน ("ใครต้องใช้บ้าง?")</li>
+        <li>เขียน Widget ลูกแบบ Stateless ที่รับข้อมูล + callback ได้</li>
+        <li>อธิบายได้ว่าทำไม <code class="inline">onPressed: _fn()</code> (มีวงเล็บ) ถึงพัง</li>
+        <li>To-Do ติ๊กเสร็จได้ ลบได้ และ header นับงานเสร็จแบบคำนวณสด</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>callback</td><td>ฟังก์ชันที่ลูกใช้ "ส่งข่าว" หาแม่</td><td>กรรมการส่งข่าวหาเจ้าของกระดาน</td></tr>
+        <tr><td>lifting state up</td><td>ยก state ขึ้นไปไว้ที่แม่ร่วมที่ใกล้ที่สุด</td><td>ย้ายกระดานไปตรงที่ทุกจอเห็น</td></tr>
+        <tr><td><code class="inline">Checkbox</code></td><td>ช่องติ๊ก จริง/เท็จ</td><td>ช่องติ๊กในแบบฟอร์ม</td></tr>
+        <tr><td><code class="inline">ValueChanged</code></td><td>callback ที่ส่งค่าแนบไปด้วย</td><td>ส่งข่าวพร้อมพัสดุ</td></tr>
+        <tr><td><code class="inline">initState</code></td><td>จุดตั้งค่าเริ่มต้น เรียกครั้งเดียวตอนเกิด</td><td>พิธีเปิดกระดาน</td></tr>
+        <tr><td>single source of truth</td><td>ความจริงมีชุดเดียว ไม่มีสำเนา</td><td>กระดานกลางอันเดียวทั้งสนาม</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>state อยู่ที่แม่ (กระดานกลาง) ลูก Stateless รับข้อมูล + ส่งข่าวผ่าน callback · ความจริงต้องมีชุดเดียว — สำเนาคือบ่อเกิดของบั๊ก · <code class="inline">onPressed: _fn</code> ไม่มีวงเล็บ · ของที่คำนวณได้ อย่าเก็บ</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่11_Layout_Row_Column_Container.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 11: Layout — Row, Column, Container</div>
+        </a>
+        <a href="บทที่13_ListView.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 13: ListView — แสดงข้อมูลเป็นรายการ</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 3 · บทที่ 12<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

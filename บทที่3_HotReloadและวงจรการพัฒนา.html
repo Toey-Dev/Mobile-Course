@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 3 — Hot Reload และวงจรการพัฒนา | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 1 · บทที่ 3 (บทปิดเฟส)</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ช่างปั้นดิน</a>
+      <a href="#levels" class="lvl1">2. สามระดับของการรีเฟรช</a>
+      <a href="#practice" class="lvl1">3. ฝึกจังหวะ Dev Loop 5 รอบ</a>
+      <a href="#techniques" class="lvl1">4. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">5. ตัวอย่างงานจริง</a>
+      <a href="#clean" class="lvl1">6. Clean Code: แก้เร็ว</a>
+      <a href="#errors" class="lvl1">7. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">8. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">9. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 1 · บทที่ 3 — บทปิดเฟส</span>
+      <h1>Hot Reload และวงจรการพัฒนา (Dev Loop)</h1>
+      <p>ทำงานเป็น "จังหวะ" แบบมืออาชีพ: แก้นิดเดียว → เห็นผลทันที → ปรับ → commit</p>
+      <div class="meta">
+        <span>⏱️ 1–1.5 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 1–2 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 5 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">บทนี้ไม่ได้สอน "คำสั่งใหม่" มากนัก แต่สอนสิ่งที่สำคัญกว่า: <strong>จังหวะการทำงาน</strong> — ทักษะที่แยกมือใหม่ที่เขียน 100 บรรทัดแล้วค่อยรัน ออกจากมืออาชีพที่รู้ทุกวินาทีว่าโค้ดตัวเองทำอะไรอยู่</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (5 คำ)</div>
+        <p><span class="pill">Dev Loop</span><span class="pill">debugPrint</span><span class="pill">Debug Console</span><span class="pill">Widget Inspector</span><span class="pill">lock file</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: ช่างปั้นดินเหนียว vs ช่างแกะสลักหิน</h2>
+      <p>ลองนึกภาพช่างสองคนที่ต้องปั้นรูปหน้าคนให้เหมือนแบบ:</p>
+      <div class="ascii">🗿 ช่างแกะสลักหิน (dev ยุคก่อน)          🏺 ช่างปั้นดินเหนียว (dev ยุค Flutter)
+   สกัดผิดทีเดียว = เริ่มใหม่ทั้งก้อน          บีบ ดู ปรับ บีบ ดู ปรับ...
+   ต้องวางแผนเป๊ะก่อนลงมือ                  ลองผิดได้ไม่จำกัด แก้ได้ตลอด
+   กว่าจะเห็นผลรวม = อีกหลายวัน             เห็นผลทุก 3 วินาที
+
+        แก้โค้ด ──► กดเซฟ ──► จอเปลี่ยนทันที
+          ▲                        │
+          └────── ดูผล + คิดต่อ ◄───┘        ← วงจรนี้คือ "Dev Loop"
+                (วนรอบละไม่กี่วินาที)</div>
+      <p><strong>Dev Loop</strong> คือจังหวะการทำงานที่คุณจะใช้ตลอดชีวิต dev: ยิ่งรอบสั้น ยิ่งเรียนรู้เร็ว ยิ่งกล้าทดลอง — Flutter ออกแบบมาให้รอบนี้สั้นระดับวินาทีด้วย Hot Reload</p>
+      <div class="box why">
+        <div class="t">🤔 ทำไมต้องฝึก "จังหวะ" ไม่ใช่แค่ "คำสั่ง"</div>
+        <p>มือใหม่ส่วนใหญ่เขียนโค้ดยาวๆ แล้วค่อยรันทีเดียว (แบบช่างแกะหิน) พอพังก็หาไม่เจอว่าผิดตรงไหน มืออาชีพแก้ทีละนิดแล้วดูผลตลอด — บั๊กจึงถูกจับได้ตั้งแต่ยังตัวเล็ก</p>
+      </div>
+    </section>
+
+    <section id="levels">
+      <h2>2. 🧠 สามระดับของการรีเฟรช — ใช้ตัวไหนเมื่อไหร่</h2>
+      <table>
+        <tr><th>คำสั่ง</th><th>ทำอะไร</th><th>ใช้เมื่อ</th><th>เวลา</th></tr>
+        <tr><td><strong>Hot Reload</strong> (กด <code class="inline">r</code> หรือแค่กดเซฟใน VS Code)</td><td>ฉีดโค้ดใหม่เข้าแอปที่รันอยู่ <strong>คงสถานะเดิม</strong></td><td>แก้ UI, ข้อความ, สี, layout</td><td>~1 วิ</td></tr>
+        <tr><td><strong>Hot Restart</strong> (กด <code class="inline">R</code>)</td><td>รันแอปใหม่ <strong>ล้างสถานะ</strong> แต่ไม่ build ใหม่</td><td>แก้ <code class="inline">main()</code>, ตัวแปร global, สถานะเพี้ยน</td><td>~5 วิ</td></tr>
+        <tr><td><strong>Full Restart</strong> (หยุดแล้ว <code class="inline">flutter run</code> ใหม่)</td><td>build ใหม่ทั้งหมด</td><td>เพิ่ม package, แก้ไฟล์ native, เพิ่ม assets</td><td>~1–2 นาที</td></tr>
+      </table>
+      <p><strong>วิธีจำแบบภาพ:</strong> Hot Reload = เปลี่ยนเสื้อผ้าตัวละครขณะละครกำลังเล่น · Hot Restart = เริ่มละครใหม่จากฉากแรก · Full Restart = สร้างโรงละครใหม่</p>
+      <div class="box why">
+        <div class="t">🤔 "คงสถานะเดิม" สำคัญยังไง</div>
+        <p>สมมติคุณกำลังแก้หน้าที่ต้องกดเข้าไป 3 ชั้น (หน้าแรก → ตั้งค่า → โปรไฟล์) — Hot Reload แก้แล้ว <strong>ยังอยู่หน้าโปรไฟล์เหมือนเดิม</strong> ไม่ต้องกดเข้าไปใหม่ 3 ชั้นทุกรอบ นี่แหละที่ประหยัดเวลามหาศาล</p>
+      </div>
+    </section>
+
+    <section id="practice">
+      <h2>3. 💻 ลงมือจริง: ฝึกจังหวะ Dev Loop 5 รอบ</h2>
+      <p>เปิด <code class="inline">my_first_app</code> แล้วสั่ง <code class="inline">flutter run</code> จากนั้นทำตามนี้ <strong>ทีละรอบ อย่ารวบ</strong> — เป้าหมายคือฝึกจังหวะ ไม่ใช่ผลลัพธ์:</p>
+      <pre><code class="language-dart">// รอบ 1: เปลี่ยนข้อความหลัก แล้วกดเซฟ → ดูจอเปลี่ยน
+Text('ฝึก Dev Loop รอบแรก! 🔁', ...)
+
+// รอบ 2: เปลี่ยนสีธีมทั้งแอปจุดเดียว แล้วเซฟ
+theme: ThemeData(colorSchemeSeed: Colors.teal),   // จาก indigo → teal
+
+// รอบ 3: ขยายไอคอน แล้วเซฟ
+Icon(Icons.flutter_dash, size: 120, ...)          // จาก 80 → 120
+
+// รอบ 4: ลองทำให้ "พัง" ดูบ้าง — ลบวงเล็บปิดตัวหนึ่งทิ้ง แล้วเซฟ
+// → อ่าน error หาคำว่า "Expected ..." และเลขบรรทัด → แก้กลับ
+
+// รอบ 5: เพิ่มบรรทัดนี้ไว้บนสุดของ build() แล้วเซฟ
+debugPrint('build ทำงานแล้ว!');                    // ดูข้อความใน Debug Console</code></pre>
+      <p><strong>รอบ 5 คือการรู้จัก <code class="inline">debugPrint</code></strong> — เครื่องมือ "ส่องความคิด" ของแอป: อยากรู้ว่าโค้ดบรรทัดไหนทำงานไหม ตัวแปรมีค่าอะไร ก็ print ออกมาดูใน <strong>Debug Console</strong> (แถบล่างของ VS Code) นี่คือเครื่องมือ debug ชิ้นแรกและถูกใช้บ่อยที่สุดในโลก</p>
+      <div class="box tip">
+        <div class="t">💡 ทำไมใช้ debugPrint ไม่ใช่ print</div>
+        <p>ทำหน้าที่เหมือนกัน แต่ <code class="inline">debugPrint</code> กันข้อความยาวถูกตัดหาย และถูกปิดอัตโนมัติในแอปเวอร์ชันจริงที่ส่งถึงมือผู้ใช้</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>4. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — "แก้จุดเดียวต่อรอบ" คือกฎเหล็ก</h3>
+      <p>ถ้าแก้ 5 จุดพร้อมกันแล้วพัง จะไม่รู้ว่าจุดไหนคือตัวปัญหา แก้ทีละจุด → เซฟ → ดูผล → รู้ทันทีว่าอะไรทำให้เกิดอะไร (นี่คือหลักวิทยาศาสตร์: เปลี่ยนตัวแปรทีละตัว)</p>
+      <h3>เทคนิคที่ 2 — ใช้ Widget Inspector ส่องหน้าจอ</h3>
+      <p>ใน VS Code เปิด Command Palette (<code class="inline">Ctrl+Shift+P</code>) → พิมพ์ "Widget Inspector" → คลิกที่องค์ประกอบบนจอ จะเห็นเลยว่ามันคือ Widget ตัวไหนในโค้ด ซ้อนอยู่ใต้อะไร — เหมือนเอกซเรย์หน้าจอ มีประโยชน์มากตอน layout ไม่เป็นอย่างที่คิด</p>
+      <h3>เทคนิคที่ 3 — จบ "หนึ่งเรื่อง" ให้ commit ทันที (จังหวะใหญ่)</h3>
+      <p>Dev Loop คือจังหวะเล็ก (วินาที) ส่วน commit คือจังหวะใหญ่ (ครึ่งชั่วโมง–ชั่วโมง): ปรับสีเสร็จเป็นที่พอใจ = commit เพราะจุดเซฟที่ดีคือ "สถานะที่แอปทำงานได้" เสมอ</p>
+      <h3>เทคนิคที่ 4 — debugPrint คือคำถาม ไม่ใช่ขยะ</h3>
+      <p>พิมพ์ debugPrint เพื่อ "ถาม" แอปว่าเกิดอะไรขึ้น พอได้คำตอบแล้ว <strong>ลบทิ้ง</strong> ก่อน commit — โค้ดที่เต็มไปด้วย print เก่าๆ เหมือนกระดาษทดที่ไม่เคยเก็บโต๊ะ</p>
+    </section>
+
+    <section id="prod">
+      <h2>5. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "ประชุมรีวิว UI วันศุกร์"</div>
+        <p>ทีมของคุณมีนัดรีวิวหน้าจอใหม่กับดีไซเนอร์และ Product Manager ทุกวันศุกร์ — dev ที่คล่อง Dev Loop จะเปิดแอปบนจอใหญ่ แล้วแก้ตามคำขอ <strong>สดๆ ในห้องประชุม</strong></p>
+      </div>
+      <div class="ascii">PM:        "ปุ่มใหญ่ไปนิด ลดลงหน่อยได้ไหม"
+คุณ:        แก้ size → เซฟ → จอเปลี่ยนใน 1 วิ
+ดีไซเนอร์:  "สีเขียวนี้ไม่ใช่เขียวแบรนด์ ใช้ #2E7D32"
+คุณ:        แก้สี → เซฟ → "แบบนี้ใช่ไหมครับ"
+ทีม:        เคาะผ่านในที่ประชุม ✓</div>
+      <p>สิ่งที่เคยใช้เวลา "รับ feedback → กลับไปแก้ → นัดดูรอบใหม่สัปดาห์หน้า" จบใน 10 นาที — ความเร็วของ Dev Loop ไม่ใช่แค่เรื่องความสะดวกส่วนตัว แต่<strong>เปลี่ยนวิธีทำงานของทั้งทีม</strong></p>
+    </section>
+
+    <section id="clean">
+      <h2>6. 🧹 ตัวอย่าง Clean Code: จัดโค้ดให้ "แก้เร็ว" รับจังหวะ Dev Loop</h2>
+      <p>Dev Loop จะเร็วได้ โค้ดต้อง "หาจุดแก้เจอเร็ว" ด้วย — เทียบสองแบบนี้:</p>
+      <div class="grid2">
+        <div class="card bad"><div class="h">❌ ค่ากระจัดกระจาย</div><p style="margin:0;font-size:14px">อยากเปลี่ยนสีแบรนด์ต้องไล่หา <code class="inline">0xFF3F51B5</code> ให้ครบทุกจุด พลาด 1 จุด = สีเพี้ยนไม่รู้ตัว</p></div>
+        <div class="card good"><div class="h">✅ รวมค่าไว้ที่เดียว</div><p style="margin:0;font-size:14px">ประกาศ <code class="inline">_accent</code>, <code class="inline">_textSize</code> ครั้งเดียวบนสุด — แก้จุดเดียว เปลี่ยนทั้งหน้า</p></div>
+      </div>
+      <pre><code class="language-dart">// ❌ ค่าตัวเลข/สีกระจัดกระจาย — แก้ 1 เรื่องต้องไล่หา 5 ที่
+body: Center(
+  child: Column(children: [
+    Icon(Icons.star, size: 40, color: Color(0xFF3F51B5)),
+    Text('หัวข้อ', style: TextStyle(fontSize: 22, color: Color(0xFF3F51B5))),
+    Text('รายละเอียด', style: TextStyle(fontSize: 22, color: Color(0xFF3F51B5))),
+  ]),
+),</code></pre>
+      <pre><code class="language-dart">// ✅ รวมค่าที่ใช้ซ้ำไว้ที่เดียว — แก้จุดเดียว เปลี่ยนทั้งหน้า
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  // ค่าที่ใช้ซ้ำ ประกาศครั้งเดียวบนสุด — เห็นปุ๊บรู้ปั๊บว่าหน้านี้ใช้อะไรบ้าง
+  static const Color _accent = Color(0xFF3F51B5);
+  static const double _textSize = 22;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(children: const [
+        Icon(Icons.star, size: 40, color: _accent),
+        Text('หัวข้อ', style: TextStyle(fontSize: _textSize, color: _accent)),
+        Text('รายละเอียด', style: TextStyle(fontSize: _textSize, color: _accent)),
+      ]),
+    );
+  }
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>โค้ดที่ clean ไม่ใช่แค่ "สวย" — มันคือโค้ดที่ <strong>ตอบสนอง Dev Loop ได้เร็ว</strong>: อยากแก้อะไร รู้ทันทีว่าไปแก้ตรงไหน จุดเดียวจบ</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>7. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① กดเซฟแล้วจอไม่เปลี่ยน (Hot Reload ไม่ติด)</div>
+        <p><strong>สาเหตุ:</strong> การแก้บางอย่าง Hot Reload ทำไม่ได้ เช่น แก้ใน <code class="inline">main()</code>, เปลี่ยนตัวแปร global, เปลี่ยน Stateless ↔ Stateful<br>
+        <strong>วิธีแก้:</strong> กด <code class="inline">R</code> (Hot Restart) — ถ้ายังไม่เปลี่ยน หยุดแล้ว <code class="inline">flutter run</code> ใหม่ · จำง่ายๆ: <em>"เซฟแล้วเฉย → R → ยังเฉย → รันใหม่"</em></p>
+      </div>
+      <div class="box warn">
+        <div class="t">② จอแดงทั้งจอ (Red Screen)</div>
+        <p><strong>สาเหตุ:</strong> โค้ดมีข้อผิดพลาดตอนวาดหน้าจอ — จอแดงคือ Flutter บอกว่า "วาดต่อไม่ได้"<br>
+        <strong>วิธีแก้:</strong> อย่าตกใจ อ่านบรรทัดแรก (มักบอกตรงๆ เช่น "RenderFlex overflowed") แก้แล้วเซฟ จอแดงหายเอง — จอแดงเกิดเฉพาะตอนพัฒนา ผู้ใช้จริงไม่เห็นแบบนี้</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ "Waiting for another flutter command to release the startup lock"</div>
+        <p><strong>สาเหตุ:</strong> มีคำสั่ง flutter อีกตัวค้างอยู่ (มักเกิดจากปิด terminal กลางคัน) — ตัวเก่าล็อกไฟล์ (lock file) กันคำสั่งชนกันเอง<br>
+        <strong>วิธีแก้:</strong> ปิด terminal/VS Code ทุกหน้าต่างแล้วเปิดใหม่ ถ้ายังไม่หายให้ restart เครื่อง</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>8. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ฝึกจังหวะ</div>
+        <p>ทำ Dev Loop 5 รอบตามหัวข้อ 3 ให้ครบ รวมถึงรอบที่ตั้งใจทำพังแล้วอ่าน error เอง จับเวลาดูว่าแต่ละรอบใช้กี่วินาที</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — เอกซเรย์จอ</div>
+        <p>เปิด Widget Inspector แล้วคลิกไล่ดูทุกองค์ประกอบบนหน้าจอ Hello World — วาดผังลงกระดาษว่า Widget อะไรซ้อนอยู่ใต้อะไร แล้วเทียบกับโค้ดจริงว่าตรงไหม</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — Speed run แบบมืออาชีพ</div>
+        <p>ตั้งโจทย์เอง 3 การแก้ (เช่น เปลี่ยนธีม, เพิ่มไอคอนตัวที่สอง, แก้ข้อความ) ทำให้ครบภายใน 10 นาที โดยแต่ละเรื่อง commit แยกกันด้วยข้อความ conventional commits ที่ถูกต้อง — จบแล้ว <code class="inline">git log --oneline</code> ต้องเล่าเรื่องได้ว่าทำอะไรไปบ้าง</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>9. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายความต่างของ Hot Reload / Hot Restart / Full Restart พร้อมตัวอย่างว่าใช้เมื่อไหร่</li>
+        <li>ใช้ <code class="inline">debugPrint</code> ดูค่าใน Debug Console เป็น</li>
+        <li>เปิด Widget Inspector และชี้ได้ว่าองค์ประกอบบนจอคือ Widget ตัวไหน</li>
+        <li>เจอจอแดงแล้วไม่ตกใจ อ่านบรรทัดแรกเป็น</li>
+        <li>ทำ speed run ระดับ 3 สำเร็จ พร้อมประวัติ commit สวยงาม</li>
+      </ul>
+      <div class="box tip">
+        <div class="t">🎉 จบเฟส 1!</div>
+        <p>คุณมีเครื่องมือครบ รันแอปได้ เข้าใจโครงสร้าง ใช้ Git เป็น และทำงานเป็นจังหวะแบบมืออาชีพแล้ว</p>
+      </div>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>Dev Loop</td><td>วงจร แก้→ดูผล→ปรับ ที่วนเร็วที่สุด</td><td>ช่างปั้นดินเหนียว</td></tr>
+        <tr><td><code class="inline">debugPrint</code></td><td>พิมพ์ข้อความออกมาดูความคิดของแอป</td><td>ถามแอปว่า "ตอนนี้ทำอะไรอยู่"</td></tr>
+        <tr><td>Debug Console</td><td>หน้าต่างที่ข้อความ debug ปรากฏ</td><td>กระดานคำตอบของแอป</td></tr>
+        <tr><td>Widget Inspector</td><td>เครื่องมือส่องว่าจอประกอบจาก Widget อะไร</td><td>เอกซเรย์หน้าจอ</td></tr>
+        <tr><td>lock file</td><td>ไฟล์กันคำสั่ง flutter รันชนกัน</td><td>ป้าย "ห้องไม่ว่าง"</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>Dev Loop สั้น = เรียนรู้เร็ว + กล้าทดลอง · เซฟแล้วเฉยให้กด R · debugPrint คือเครื่องมือถามแอป · โค้ด clean คือโค้ดที่หาจุดแก้เจอในวินาที</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่2_โครงสร้างโปรเจกต์และGit.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 2: โครงสร้างโปรเจกต์ + Git</div>
+        </a>
+        <a href="บทที่4_ตัวแปรและNullSafety.html">
+          <div class="lbl">บทต่อไป (เริ่มเฟส 2!) →</div>
+          <div class="ttl">บทที่ 4: ตัวแปร ชนิดข้อมูล และ Null Safety</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 1 · บทที่ 3<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

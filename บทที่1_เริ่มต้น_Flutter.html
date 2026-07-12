@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 1 — เริ่มต้น Flutter | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fa; --surface:#ffffff; --ink:#1f2430; --ink-soft:#5b6373;
+    --muted:#8a93a6; --line:#e6e9ef; --brand:#3f51b5; --brand-soft:#eef0fb;
+    --code-bg:#282c34; --ok:#1f9d6b; --ok-soft:#e8f6ef; --warn:#c77700; --warn-soft:#fdf3e2;
+    --why:#0b72b9; --why-soft:#e7f2fb; --prod:#7b3fbf; --prod-soft:#f2ebfb;
+    --radius:12px; --maxw:860px;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Sarabun","Noto Sans Thai",Roboto,Arial,sans-serif;
+    --mono:"SF Mono", "JetBrains Mono",Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+       font-size:16.5px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  #progress{position:fixed;top:0;left:0;height:3px;background:var(--brand);width:0;z-index:100;transition:width .1s;}
+  .wrap{display:flex;max-width:1240px;margin:0 auto;}
+  #sidebar{position:sticky;top:0;align-self:flex-start;width:280px;height:100vh;
+           overflow-y:auto;padding:26px 18px;border-right:1px solid var(--line);
+           background:var(--surface);flex:0 0 280px;}
+  #sidebar .brand{font-weight:700;color:var(--brand);font-size:15px;letter-spacing:.3px;}
+  #sidebar .sub{color:var(--muted);font-size:12.5px;margin:2px 0 18px;}
+  #toc a{display:block;padding:6px 12px;border-radius:8px;color:var(--ink-soft);
+         text-decoration:none;font-size:13.5px;line-height:1.5;margin:1px 0;border-left:2px solid transparent;}
+  #toc a:hover{background:var(--brand-soft);color:var(--brand);}
+  #toc a.active{background:var(--brand-soft);color:var(--brand);border-left-color:var(--brand);font-weight:600;}
+  #toc a.lvl2{padding-left:24px;font-size:12.5px;color:var(--muted);}
+  main{flex:1;min-width:0;padding:40px 48px 120px;}
+  .content{max-width:var(--maxw);margin:0 auto;}
+  .hero{background:linear-gradient(135deg,#3f51b5,#5c6bc0);color:#fff;border-radius:16px;
+        padding:30px 34px;margin-bottom:34px;}
+  .hero .week{display:inline-block;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:30px;font-size:13px;font-weight:600;}
+  .hero h1{margin:14px 0 8px;font-size:30px;line-height:1.25;}
+  .hero p{margin:0;opacity:.92;font-size:15px;}
+  .hero .meta{margin-top:16px;display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;opacity:.95;}
+  h2{font-size:24px;margin:48px 0 14px;padding-top:10px;border-top:1px solid var(--line);}
+  h2:first-of-type{border-top:none;}
+  h3{font-size:19px;margin:30px 0 10px;color:var(--ink);}
+  h4{font-size:16px;margin:22px 0 8px;color:var(--ink-soft);}
+  p{margin:12px 0;}
+  ul,ol{margin:12px 0;padding-left:24px;}
+  li{margin:6px 0;}
+  a{color:var(--brand);}
+  strong{font-weight:700;}
+  .lead{font-size:17.5px;color:var(--ink-soft);}
+  .box{border-radius:var(--radius);padding:16px 18px;margin:18px 0;border:1px solid var(--line);background:var(--surface);}
+  .box .t{font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:15px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.why{background:var(--why-soft);border-color:#cfe6f7;} .box.why .t{color:var(--why);}
+  .box.tip{background:var(--ok-soft);border-color:#c8ead8;} .box.tip .t{color:var(--ok);}
+  .box.warn{background:var(--warn-soft);border-color:#f3e2c0;} .box.warn .t{color:var(--warn);}
+  .box.concept{background:var(--brand-soft);border-color:#d6dafb;} .box.concept .t{color:var(--brand);}
+  .box.prod{background:var(--prod-soft);border-color:#e1d2f5;} .box.prod .t{color:var(--prod);}
+  pre{position:relative;margin:16px 0;border-radius:12px;overflow:hidden;background:var(--code-bg);}
+  /* สีตัวอักษรพื้นฐานในกล่องโค้ด — กันกรณี highlight.js โหลดไม่ทัน ทำให้อ่านออกเสมอ */
+  pre code,pre code.hljs{display:block;padding:18px 18px;font-family:var(--mono);font-size:14px;
+       line-height:1.65;overflow-x:auto;color:#d7dae0;background:transparent;}
+  pre code .hljs-comment{color:#7f848e;}
+  .copy-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.12);color:#cfd3dc;
+            border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:var(--font);}
+  .copy-btn:hover{background:rgba(255,255,255,.22);color:#fff;}
+  .copy-btn.done{background:var(--ok);color:#fff;}
+  code.inline{background:#eceef3;color:#c0341d;padding:2px 7px;border-radius:6px;font-family:var(--mono);font-size:13.5px;}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:14.5px;background:var(--surface);border-radius:10px;overflow:hidden;}
+  th,td{border:1px solid var(--line);padding:10px 13px;text-align:left;vertical-align:top;}
+  th{background:var(--brand-soft);color:var(--brand);font-weight:700;}
+  tr:nth-child(even) td{background:#fafbfd;}
+  .ascii{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+         font-family:var(--mono);font-size:13px;line-height:1.5;white-space:pre;overflow-x:auto;color:var(--ink-soft);}
+  .checklist{list-style:none;padding-left:0;}
+  .checklist li{padding-left:30px;position:relative;}
+  .checklist li:before{content:"\2610";position:absolute;left:4px;color:var(--brand);font-size:18px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .card.bad{border-color:#f0c9c2;background:#fdf1ef;}
+  .card.good{border-color:#c8ead8;background:#f1faf5;}
+  .card .h{font-weight:700;margin-bottom:8px;font-size:14px;}
+  .card.bad .h{color:#c0341d;} .card.good .h{color:var(--ok);}
+  .pill{display:inline-block;background:var(--brand-soft);color:var(--brand);padding:2px 10px;border-radius:20px;font-size:12.5px;font-weight:600;margin:2px 4px 2px 0;}
+  .footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;}
+  .nav-next{display:flex;justify-content:space-between;gap:14px;margin-top:30px;}
+  .nav-next a{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;text-decoration:none;color:var(--ink);}
+  .nav-next a:hover{border-color:var(--brand);}
+  .nav-next .lbl{font-size:12px;color:var(--muted);}
+  .nav-next .ttl{font-weight:700;color:var(--brand);}
+  #menu-toggle{display:none;}
+  @media(max-width:880px){
+    #sidebar{position:fixed;left:-300px;z-index:50;transition:left .25s;box-shadow:0 0 30px rgba(0,0,0,.1);}
+    #sidebar.open{left:0;}
+    #menu-toggle{display:flex;position:fixed;top:14px;left:14px;z-index:60;background:var(--brand);color:#fff;
+                 border:none;border-radius:10px;width:44px;height:44px;font-size:20px;align-items:center;justify-content:center;cursor:pointer;}
+    main{padding:64px 20px 100px;}
+    .grid2{grid-template-columns:1fr;}
+    .hero h1{font-size:24px;}
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">สัปดาห์ที่ 1 · บทที่ 1</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#what" class="lvl1">1. Flutter คืออะไร</a>
+      <a href="#why-companies" class="lvl2">— ทำไมบริษัทเลือก</a>
+      <a href="#widget" class="lvl1">2. Everything is a Widget</a>
+      <a href="#declarative" class="lvl2">— Declarative UI</a>
+      <a href="#setup" class="lvl1">3. ติดตั้งเครื่องมือ</a>
+      <a href="#doctor" class="lvl2">— flutter doctor</a>
+      <a href="#firstapp" class="lvl1">4. รันแอปแรก</a>
+      <a href="#explain" class="lvl2">— อธิบายทุกบรรทัด</a>
+      <a href="#hotreload" class="lvl1">5. Hot Reload</a>
+      <a href="#mindset" class="lvl1">6. หลักคิดของ dev</a>
+      <a href="#clean" class="lvl1">7. Clean vs Production</a>
+      <a href="#github" class="lvl1">8. เก็บผลงาน GitHub</a>
+      <a href="#exercise" class="lvl1">9. แบบฝึกหัด</a>
+      <a href="#checklist" class="lvl1">10. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 สัปดาห์ที่ 1 · บทที่ 1</span>
+      <h1>เริ่มต้น Flutter และรันแอปแรกของคุณ</h1>
+      <p>เข้าใจว่า Flutter ทำงานอย่างไร ติดตั้งเครื่องมือสำเร็จ และรันแอป Hello World บนมือถือได้จริง พร้อมหลักคิดของ developer มืออาชีพตั้งแต่บรรทัดแรก</p>
+      <div class="meta">
+        <span>⏱️ ใช้เวลา ~2–3 ชั่วโมง</span>
+        <span>📊 ระดับ: เริ่มต้นจากศูนย์</span>
+        <span>🛠️ Flutter 3.44+ / Dart 3.12+</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">บทนี้คือ "ด่านแรก" ที่สำคัญที่สุด เพราะเป็นจุดที่คนเลิกเรียนเยอะที่สุด เป้าหมายของเราคือพาคุณข้ามกำแพงการติดตั้งให้ได้ และทำให้คุณเห็นแอปของตัวเองทำงานบนมือถือจริง ซึ่งจะสร้างแรงบันดาลใจให้เรียนต่อ</p>
+      <div class="box concept">
+        <div class="t">🧭 สิ่งที่คุณจะทำได้เมื่อจบบทนี้</div>
+        <ul style="margin-bottom:0">
+          <li>อธิบายได้ว่า Flutter คืออะไร และต่างจากการเขียนแอปแบบเดิมอย่างไร</li>
+          <li>ติดตั้ง Flutter SDK + editor และผ่าน <code class="inline">flutter doctor</code></li>
+          <li>สร้าง รัน และแก้ไขแอป Hello World ของตัวเอง</li>
+          <li>เข้าใจคอนเซปต์หัวใจ "Everything is a Widget"</li>
+          <li>เก็บผลงานชิ้นแรกขึ้น GitHub แบบมืออาชีพ</li>
+        </ul>
+      </div>
+      <div class="box tip">
+        <div class="t">💡 วิธีเรียนให้ได้ผล</div>
+        <p>อย่าแค่อ่าน — <strong>ลงมือพิมพ์โค้ดเองทุกตัว</strong> แม้จะรู้สึกว่าก็อปวางเร็วกว่า การพิมพ์เองทำให้สมองจดจำ pattern และเจอ error เล็กๆ ที่สอนเราได้มากที่สุด นักพัฒนาเก่งทุกคนผ่านขั้นตอนนี้มาแล้ว</p>
+      </div>
+    </section>
+
+    <section id="what">
+      <h2>1. Flutter คืออะไร? (มองให้เห็นภาพก่อน)</h2>
+      <p>ลองนึกถึงการเปิดร้านอาหารที่อยากขายทั้ง <strong>หน้าร้าน</strong> และ <strong>เดลิเวอรี</strong> พร้อมกัน</p>
+      <ul>
+        <li><strong>วิธีเดิม (Native):</strong> ต้องจ้างเชฟ 2 คน — คนหนึ่งทำอาหารสำหรับหน้าร้าน (iOS, ภาษา Swift) อีกคนทำสำหรับเดลิเวอรี (Android, ภาษา Kotlin) → แพง ช้า เมนูต้องอัปเดต 2 ที่ และมีโอกาสที่อาหารสองช่องทางหน้าตาไม่เหมือนกัน</li>
+        <li><strong>วิธี Flutter:</strong> เชฟคนเดียว ครัวกลางครัวเดียว แล้วเสิร์ฟได้ทั้ง 2 ช่องทาง → เขียนโค้ดครั้งเดียว ออกได้ทั้ง iOS และ Android (และ Web/Desktop)</li>
+      </ul>
+      <div class="ascii">                    โค้ด Flutter (เขียนครั้งเดียว)
+                            │
+              ┌─────────────┼─────────────┐
+              ▼             ▼             ▼
+          📱 iOS       🤖 Android      🌐 Web
+        (iPhone)      (Samsung...)   (เบราว์เซอร์)</div>
+      <p><strong>คีย์เวิร์ดที่ต้องจำ:</strong></p>
+      <p>
+        <span class="pill">Cross-platform = ข้ามแพลตฟอร์ม</span>
+        <span class="pill">Dart = ภาษาที่ใช้</span>
+        <span class="pill">Widget = ทุกชิ้นบนจอ</span>
+        <span class="pill">SDK = ชุดเครื่องมือพัฒนา</span>
+      </p>
+      <div class="box why">
+        <div class="t">🤔 ทำไม Flutter ถึงเร็วเทียบเท่าแอป Native?</div>
+        <p>ต่างจากเครื่องมือ cross-platform รุ่นเก่า (ที่ยัดเว็บไว้ในแอป) Flutter <strong>คอมไพล์โค้ด Dart เป็นภาษาเครื่อง (native machine code)</strong> ของแต่ละแพลตฟอร์มโดยตรง และ Flutter <strong>วาดทุก pixel เองด้วย engine ของตัวเอง (Skia/Impeller)</strong> จึงควบคุมหน้าตาและความลื่นได้เต็มที่ นี่คือเหตุผลทางเทคนิคที่ทำให้แอป Flutter รู้สึก "ลื่นเหมือน native"</p>
+      </div>
+      <h3 id="why-companies">ทำไมบริษัทถึงเลือก Flutter (ความสำคัญในโลกจริง)</h3>
+      <p>ในมุมธุรกิจ Flutter ตอบโจทย์ 3 อย่างที่บริษัทแคร์ที่สุด:</p>
+      <table>
+        <tr><th>มุมมอง</th><th>ประโยชน์จริง</th></tr>
+        <tr><td>💰 ต้นทุน</td><td>ทีมเดียว โค้ดเดียว แทนที่จะมีทีม iOS + ทีม Android แยกกัน ลดคนและเวลาได้ราว 40–50%</td></tr>
+        <tr><td>⚡ ความเร็ว</td><td>ออกฟีเจอร์ใหม่พร้อมกันทั้งสองระบบ ไม่ต้องรอทีมใดทีมหนึ่ง</td></tr>
+        <tr><td>🎨 ความสม่ำเสมอ</td><td>แบรนด์ดูเหมือนกันเป๊ะทุกเครื่อง ไม่ต้องดีไซน์ซ้ำ 2 รอบ</td></tr>
+      </table>
+      <p>แอปที่ใช้ Flutter จริงในระดับโลก เช่น Google Pay, Alibaba (บางส่วน), BMW, eBay Motors และแอปธนาคาร/อีคอมเมิร์ซจำนวนมากในไทย ทำให้ทักษะนี้มี <strong>ตลาดงานรองรับจริง</strong></p>
+      <div class="box prod">
+        <div class="t">🏭 มุมมองในโปรดักชันจริง</div>
+        <p>เวลาทำงานจริง คุณมักได้ยินคำว่า <strong>"write once, run anywhere"</strong> แต่ความจริงคือ <strong>"write once, <em>test</em> everywhere"</strong> — โค้ดส่วนใหญ่ใช้ร่วมกันได้ก็จริง แต่ยังต้องทดสอบบนทั้ง iOS และ Android เพราะพฤติกรรมเล็กๆ (คีย์บอร์ด, permission, การแจ้งเตือน) ต่างกัน อย่าหลงเชื่อว่าทำครั้งเดียวแล้วจบ 100%</p>
+      </div>
+    </section>
+
+    <section id="widget">
+      <h2>2. คอนเซปต์หัวใจ: "Everything is a Widget"</h2>
+      <p>นี่คือแนวคิดหลักที่ต้องฝังในหัวตั้งแต่วันแรก — <strong>ทุกอย่างที่คุณเห็นใน Flutter คือ Widget</strong> ปุ่มคือ Widget, ข้อความคือ Widget, ช่องว่างคือ Widget, แม้แต่การจัดวาง (ตรงกลาง/ซ้าย/ขวา) ก็เป็น Widget</p>
+      <div class="box concept">
+        <div class="t">🧠 ทำไมต้องเข้าใจตรงนี้ให้ลึก</div>
+        <p>ถ้าเข้าใจว่าทุกอย่างคือ Widget ที่นำมา <strong>ประกอบและซ้อนกัน (compose)</strong> ได้เหมือนตัวต่อเลโก้ คุณจะสร้างหน้าจอแบบไหนก็ได้ในอนาคต โดยไม่ต้องท่องจำ เพราะมันคือหลักการเดียวที่ใช้ซ้ำตลอดทั้งเฟรมเวิร์ก — เข้าใจหลักการเดียว แทนการจำร้อยกรณี</p>
+      </div>
+      <p>โครงสร้างของหน้าจอจึงเป็น "ต้นไม้ของ Widget" (Widget Tree) — Widget ซ้อนอยู่ใน Widget:</p>
+      <div class="ascii">        MaterialApp            ← ตัวห่อทั้งแอป (ธีม, การนำทาง)
+        └── Scaffold           ← โครงหน้าจอ 1 หน้า
+            ├── AppBar         ← แถบบน
+            │   └── Text       ← "ชื่อแอป"
+            └── Center         ← จัดกึ่งกลาง
+                └── Text       ← "Hello World"   ◀ Widget ในสุด</div>
+      <h3 id="declarative">แนวคิดเบื้องหลัง: Declarative UI (สำคัญมาก)</h3>
+      <p>Flutter ใช้แนวคิด <strong>Declarative</strong> ซึ่งต่างจากวิธีเดิม (Imperative) ที่มือใหม่หลายคนคุ้นเคย ลองเทียบ:</p>
+      <div class="grid2">
+        <div class="card bad">
+          <div class="h">❌ Imperative (วิธีเดิม)</div>
+          <p style="font-size:14px;margin:0">"ไปหาปุ่มนั้น แล้วเปลี่ยนสีมัน แล้วเปลี่ยนข้อความมัน" — เราสั่งทีละขั้นว่าจะ <em>เปลี่ยน</em> อย่างไร พอ UI ซับซ้อนจะพันกันยุ่ง</p>
+        </div>
+        <div class="card good">
+          <div class="h">✅ Declarative (Flutter)</div>
+          <p style="font-size:14px;margin:0">"หน้าจอควรหน้าตาแบบนี้ ตามข้อมูลปัจจุบัน" — เราบอกแค่ <em>ผลลัพธ์ที่ต้องการ</em> แล้ว Flutter จัดการอัปเดตเอง โค้ดคาดเดาง่ายและบั๊กน้อยกว่า</p>
+        </div>
+      </div>
+      <div class="box why">
+        <div class="t">🤔 ทำไม Declarative ถึงดีกว่าในระยะยาว</div>
+        <p>หัวใจคือสมการ <code class="inline">UI = f(state)</code> — "หน้าตา = ฟังก์ชันของข้อมูล" เมื่อข้อมูลเปลี่ยน Flutter จะวาดหน้าจอใหม่ให้ตรงกับข้อมูลเสมอ เราไม่ต้องไล่แก้ทีละจุดเอง ทำให้โค้ดที่มี state ซับซ้อน (เช่น ตะกร้าสินค้า, ฟอร์มยาวๆ) จัดการได้ง่ายขึ้นมาก คุณจะเห็นพลังของสิ่งนี้ชัดในเฟส 3–4</p>
+      </div>
+    </section>
+
+    <section id="setup">
+      <h2>3. ติดตั้งเครื่องมือ (Setup)</h2>
+      <div class="box warn">
+        <div class="t">⚠️ หลักคิดสำคัญก่อนเริ่ม</div>
+        <p>ขั้นตอนติดตั้งคือด่านที่คนเลิกเยอะที่สุด ใจเย็นๆ ทำตามทีละขั้น ถ้าติด error ให้ <strong>คัดลอกข้อความ error ไปค้นหาใน Google</strong> — นี่ไม่ใช่การโกง แต่คือ "ทักษะ dev จริง" ที่มืออาชีพใช้ทุกวัน ไม่มีใครจำทุกอย่างได้</p>
+      </div>
+      <h3>3.1 ติดตั้ง Flutter SDK</h3>
+      <ol>
+        <li>ไปที่หน้า <a href="https://docs.flutter.dev/get-started/install" target="_blank">docs.flutter.dev/get-started/install</a></li>
+        <li>เลือกระบบปฏิบัติการ (Windows / macOS / Linux) แล้วทำตามทีละขั้น</li>
+        <li>ติดตั้ง <strong>Git</strong> ด้วย (Flutter ใช้ Git ทำงานเบื้องหลัง — ดาวน์โหลด/อัปเดต)</li>
+      </ol>
+      <table>
+        <tr><th>ระบบ</th><th>สิ่งที่ต้องลงเพิ่ม</th><th>ใช้ build อะไรได้</th></tr>
+        <tr><td>Windows</td><td>Android Studio (สำหรับ Android SDK + emulator)</td><td>Android, Web</td></tr>
+        <tr><td>macOS</td><td>Android Studio + Xcode</td><td>Android, iOS, Web (ครบที่สุด)</td></tr>
+        <tr><td>Linux</td><td>Android Studio</td><td>Android, Web</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">💡 ยังไม่มี Mac ก็เริ่มได้</div>
+        <p>การ <strong>เขียนโค้ด</strong> Flutter ทำได้บนทุกระบบ ติดแค่ตอน <strong>build เป็นไฟล์ iOS</strong> ที่ต้องใช้ Mac (เฉพาะเฟส 5) ระหว่างเรียนทั้งหมดนี้ ใช้ Android emulator หรือรันบนเบราว์เซอร์ไปก่อนได้สบายมาก อย่าให้เรื่องนี้มาหยุดคุณ</p>
+      </div>
+      <h3>3.2 ติดตั้ง Editor (โปรแกรมเขียนโค้ด)</h3>
+      <p>แนะนำ <strong>VS Code</strong> (ฟรี เบา นิยมที่สุดสำหรับมือใหม่):</p>
+      <ol>
+        <li>โหลดจาก <a href="https://code.visualstudio.com" target="_blank">code.visualstudio.com</a></li>
+        <li>ติดตั้ง Extension ชื่อ <strong>"Flutter"</strong> (มันจะลาก Dart extension มาให้อัตโนมัติ)</li>
+      </ol>
+      <div class="box prod">
+        <div class="t">🏭 เกร็ดจากการทำงานจริง</div>
+        <p>ทีมส่วนใหญ่ใช้ VS Code หรือ Android Studio ก็ได้ — เลือกอันที่ถนัด แต่สิ่งที่ทุกทีมบังคับเหมือนกันคือ extension ที่ <strong>format โค้ดอัตโนมัติเมื่อกดบันทึก</strong> (ตั้งค่า <code class="inline">"editor.formatOnSave": true</code>) เพราะทำให้โค้ดทั้งทีมหน้าตาเหมือนกัน ลดการทะเลาะเรื่องสไตล์ใน code review — ตั้งค่านี้ตั้งแต่วันแรกเลย</p>
+      </div>
+      <h3 id="doctor">3.3 ตรวจสอบความพร้อมด้วย flutter doctor</h3>
+      <p>เปิด Terminal แล้วพิมพ์:</p>
+      <pre><code class="language-bash">flutter doctor</code></pre>
+      <div class="box why">
+        <div class="t">🤔 flutter doctor คืออะไร และทำไมต้องใช้</div>
+        <p>มันคือ "หมอตรวจสุขภาพ" ของระบบ — บอกว่าเครื่องมือตัวไหนพร้อม (✓) ตัวไหนยังขาด (✗) <strong>พร้อมบอกวิธีแก้</strong> ใช้คำสั่งนี้ทุกครั้งที่ setup มีปัญหา มันคือเครื่องมือ debug ตัวแรกที่ dev Flutter ทุกคนพึ่งพา เพิ่ม <code class="inline">flutter doctor -v</code> เพื่อดูรายละเอียดเต็ม</p>
+      </div>
+      <p>ผลลัพธ์ที่ดีจะมีติ๊กถูกครบ เช่น:</p>
+      <pre><code class="language-text">[✓] Flutter (Channel stable, 3.44.0)
+[✓] Android toolchain - develop for Android devices
+[✓] Xcode - develop for iOS and macOS   (เฉพาะ Mac)
+[✓] VS Code
+[✓] Connected device (1 available)
+[✓] Network resources</code></pre>
+      <div class="box tip">
+        <div class="t">💡 ถ้าเจอ ✗ ไม่ต้องตกใจ</div>
+        <p>บรรทัดที่ขึ้น ✗ จะมีข้อความบอกว่าต้องทำอะไร เช่น "Run flutter doctor --android-licenses" ให้ทำตามทีละบรรทัดจนเขียวครบ ขอแค่ <strong>Flutter เขียว + มี device 1 ตัว</strong> ก็เริ่มบทนี้ได้แล้ว (Xcode ค่อยจัดการตอนเฟส 5)</p>
+      </div>
+    </section>
+
+    <section id="firstapp">
+      <h2>4. สร้างและรันแอปแรก</h2>
+      <h3>4.1 สร้างโปรเจกต์</h3>
+      <p>เปิด Terminal ในโฟลเดอร์ที่ต้องการ แล้วพิมพ์:</p>
+      <pre><code class="language-bash">flutter create my_first_app
+cd my_first_app
+flutter run</code></pre>
+      <div class="box why">
+        <div class="t">🤔 ทำไมต้องใช้ flutter create แทนการสร้างไฟล์เอง</div>
+        <p>คำสั่งนี้สร้าง "โครงสร้างมาตรฐาน" ให้ครบ — โฟลเดอร์สำหรับ iOS, Android, Web, ไฟล์ตั้งค่า, และตัวอย่างโค้ด ถ้าสร้างเองทีละไฟล์จะขาดไฟล์สำคัญ (เช่นไฟล์ตั้งค่าแพลตฟอร์ม) และรันไม่ได้ นี่คือมาตรฐานที่ทีมทั่วโลกใช้ และทำให้โปรเจกต์ของคุณ "คุยกัน" กับ dev คนอื่นได้ทันที</p>
+      </div>
+      <h3>4.2 เขียน Hello World เวอร์ชันของเราเอง</h3>
+      <p>เปิดไฟล์ <code class="inline">lib/main.dart</code> แล้วแทนที่ทั้งหมดด้วยโค้ดนี้:</p>
+      <pre><code class="language-dart">// main.dart — แอป Hello World แบบเข้าใจง่าย
+import 'package:flutter/material.dart';
+
+// จุดเริ่มต้นของทุกแอป Flutter — เปรียบเหมือน "สวิตช์เปิดเครื่อง"
+void main() {
+  runApp(const MyApp());
+}
+
+// MyApp คือ Widget ตัวนอกสุด (root) ของทั้งแอป
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'แอปแรกของฉัน',
+      home: Scaffold(
+        // AppBar = แถบหัวด้านบน
+        appBar: AppBar(
+          title: const Text('แอปแรกของฉัน'),
+        ),
+        // Center = จัดเนื้อหาให้อยู่กึ่งกลางจอ
+        body: const Center(
+          child: Text(
+            'สวัสดีชาวโลก! 🌏',
+            style: TextStyle(fontSize: 24),
+          ),
+        ),
+      ),
+    );
+  }
+}</code></pre>
+      <h3 id="explain">4.3 อธิบายโค้ดทีละบรรทัด (ทำไมแต่ละบรรทัดถึงจำเป็น)</h3>
+      <table>
+        <tr><th>โค้ด</th><th>ทำหน้าที่อะไร</th><th>ทำไมต้องมี</th></tr>
+        <tr><td><code class="inline">import '...material.dart';</code></td><td>ดึงชุดเครื่องมือ UI สำเร็จรูปมาใช้</td><td>ถ้าไม่ import จะไม่รู้จัก <code class="inline">Text</code>, <code class="inline">Scaffold</code> ฯลฯ — โปรแกรมไม่รู้ว่าของพวกนี้คืออะไร</td></tr>
+        <tr><td><code class="inline">void main()</code></td><td>จุดเริ่มทำงานของแอป</td><td>ทุกแอปต้องมีจุดเริ่ม Flutter จะมองหาฟังก์ชันชื่อ main ก่อนเสมอ</td></tr>
+        <tr><td><code class="inline">runApp(...)</code></td><td>สั่งให้แอปเริ่มแสดงผล</td><td>เป็นคำสั่งที่ "เปิดเครื่อง" จริงๆ — รับ Widget ตัวแรกไปแสดง</td></tr>
+        <tr><td><code class="inline">const</code></td><td>บอกว่าค่านี้ไม่เปลี่ยน</td><td>ช่วยให้ Flutter ไม่ต้องสร้าง object ใหม่ทุกครั้ง → แอปเร็วขึ้น (ดูหัวข้อ clean code)</td></tr>
+        <tr><td><code class="inline">extends StatelessWidget</code></td><td>สร้าง Widget ที่หน้าตาไม่เปลี่ยน</td><td>เหมาะกับหน้าจอที่นิ่ง — บทหน้าจะเจอ StatefulWidget ที่เปลี่ยนได้</td></tr>
+        <tr><td><code class="inline">build(...)</code></td><td>วาดหน้าจอออกมา</td><td>Flutter เรียกฟังก์ชันนี้เพื่อรู้ว่าจะแสดงอะไร — หัวใจของทุก Widget</td></tr>
+        <tr><td><code class="inline">Scaffold</code></td><td>โครงหน้าจอมาตรฐาน</td><td>ให้โครง AppBar + body + ปุ่มลอย ฯลฯ มาให้พร้อม ไม่ต้องสร้างเอง</td></tr>
+      </table>
+      <div class="box concept">
+        <div class="t">🧠 หลักคิด dev: อ่านโค้ด "จากนอกเข้าใน"</div>
+        <p>เวลาเจอโค้ดที่ซ้อนกันหลายชั้นแบบนี้ อย่าอ่านทีละบรรทัดจากบนลงล่าง แต่ให้มองโครงใหญ่ก่อน: <code class="inline">MaterialApp → Scaffold → (AppBar + body)</code> แล้วค่อยเจาะเข้าไปแต่ละชั้น เหมือนดูแผนที่ก่อนดูตรอกซอย ทักษะ "อ่านโครงสร้างก่อนรายละเอียด" นี้จะช่วยคุณตลอดอาชีพ</p>
+      </div>
+    </section>
+
+    <section id="hotreload">
+      <h2>5. Hot Reload — อาวุธลับของ Flutter</h2>
+      <p>ขณะที่แอปกำลังรันอยู่ ลองแก้ข้อความจาก <code class="inline">'สวัสดีชาวโลก! 🌏'</code> เป็น <code class="inline">'ผมเขียนแอปได้แล้ว! 🎉'</code> แล้วกด <strong>บันทึก (Ctrl+S / Cmd+S)</strong> → หน้าจอจะเปลี่ยน <strong>ทันที</strong> โดยไม่ต้องปิด-เปิดแอปใหม่</p>
+      <div class="box why">
+        <div class="t">🤔 ทำไม Hot Reload ถึงเปลี่ยนชีวิต dev</div>
+        <p>สมัยก่อนแก้โค้ด 1 บรรทัดต้อง build ใหม่ รอ 1–2 นาที วันหนึ่งเสียเวลาเป็นชั่วโมงไปกับการรอ Flutter ทำให้เห็นผลใน <strong>เสี้ยววินาที</strong> โดย <em>คงสถานะแอปไว้</em> (เช่น ยังอยู่หน้าเดิม ข้อมูลในฟอร์มยังอยู่) ทำให้ลองผิดลองถูกได้เร็ว = เรียนรู้เร็ว นี่คือเหตุผลอันดับหนึ่งที่คนรัก Flutter</p>
+      </div>
+      <table>
+        <tr><th>คำสั่ง</th><th>ทำอะไร</th><th>ใช้เมื่อไหร่</th></tr>
+        <tr><td>Hot Reload (กด <code class="inline">r</code>)</td><td>อัปเดต UI ทันที <strong>คงสถานะเดิม</strong></td><td>แก้หน้าตา/ข้อความ/สี (ใช้บ่อยสุด)</td></tr>
+        <tr><td>Hot Restart (กด <code class="inline">R</code>)</td><td>รีเซ็ตแอปใหม่ทั้งหมด <strong>ล้างสถานะ</strong></td><td>แก้ตัวแปร global, โครงสร้างหลัก หรือ Hot Reload ไม่ติด</td></tr>
+        <tr><td>Full Restart (<code class="inline">flutter run</code> ใหม่)</td><td>build ใหม่หมด</td><td>เพิ่ม package ใหม่ใน pubspec, แก้ไฟล์ native</td></tr>
+      </table>
+      <div class="box prod">
+        <div class="t">🏭 ตัวอย่างใช้งานจริงในที่ทำงาน</div>
+        <p>ตอนประชุมกับดีไซเนอร์ เขาบอก "ขยับปุ่มลงนิด เปลี่ยนสีเป็นน้ำเงิน เพิ่มระยะห่าง" คุณแก้แล้วทุกคนเห็นผลทันทีบนจอในห้องประชุม — ตัดสินใจร่วมกันได้เลยใน 5 นาที แทนที่จะนัดรอบใหม่พรุ่งนี้ ความเร็วระดับนี้เปลี่ยนวิธีทำงานของทั้งทีม</p>
+      </div>
+    </section>
+
+    <section id="mindset">
+      <h2>6. หลักคิดของ developer (Developer Mindset)</h2>
+      <p class="lead">นี่คือหัวข้อที่ตำราส่วนใหญ่ข้าม แต่สำคัญที่สุด เพราะ <strong>คอนเซปต์อยู่กับคุณตลอดชีวิต ส่วน syntax ลืมแล้วเปิดดูได้</strong> ถ้าไม่เข้าใจวิธีคิด จะไปเขียนเองในอนาคตยากมาก</p>
+      <h3>6.1 Error message คือเพื่อน ไม่ใช่ศัตรู</h3>
+      <p>มือใหม่เห็นข้อความสีแดงแล้วตกใจ แต่มืออาชีพ <strong>อ่านมันอย่างใจเย็น</strong> เพราะ error ส่วนใหญ่บอกตรงๆ ว่าผิดตรงไหน บรรทัดไหน เทคนิคการอ่าน error:</p>
+      <ol>
+        <li>อ่าน <strong>บรรทัดแรก</strong> — มักบอกชนิดของปัญหา (เช่น "The method 'foo' isn't defined")</li>
+        <li>หา <strong>ชื่อไฟล์ + เลขบรรทัด</strong> — บอกตำแหน่งที่เกิดเหตุ</li>
+        <li>ถ้าไม่เข้าใจ → คัดลอกบรรทัดแรกไปค้นหา (เติมคำว่า "flutter" ต่อท้าย)</li>
+      </ol>
+      <div class="box concept">
+        <div class="t">🧠 หลักคิด: Rubber Duck Debugging</div>
+        <p>เทคนิคคลาสสิกของ dev — เวลาติดปัญหา ให้ <strong>อธิบายโค้ดของคุณออกมาดังๆ ทีละบรรทัด</strong> (จะพูดกับเป็ดยางบนโต๊ะก็ได้) บ่อยครั้งคุณจะ "เห็น" จุดผิดเองระหว่างอธิบาย เพราะการเรียบเรียงเป็นคำพูดบังคับให้สมองคิดเป็นลำดับ</p>
+      </div>
+      <h3>6.2 เขียนทีละนิด ทดสอบบ่อยๆ</h3>
+      <p>อย่าเขียนยาว 100 บรรทัดแล้วค่อยกดรัน เพราะถ้าพังจะหาไม่เจอว่าผิดตรงไหน ให้เขียน 5–10 บรรทัด → รัน → เห็นว่าทำงาน → เขียนต่อ วิธีนี้เรียกว่า <strong>"incremental development"</strong> ทำให้ขอบเขตของบั๊กเล็กเสมอ</p>
+      <h3>6.3 เข้าใจ > จำ</h3>
+      <p>โค้ดและเฟรมเวิร์กเปลี่ยนทุกปี (Flutter ออกเวอร์ชันใหม่ตลอด) แต่หลักการอย่าง "ทุกอย่างคือ Widget", "UI = f(state)", "แยกหน้าที่ให้ชัด" อยู่กับเราตลอด <strong>ลงทุนเวลาเข้าใจหลักการ คุ้มกว่าท่องจำ syntax</strong></p>
+      <div class="box tip">
+        <div class="t">💡 4 นิสัยที่ควรสร้างตั้งแต่วันนี้</div>
+        <ul style="margin-bottom:0">
+          <li>อ่าน error ก่อนถาม/ค้นหาทุกครั้ง</li>
+          <li>commit งานขึ้น Git ทุกวันที่เขียนโค้ด</li>
+          <li>ตั้งชื่อตัวแปร/ฟังก์ชันให้คนอื่นอ่านเข้าใจ</li>
+          <li>เมื่อโค้ดทำงานแล้ว ใช้เวลาอีก 2 นาทีจัดให้สะอาด (refactor)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="clean">
+      <h2>7. Clean Code vs โค้ดในโปรดักชันจริง</h2>
+      <p>หลายคนสับสนว่า "clean code" กับ "โค้ดที่ใช้งานได้" คือสิ่งเดียวกัน — ไม่ใช่ โค้ดที่ <em>รันได้</em> กับโค้ดที่ <em>ทีมดูแลต่อได้</em> ต่างกันมาก ส่วนนี้จะให้เห็นภาพชัด</p>
+      <h3>7.1 ตัวอย่างเดียวกัน เขียน 2 แบบ</h3>
+      <div class="grid2">
+        <div class="card bad"><div class="h">❌ เขียนแบบรีบๆ (ใช้ได้ แต่ดูแลยาก)</div></div>
+        <div class="card good"><div class="h">✅ เขียนแบบ clean (มืออาชีพ)</div></div>
+      </div>
+      <pre><code class="language-dart">// ❌ แบบรีบๆ — รันได้ แต่อ่านยาก
+class a extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Text("hello",
+      style: TextStyle(fontSize: 24, color: Color(0xFF3F51B5)))));
+  }
+}</code></pre>
+      <pre><code class="language-dart">// ✅ แบบ clean — ตั้งชื่อสื่อความหมาย, แยกค่าคงที่, ใช้ const
+class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
+
+  // แยกค่าคงที่ออกมา -> แก้ที่เดียว มีผลทั้งไฟล์ (หลัก DRY)
+  static const double _titleSize = 24;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Text(
+          'hello',
+          // ใช้สีจากธีม แทนการ hardcode เลขสี
+          style: TextStyle(
+            fontSize: _titleSize,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ),
+    );
+  }
+}</code></pre>
+      <table>
+        <tr><th>ประเด็น</th><th>❌ แบบรีบ</th><th>✅ แบบ clean</th></tr>
+        <tr><td>ชื่อคลาส</td><td><code class="inline">a</code> — ไม่รู้ว่าคืออะไร</td><td><code class="inline">WelcomeScreen</code> — รู้ทันที</td></tr>
+        <tr><td>สี</td><td>hardcode <code class="inline">0xFF3F51B5</code></td><td>ดึงจากธีม เปลี่ยนทีเดียวทั้งแอป</td></tr>
+        <tr><td>ค่าตัวเลข</td><td>ปนอยู่ในโค้ด (magic number)</td><td>ตั้งชื่อค่าคงที่ชัดเจน</td></tr>
+        <tr><td>const</td><td>ไม่มี → แอปทำงานหนักขึ้น</td><td>มี → ประสิทธิภาพดีกว่า</td></tr>
+      </table>
+      <div class="box prod">
+        <div class="t">🏭 ความจริงในโปรดักชัน: "ดีพอ" กับ "สมบูรณ์แบบ"</div>
+        <p>ในงานจริงมีคำว่า <strong>deadline</strong> บางครั้งคุณต้องเขียนให้ "ใช้ได้ก่อน" แล้วค่อยกลับมาทำให้สะอาด (เรียกว่า <em>technical debt</em> — หนี้ทางเทคนิค) สิ่งสำคัญคือ <strong>รู้ตัวว่ากำลังสร้างหนี้</strong> และจดไว้ (เช่นเขียน <code class="inline">// TODO: refactor นี้ทีหลัง</code>) ทีมที่ดีจะมีเวลากลับมาจ่ายหนี้ ส่วนทีมที่แย่จะปล่อยจนโค้ดพังทั้งระบบ — เป้าหมายคือสมดุล ไม่ใช่ perfect ทุกบรรทัด</p>
+      </div>
+      <h3>7.2 กฎทองที่ทีมระดับโลกใช้</h3>
+      <ul>
+        <li><strong>ตั้งชื่อให้อ่านแล้วเข้าใจ</strong> — โค้ดถูกอ่านมากกว่าถูกเขียน 10 เท่า</li>
+        <li><strong>หนึ่งฟังก์ชัน หนึ่งหน้าที่</strong> (Single Responsibility) — ถ้าอธิบายฟังก์ชันต้องใช้คำว่า "และ" หลายครั้ง แปลว่าควรแยก</li>
+        <li><strong>comment บอก "ทำไม" ไม่ใช่ "ทำอะไร"</strong> — โค้ดบอกอยู่แล้วว่าทำอะไร</li>
+        <li><strong>DRY (Don't Repeat Yourself)</strong> — ถ้าก็อปโค้ดเดิมเกิน 2 ครั้ง ให้แยกเป็นฟังก์ชัน/Widget</li>
+      </ul>
+      <div class="box concept">
+        <div class="t">🧠 หลักทองที่ควรท่อง</div>
+        <p>"เขียนโค้ดเหมือนคนที่จะมาอ่านต่อ คือตัวคุณเองในอีก 6 เดือนข้างหน้า ที่ลืมหมดแล้วว่าเขียนอะไรไว้" — เขียนให้อ่านง่ายที่สุดเข้าไว้ คุณในอนาคตจะขอบคุณ</p>
+      </div>
+    </section>
+
+    <section id="github">
+      <h2>8. เก็บผลงานขึ้น GitHub (ทำให้เป็นผลงานจริง)</h2>
+      <p>ทำให้แอปแรกเป็นผลงานมาตรฐานที่โชว์ได้ — รันคำสั่งเหล่านี้ในโฟลเดอร์โปรเจกต์:</p>
+      <pre><code class="language-bash"># 1. เข้าโฟลเดอร์โปรเจกต์
+cd my_first_app
+
+# 2. เริ่ม track ด้วย git (flutter create สร้าง .gitignore ให้แล้ว)
+git init
+git add .
+git commit -m "feat: create first Flutter Hello World app"
+
+# 3. สร้าง repo บน GitHub แล้วเชื่อมต่อ
+git remote add origin https://github.com/&lt;ชื่อคุณ&gt;/my_first_app.git
+git branch -M main
+git push -u origin main</code></pre>
+      <div class="box why">
+        <div class="t">🤔 ทำไมต้อง commit ตั้งแต่บทแรก</div>
+        <p>GitHub คือ "เรซูเม่ที่มีชีวิต" ของ dev — บริษัทดูประวัติ commit เพื่อเห็นว่าคุณทำงานสม่ำเสมอแค่ไหน และดูคุณภาพโค้ดจริง การเริ่มนิสัยนี้ตั้งแต่วันแรกทำให้ <strong>6 เดือนต่อมาคุณมี portfolio เต็มไปด้วยผลงาน</strong> โดยไม่ต้องมานั่งทำย้อนหลัง</p>
+      </div>
+      <div class="box tip">
+        <div class="t">💡 มาตรฐาน Conventional Commits</div>
+        <p>การขึ้นต้น commit ด้วยคำเฉพาะเป็นมาตรฐานสากลที่ทีมมืออาชีพใช้ ทำให้ประวัติอ่านง่ายและดูเป็นมือโปร:</p>
+        <ul style="margin-bottom:0">
+          <li><code class="inline">feat:</code> = เพิ่มฟีเจอร์ใหม่</li>
+          <li><code class="inline">fix:</code> = แก้บั๊ก</li>
+          <li><code class="inline">docs:</code> = แก้เอกสาร</li>
+          <li><code class="inline">refactor:</code> = ปรับโค้ดให้ดีขึ้นโดยพฤติกรรมเหมือนเดิม</li>
+        </ul>
+      </div>
+      <div class="box prod">
+        <div class="t">🏭 README สำคัญกว่าที่คิด</div>
+        <p>ในงานจริง สิ่งแรกที่คนเปิดดูใน repo คือ README ไม่ใช่โค้ด README ที่ดีบอก: แอปทำอะไร, รันยังไง, โครงสร้างโปรเจกต์ — โปรเจกต์ <code class="inline">my_first_app</code> ที่แนบมามี README มาตรฐานพร้อม badge ให้แล้ว ลองเปิดดูเป็นแม่แบบ</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>9. แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <p>ความรู้จะติดตัวก็ต่อเมื่อได้ลองทำเอง ลองทำ 3 ระดับนี้:</p>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ปรับแต่ง</div>
+        <p>เปลี่ยนข้อความ, สีของ AppBar, และขนาดตัวอักษร แล้วใช้ Hot Reload ดูผล</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — เพิ่มองค์ประกอบ</div>
+        <p>เพิ่ม <code class="inline">Icon</code> และข้อความบรรทัดที่สอง โดยใช้ <code class="inline">Column</code> ห่อไว้ (ดูเฉลยได้จากไฟล์ <code class="inline">main.dart</code> ในโปรเจกต์ตัวอย่าง)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — ท้าทาย</div>
+        <p>สร้างหน้า "นามบัตรดิจิทัล" ของตัวเอง: มีไอคอนรูปคน, ชื่อ, ตำแหน่ง, และอีเมล จัดให้กึ่งกลางสวยงาม แล้ว push ขึ้น GitHub เป็น repo ที่สอง</p>
+      </div>
+      <div class="box tip">
+        <div class="t">💡 ทำเสร็จแล้ว</div>
+        <p>commit ด้วยข้อความ <code class="inline">feat: add personal business card screen</code> — นี่คือผลงานชิ้นที่ 2 ใน portfolio ของคุณแล้ว</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>10. เช็กลิสต์และสรุปบทเรียน</h2>
+      <p>ก่อนไปบทต่อไป ตรวจว่าทำครบแล้ว:</p>
+      <ul class="checklist">
+        <li><code class="inline">flutter doctor</code> ขึ้น ✓ ครบ (อย่างน้อย Flutter + 1 device)</li>
+        <li>รันแอป Hello World บนมือถือ/emulator ได้</li>
+        <li>ลองแก้ข้อความแล้วเห็น Hot Reload ทำงาน</li>
+        <li>เข้าใจคอนเซปต์ "Everything is a Widget" และ "UI = f(state)"</li>
+        <li>อ่าน error เป็น และรู้จัก Rubber Duck Debugging</li>
+        <li>แยกความต่างระหว่างโค้ดแบบรีบ กับแบบ clean ได้</li>
+        <li>push โปรเจกต์ขึ้น GitHub ด้วย conventional commit สำเร็จ</li>
+      </ul>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>Flutter = เขียนครั้งเดียวออกหลายระบบ เพราะคอมไพล์เป็น native และวาดทุก pixel เอง · ทุกอย่างคือ Widget ที่ประกอบกันแบบ declarative (UI = f(state)) · เริ่มสร้างนิสัยมืออาชีพตั้งแต่วันแรก: อ่าน error เป็น, เขียน clean, commit ทุกวัน</p>
+      </div>
+      <div class="nav-next">
+        <a href="#intro">
+          <div class="lbl">↑ กลับขึ้นบน</div>
+          <div class="ttl">ทบทวนบทที่ 1</div>
+        </a>
+        <a href="บทที่2_โครงสร้างโปรเจกต์และGit.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 2: โครงสร้างโปรเจกต์ + Git เจาะลึก</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · สัปดาห์ที่ 1 · บทที่ 1<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script>
+  // ครอบด้วย if กันกรณีเปิดแบบออฟไลน์ (โหลด highlight.js จาก CDN ไม่ได้)
+  // ถ้าไม่ครอบ บรรทัดนี้จะ throw error แล้วทำให้สคริปต์ที่เหลือทั้งหมดไม่ทำงาน
+  if (window.hljs) { hljs.highlightAll(); }
+  document.querySelectorAll('pre').forEach(function(pre){
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'คัดลอก';
+    btn.addEventListener('click', function(){
+      var code = pre.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(function(){
+        btn.textContent = '✓ คัดลอกแล้ว';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.textContent='คัดลอก'; btn.classList.remove('done'); }, 1600);
+      });
+    });
+    pre.appendChild(btn);
+  });
+  window.addEventListener('scroll', function(){
+    var h = document.documentElement;
+    var scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    document.getElementById('progress').style.width = scrolled + '%';
+  });
+  var links = Array.from(document.querySelectorAll('#toc a'));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  window.addEventListener('scroll', function(){
+    var pos = window.scrollY + 120;
+    var current = -1;
+    sections.forEach(function(sec, i){ if(sec && sec.offsetTop <= pos) current = i; });
+    links.forEach(function(a){ a.classList.remove('active'); });
+    if(current >= 0) links[current].classList.add('active');
+  });
+  var sb = document.getElementById('sidebar');
+  var mt = document.getElementById('menu-toggle');
+  mt.addEventListener('click', function(){ sb.classList.toggle('open'); });
+  document.querySelectorAll('#toc a').forEach(function(a){
+    a.addEventListener('click', function(){ sb.classList.remove('open'); });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 6 — ฟังก์ชัน | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 2 · บทที่ 6</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: เครื่องปั่น</a>
+      <a href="#anatomy" class="lvl1">2. กายวิภาคของฟังก์ชัน</a>
+      <a href="#named" class="lvl2">— Named Parameter</a>
+      <a href="#secret" class="lvl2">— ความลับของ Widget</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง</a>
+      <a href="#clean" class="lvl1">5. Clean Code: ผ่าตัด main()</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 2 · บทที่ 6</span>
+      <h1>ฟังก์ชัน: แบ่งงานเป็นชิ้นเล็กที่เรียกใช้ซ้ำได้</h1>
+      <p>จัด main() ให้สั้นจนอ่านจบใน 10 วินาที — พร้อมค้นพบว่า Widget ที่เขียนมาตลอดคือฟังก์ชันนี่เอง</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 5 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">Quiz ของเราหลังบทที่ 5 เริ่ม "อ้วน" — ทุกอย่างกองใน main() บทนี้เราจะเรียนวิธีแบ่งงานเป็นชิ้นเล็กที่เรียกใช้ซ้ำได้ ซึ่งเป็นรากฐานของ Widget ทุกตัวใน Flutter</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">function</span><span class="pill">parameter</span><span class="pill">argument</span><span class="pill">return</span><span class="pill">named parameter</span><span class="pill">arrow (=&gt;)</span><span class="pill">scope</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: เครื่องปั่นน้ำผลไม้</h2>
+      <p>ฟังก์ชันคือ <strong>"เครื่อง" ที่สร้างครั้งเดียว แล้วใช้ได้ตลอด</strong>: ใส่วัตถุดิบเข้าไป → เครื่องทำงาน → ได้ผลลัพธ์ออกมา</p>
+      <div class="ascii">        วัตถุดิบเข้า (parameter)         เครื่องทำงาน              ผลลัพธ์ออก (return)
+                                    ┌─────────────────┐
+        🍓 สตรอว์เบอร์รี  ──────►    │   🌀 เครื่องปั่น    │  ──────►  🥤 น้ำปั่น
+        🥭 มะม่วง        ──────►    │  makeSmoothie()  │  ──────►  🥤 น้ำปั่น (รสใหม่)
+                                    └─────────────────┘
+        สร้างเครื่องครั้งเดียว → ปั่นได้ล้านแก้ว ไม่ต้องสร้างเครื่องใหม่ทุกแก้ว</div>
+      <h3>ฉากที่สอง — ทำไมต้องมีเครื่อง? ลองนึกภาพครัวที่ไม่มี</h3>
+      <div class="ascii">❌ ครัวที่ไม่มีเครื่อง (ไม่มีฟังก์ชัน)          ✅ ครัวที่มีเครื่อง (มีฟังก์ชัน)
+
+ออเดอร์ 1: หยิบผลไม้→ล้าง→หั่น→ปั่น→เท       ออเดอร์ 1: makeSmoothie('สตรอว์เบอร์รี')
+ออเดอร์ 2: หยิบผลไม้→ล้าง→หั่น→ปั่น→เท       ออเดอร์ 2: makeSmoothie('มะม่วง')
+ออเดอร์ 3: หยิบผลไม้→ล้าง→หั่น→ปั่น→เท       ออเดอร์ 3: makeSmoothie('กล้วย')
+(ก็อปโค้ดเดิม 5 บรรทัดทุกออเดอร์             (สูตรอยู่ที่เดียว — แก้สูตรครั้งเดียว
+ แก้สูตร = ไล่แก้ทุกจุด พลาดแน่นอน)            ทุกออเดอร์ได้สูตรใหม่ทันที)</div>
+      <div class="box why">
+        <div class="t">🤔 นี่คือหลัก DRY (Don't Repeat Yourself) ตัวจริง</div>
+        <p>โค้ดซ้ำไม่ใช่แค่ "ไม่สวย" — มันคือระเบิดเวลา เพราะวันที่ต้องแก้ คุณจะแก้ไม่ครบทุกจุด</p>
+      </div>
+    </section>
+
+    <section id="anatomy">
+      <h2>2. 💻 ลงมือจริง: กายวิภาคของฟังก์ชัน</h2>
+      <pre><code class="language-dart">// ┌ ชนิดผลลัพธ์  ┌ ชื่อเครื่อง       ┌ วัตถุดิบเข้า (parameter)
+// ▼             ▼                 ▼
+   String        greetPlayer(String name) {
+     return 'สวัสดีคุณ $name ยินดีต้อนรับสู่เกม Quiz!';
+//   ▲ return = ส่งผลลัพธ์ออกจากเครื่อง (จบการทำงานทันที)
+   }
+
+void main() {
+  // เรียกใช้เครื่อง — ค่าที่ส่งเข้าไปจริงๆ เรียกว่า argument
+  print(greetPlayer('มายด์'));   // สวัสดีคุณมายด์ ยินดีต้อนรับ...
+  print(greetPlayer('บีม'));     // เครื่องเดิม วัตถุดิบใหม่
+}
+
+// ฟังก์ชันที่ "ทำอย่างเดียว ไม่คืนค่า" ใช้ void (แปลว่า ว่างเปล่า)
+void showWelcomeBanner() {
+  print('====================');
+  print('   QUIZ GAME 2026   ');
+  print('====================');
+}
+
+// ฟังก์ชันสั้นบรรทัดเดียว เขียนย่อด้วย arrow (=>) ได้
+int doubleScore(int score) => score * 2;</code></pre>
+      <h3 id="named">Named Parameter — ท่าเดียวกับ Flutter เป๊ะ</h3>
+      <p>พารามิเตอร์หลายตัวจำลำดับยาก Dart จึงมี <strong>named parameter</strong>: ระบุชื่อตอนเรียก อ่านออกทันทีว่าค่าไหนคืออะไร</p>
+      <pre><code class="language-dart">// {required ...} = ต้องส่งเสมอ · มีค่า default ได้ (เช่น timeLimit = 30)
+void askQuestion({
+  required String question,
+  required String answer,
+  int timeLimit = 30,
+}) {
+  print('($timeLimit วินาที) $question');
+}
+
+void main() {
+  // เรียกแบบระบุชื่อ — สลับลำดับได้ อ่านรู้เรื่องเสมอ
+  askQuestion(question: 'Flutter ใช้ภาษาอะไร?', answer: 'dart');
+  askQuestion(answer: 'pubspec', question: 'ไฟล์รายการ package ชื่ออะไร?', timeLimit: 60);
+}</code></pre>
+      <h3 id="secret">🤯 ความลับที่รอมาถึงบทนี้</h3>
+      <p>ย้อนดูโค้ดบทที่ 1 สิครับ —</p>
+      <pre><code class="language-dart">Text('สวัสดีชาวโลก', style: TextStyle(fontSize: 24))
+//   ▲ argument ตามลำดับ  ▲ named argument ชื่อ style!</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 Widget ทุกตัวคือการเรียกฟังก์ชัน</div>
+        <p><strong>Widget ทุกตัวที่คุณเขียนมาตลอด คือการเรียกฟังก์ชัน (constructor) ที่มี named parameter</strong> — <code class="inline">title:</code>, <code class="inline">body:</code>, <code class="inline">child:</code> ล้วนเป็น named parameter ทั้งนั้น คุณใช้คอนเซปต์นี้มาตั้งแต่วันแรกโดยไม่รู้ตัว ตอนนี้คุณอ่านโค้ด Flutter "ออก" แล้วจริงๆ</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — ตั้งชื่อฟังก์ชันด้วยกริยา</h3>
+      <p><code class="inline">calculateTotal()</code>, <code class="inline">showResult()</code>, <code class="inline">isAnswerCorrect()</code> — ฟังก์ชันคือ "การกระทำ" ชื่อจึงควรขึ้นต้นด้วยกริยา (ยกเว้นที่คืนค่า bool นิยมขึ้นด้วย <code class="inline">is</code>/<code class="inline">has</code>/<code class="inline">can</code>)</p>
+      <h3>เทคนิคที่ 2 — กฎ "หนึ่งฟังก์ชัน หนึ่งงาน" ทดสอบด้วยคำว่า "และ"</h3>
+      <p>ถ้าอธิบายฟังก์ชันแล้วต้องพูดว่า "มันถามคำถาม <strong>และ</strong> ตรวจคำตอบ <strong>และ</strong> สรุปคะแนน" = ควรแยกเป็น 3 ฟังก์ชัน</p>
+      <h3>เทคนิคที่ 3 — ใช้ named parameter เมื่อพารามิเตอร์เกิน 2 ตัว</h3>
+      <p><code class="inline">createUser('มายด์', 25, true, false)</code> — true false คืออะไร? ไม่มีใครรู้ · <code class="inline">createUser(name: 'มายด์', age: 25, isVip: true, isBanned: false)</code> — อ่านออกทุกคน นี่คือเหตุผลที่ Flutter เลือกทางนี้ทั้งเฟรมเวิร์ก</p>
+      <h3>เทคนิคที่ 4 — return เร็ว = guard clause เวอร์ชันฟังก์ชัน</h3>
+      <p>ความรู้บทที่แล้วใช้ต่อได้เลย: เช็คเงื่อนไขไม่ผ่านแล้ว <code class="inline">return</code> ทันทีตั้งแต่บรรทัดแรกๆ ให้โค้ดหลักอยู่ตื้นเสมอ</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "สูตรคำนวณราคาที่ใช้ 5 ที่ในแอป"</div>
+        <p>แอปขายของมีจุดแสดงราคา 5 จุด: หน้าสินค้า, ตะกร้า, หน้าจ่ายเงิน, อีเมลยืนยัน, ใบเสร็จ — ทุกจุดต้องคิด "ราคาหลังส่วนลด + VAT" เหมือนกันเป๊ะ</p>
+      </div>
+      <pre><code class="language-dart">// ฟังก์ชันเดียว เป็นแหล่งความจริงเดียว (single source of truth) ของสูตรราคา
+double finalPrice({required double base, double discountRate = 0}) {
+  final discounted = base * (1 - discountRate);
+  return discounted * 1.07; // VAT 7%
+}</code></pre>
+      <p>วันหนึ่ง VAT เปลี่ยน หรือบริษัทเปลี่ยนนโยบายส่วนลด — <strong>แก้ที่เดียว ถูกทั้ง 5 จุดทันที</strong> ถ้าไม่มีฟังก์ชันนี้ เคสจริงที่เจอบ่อยคือแก้ครบแค่ 4 จุด → ใบเสร็จแสดงราคาไม่ตรงกับหน้าจ่ายเงิน → ลูกค้าร้องเรียน นี่คือบั๊กประเภทที่ทำให้บริษัทเสียเงินจริง และป้องกันได้ด้วยฟังก์ชันเดียว</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: ผ่าตัด main() ยักษ์</h2>
+      <div class="grid2">
+        <div class="card bad"><div class="h">❌ main() ยักษ์</div><p style="margin:0;font-size:14px">แบนเนอร์ + ถาม 3 ข้อ (ก็อปโค้ดเดิม 3 รอบ) + สรุปผล กองรวมกัน 40+ บรรทัด</p></div>
+        <div class="card good"><div class="h">✅ แยกตามหน้าที่</div><p style="margin:0;font-size:14px">main() กลายเป็น "สารบัญ" ของโปรแกรม — อ่าน 7 บรรทัดรู้ flow ทั้งเกม</p></div>
+      </div>
+      <pre><code class="language-dart">import 'dart:io';
+
+void main() {
+  showWelcomeBanner();                       // อ่าน main() แล้วรู้ flow ทั้งเกม
+  int score = 0;                             // โดยไม่ต้องอ่านรายละเอียดสักบรรทัด
+  score += playRound(question: 'Flutter ใช้ภาษาอะไรเขียน?', answer: 'dart');
+  score += playRound(question: 'ไฟล์รายการ package ชื่ออะไร?', answer: 'pubspec.yaml');
+  score += playRound(question: 'คำสั่งดูสถานะ git คืออะไร?', answer: 'git status');
+  showFinalResult(score: score, total: 3);
+}
+
+void showWelcomeBanner() {
+  print('=== QUIZ GAME 2026 ===');
+}
+
+/// เล่น 1 ข้อ: ถาม → รับคำตอบ → ตรวจ → คืนคะแนน (1 = ถูก, 0 = ผิด)
+int playRound({required String question, required String answer}) {
+  print('\nคำถาม: $question');
+  final userAnswer = (stdin.readLineSync() ?? '').trim().toLowerCase();
+  if (userAnswer == answer) {
+    print('ถูกต้อง! 🎉');
+    return 1;
+  }
+  print('เฉลย: $answer');
+  return 0;
+}
+
+void showFinalResult({required int score, required int total}) {
+  print('\nคุณได้ $score จาก $total คะแนน');
+  print(score == total ? 'เพอร์เฟกต์! 🏆' : 'ฝึกต่อไป สู้ๆ 💪');
+}</code></pre>
+      <p>สังเกตว่า <strong>เพิ่มคำถามใหม่ = เพิ่ม 1 บรรทัดใน main()</strong> — ไม่ต้องก็อป 8 บรรทัดอีกแล้ว และแต่ละฟังก์ชันทดสอบแยกกันได้ (ประโยชน์จะชัดมากตอนบทที่ 22)</p>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① เรียกฟังก์ชันแล้วได้ null / ค่าไม่มา</div>
+        <p><strong>สาเหตุ:</strong> ลืม return — ฟังก์ชันทำงานครบแต่ไม่ได้ "ส่งของออกมา" หรือเขียน return ไว้ใน if แต่ลืมเคส else<br>
+        <strong>วิธีแก้:</strong> Dart จะเตือน "The body might complete normally..." = มีเส้นทางที่ไม่ return — ตรวจว่าทุกเส้นทางมี return ครบ</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② "The named parameter 'x' is required, but there's no corresponding argument"</div>
+        <p><strong>สาเหตุ:</strong> ฟังก์ชันประกาศ <code class="inline">required</code> แต่ตอนเรียกไม่ได้ส่งค่านั้นมา<br>
+        <strong>วิธีแก้:</strong> อ่านชื่อ parameter ใน error แล้วเติมให้ครบ — error นี้จะเจอบ่อยมากตอนเขียน Flutter (ลืมส่ง <code class="inline">child:</code>, <code class="inline">builder:</code> ฯลฯ)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ ใช้ตัวแปรนอกฟังก์ชันไม่ได้ — "Undefined name 'userAnswer'"</div>
+        <p><strong>สาเหตุ:</strong> ตัวแปรที่ประกาศในฟังก์ชัน มีชีวิตอยู่แค่ในฟังก์ชันนั้น (เรียกว่า scope) เหมือนอุปกรณ์ในครัว ร้านอื่นมาหยิบใช้ไม่ได้<br>
+        <strong>วิธีแก้:</strong> อยากส่งค่าออก → return · อยากส่งค่าเข้า → parameter (อย่าแก้ด้วยการประกาศ global ไว้บนสุด — นั่นคือจุดเริ่มของโค้ดสปาเกตตี)</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — สร้างเครื่อง</div>
+        <p>เขียนฟังก์ชัน <code class="inline">bmi({required double weightKg, required double heightM})</code> คืนค่า BMI (น้ำหนัก ÷ ส่วนสูง²) แล้วเขียน <code class="inline">bmiCategory(double bmi)</code> คืนข้อความ ผอม/ปกติ/เกิน ด้วย guard clause — เรียกใช้จาก main() กับข้อมูล 3 คน</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — เครื่องคิดเลข</div>
+        <p>เขียน <code class="inline">calculate({required double a, required double b, required String operator})</code> รองรับ + - * / โดยใช้ switch และมี guard clause กันหารด้วยศูนย์ (คืนข้อความเตือนแทน crash) — ทำเมนูวนถามด้วย while จากบทที่แล้ว</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — ผ่าตัด Quiz</div>
+        <p>refactor quiz.dart ของคุณให้เหมือนหัวข้อ 5: main() ต้องไม่เกิน 10 บรรทัด, มี <code class="inline">playRound()</code> / <code class="inline">showFinalResult()</code> เป็นอย่างน้อย, เพิ่มระบบชีวิตจากบทที่ 5 กลับเข้าไปโดยให้ playRound คืนค่าผลลัพธ์ — commit ด้วย <code class="inline">refactor: extract functions from main</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>เขียนฟังก์ชันรับ parameter และ return ค่าได้เอง</li>
+        <li>อธิบายความต่าง parameter (ตอนประกาศ) กับ argument (ตอนเรียก) ได้</li>
+        <li>ใช้ named parameter + required เป็น และบอกได้ว่าทำไม Flutter ใช้ท่านี้ทั้งเฟรมเวิร์ก</li>
+        <li>อธิบาย scope ได้ว่าทำไมตัวแปรในฟังก์ชันหยิบใช้ข้างนอกไม่ได้</li>
+        <li>main() ของ Quiz สั้นกว่า 10 บรรทัดแล้ว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>function</td><td>ชุดคำสั่งที่ตั้งชื่อไว้เรียกใช้ซ้ำ</td><td>เครื่องปั่นน้ำผลไม้</td></tr>
+        <tr><td>parameter</td><td>ช่องรับวัตถุดิบ (ตอนประกาศ)</td><td>ช่องใส่ผลไม้ของเครื่อง</td></tr>
+        <tr><td>argument</td><td>ค่าที่ส่งเข้าไปจริง (ตอนเรียก)</td><td>ผลไม้ที่หย่อนลงไป</td></tr>
+        <tr><td><code class="inline">return</code></td><td>ส่งผลลัพธ์ออกและจบการทำงาน</td><td>น้ำปั่นไหลออกจากเครื่อง</td></tr>
+        <tr><td>named parameter</td><td>ระบุชื่อค่าตอนเรียก</td><td>ฉลากติดวัตถุดิบ</td></tr>
+        <tr><td>arrow (<code class="inline">=&gt;</code>)</td><td>ท่าย่อของฟังก์ชันบรรทัดเดียว</td><td>ทางลัด</td></tr>
+        <tr><td>scope</td><td>ขอบเขตชีวิตของตัวแปร</td><td>อุปกรณ์ใช้ได้แค่ในครัวตัวเอง</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>ฟังก์ชัน = เครื่องที่สร้างครั้งเดียวใช้ตลอด · named parameter คือท่าประจำของ Flutter — คุณใช้มันมาตั้งแต่บทแรก · main() ที่ดีคือสารบัญ ไม่ใช่กองเอกสาร</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่5_เงื่อนไขและลูป.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 5: เงื่อนไขและลูป</div>
+        </a>
+        <a href="บทที่7_List_Map_Collection.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 7: List, Map และ Collection</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 2 · บทที่ 6<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

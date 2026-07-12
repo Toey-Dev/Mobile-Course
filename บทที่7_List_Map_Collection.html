@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 7 — List, Map และ Collection | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 2 · บทที่ 7</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ชั้นวาง+ล็อกเกอร์</a>
+      <a href="#code" class="lvl1">2. Quiz เพิ่มคำถามไม่จำกัด</a>
+      <a href="#listops" class="lvl2">— คำสั่งประจำตัวของ List</a>
+      <a href="#mapdemo" class="lvl2">— Map + where/map</a>
+      <a href="#concept" class="lvl1">3. List = รากฐานของหน้าจอแอป</a>
+      <a href="#techniques" class="lvl1">4. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">5. ตัวอย่างงานจริง</a>
+      <a href="#clean" class="lvl1">6. Clean Code</a>
+      <a href="#errors" class="lvl1">7. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">8. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">9. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 2 · บทที่ 7</span>
+      <h1>List, Map และ Collection: จัดการข้อมูลหลายชิ้น</h1>
+      <p>Quiz จะเพิ่มคำถามได้ไม่จำกัดโดยแก้โค้ดแค่บรรทัดเดียว — และนี่คือรากฐานตรงของ ListView ในเฟส 3</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 6 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">บทที่แล้ว Quiz เรามีคำถาม 3 ข้อ = ตัวแปร 6 ตัว ถ้ามี 100 ข้อล่ะ? ตัวแปร 200 ตัว?! — เราต้องการ "เฟอร์นิเจอร์เก็บของ" ที่ดีกว่ากล่องเดี่ยวๆ</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">List</span><span class="pill">Map</span><span class="pill">index</span><span class="pill">key / value</span><span class="pill">for-in</span><span class="pill">.where()</span><span class="pill">.map()</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: ชั้นวางหนังสือ และตู้ล็อกเกอร์</h2>
+      <div class="ascii">📚 List = ชั้นวางหนังสือเรียงตามเลขช่อง         🔐 Map = ตู้ล็อกเกอร์ติดป้ายชื่อ
+
+   ช่อง: [0]      [1]      [2]                  ป้าย(key) → ของข้างใน(value)
+   ┌───────┬───────┬───────┐                  ┌──────────────────────┐
+   │ 'ข้อ1' │ 'ข้อ2' │ 'ข้อ3' │                  │ 'name'  → 'มายด์'     │
+   └───────┴───────┴───────┘                  │ 'score' → 42          │
+   หยิบด้วยเลขช่อง: questions[0]                │ 'level' → 'gold'      │
+                                              └──────────────────────┘
+   เหมาะกับ: ของหลายชิ้น "ชนิดเดียวกัน"          หยิบด้วยป้าย: player['name']
+   ที่ลำดับมีความหมาย                            เหมาะกับ: คุณสมบัติหลายด้าน
+                                               "ของสิ่งเดียว"</div>
+      <div class="box warn">
+        <div class="t">⚠️ กับดักเดียวที่ต้องจำจากภาพนี้</div>
+        <p>ช่องของ List <strong>เริ่มนับที่ 0 ไม่ใช่ 1</strong> — หนังสือเล่มแรกอยู่ช่อง <code class="inline">[0]</code> เล่มสุดท้ายของชั้นที่มี 10 เล่มอยู่ช่อง <code class="inline">[9]</code> สาเหตุอันดับหนึ่งของ error ในบทนี้คือลืมเรื่องนี้</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: Quiz เพิ่มคำถามได้ไม่จำกัด</h2>
+      <pre><code class="language-dart">import 'dart:io';
+
+void main() {
+  // List&lt;String&gt; = ชั้นวางที่รับเฉพาะข้อความ (ระบุชนิดของที่เก็บใน &lt;&gt;)
+  final List&lt;String&gt; questions = [
+    'Flutter ใช้ภาษาอะไรเขียน?',
+    'ไฟล์รายการ package ชื่ออะไร?',
+    'คำสั่งดูสถานะ git คืออะไร?',
+  ];
+  final List&lt;String&gt; answers = ['dart', 'pubspec.yaml', 'git status'];
+
+  int score = 0;
+
+  for (int i = 0; i &lt; questions.length; i++) {
+    print('\nข้อ ${i + 1}: ${questions[i]}');       // ผู้เล่นเห็น "ข้อ 1" แต่ index คือ 0
+    final userAnswer = (stdin.readLineSync() ?? '').trim().toLowerCase();
+    if (userAnswer == answers[i]) {
+      score++;
+      print('ถูกต้อง! 🎉');
+    } else {
+      print('เฉลย: ${answers[i]}');
+    }
+  }
+  print('\nสรุป: $score จาก ${questions.length} คะแนน');
+}</code></pre>
+      <p><strong>อยากเพิ่มคำถามที่ 4?</strong> เพิ่ม 1 บรรทัดใน List — ลูปจัดการที่เหลือให้หมด นี่คือพลังของ Collection + ลูปที่เรียนบทที่ 5</p>
+      <h3 id="listops">คำสั่งประจำตัวของ List</h3>
+      <pre><code class="language-dart">final tasks = &lt;String&gt;['ซื้อนม', 'อ่านหนังสือ'];   // อีกท่าประกาศ List
+tasks.add('ออกกำลังกาย');    // เพิ่มท้ายชั้น → 3 ชิ้น
+tasks.removeAt(0);           // เอาช่อง 0 ออก → เหลือ 2 ชิ้น (ทุกชิ้นขยับซ้าย!)
+print(tasks.length);         // 2
+print(tasks.contains('อ่านหนังสือ'));  // true
+print(tasks.isEmpty);        // false — ใช้เช็คก่อนแสดงผลเสมอ</code></pre>
+      <h3 id="mapdemo">Map — โปรไฟล์ผู้เล่น</h3>
+      <pre><code class="language-dart">// Map&lt;String, dynamic&gt; = ป้ายเป็นข้อความ ของข้างในเป็นอะไรก็ได้
+final Map&lt;String, dynamic&gt; player = {
+  'name': 'มายด์',
+  'score': 42,
+  'isVip': true,
+};
+print(player['name']);            // มายด์
+player['score'] = 50;             // แก้ค่าในล็อกเกอร์
+print(player['email']);           // null! — ไม่มีล็อกเกอร์ป้ายนี้ (ไม่ crash แต่ต้องระวัง)
+print(player['email'] ?? 'ไม่ระบุ'); // ท่าปลอดภัยจากบทที่ 4 กลับมาอีกแล้ว</code></pre>
+      <h3><code class="inline">.where()</code> และ <code class="inline">.map()</code> — เครื่องคัดกรองและเครื่องแปลงร่าง</h3>
+      <pre><code class="language-dart">final scores = [85, 42, 90, 55, 78];
+
+// where = เครื่องคัดกรอง: เก็บเฉพาะชิ้นที่ผ่านเกณฑ์
+final passed = scores.where((s) =&gt; s &gt;= 60).toList();   // [85, 90, 78]
+
+// map = เครื่องแปลงร่าง: แปลงทุกชิ้นเป็นรูปแบบใหม่
+final labels = scores.map((s) =&gt; 'ได้ $s คะแนน').toList();
+// ['ได้ 85 คะแนน', 'ได้ 42 คะแนน', ...]</code></pre>
+      <p>อ่านท่า <code class="inline">(s) =&gt; s &gt;= 60</code> ว่า: "รับของชิ้นหนึ่งชื่อ s แล้วตอบว่า s ≥ 60 ไหม" — มันคือฟังก์ชันจิ๋วไม่มีชื่อ (ความรู้บทที่แล้ว ในร่างย่อส่วน)</p>
+    </section>
+
+    <section id="concept">
+      <h2>3. 🧠 คอนเซปต์: List คือรากฐานตรงของหน้าจอแอปเกือบทุกหน้า</h2>
+      <p>มองแอปในมือถือคุณตอนนี้: ฟีด Facebook = List ของโพสต์ · แชท Line = List ของข้อความ · YouTube = List ของวิดีโอ — <strong>หน้าจอแอปส่วนใหญ่ในโลกคือ "List ที่ถูกวาดเป็นภาพ"</strong></p>
+      <div class="ascii">เฟส 2 (ตอนนี้)                          เฟส 3 (บทที่ 13)
+List&lt;String&gt; tasks       ────────►     ListView บนหน้าจอมือถือ
+วนด้วย for แล้ว print                    วนด้วย ListView.builder แล้ววาด Widget</div>
+      <p>สิ่งที่คุณฝึกวันนี้บน Terminal คือกล้ามเนื้อเดียวกับที่จะใช้สร้างหน้าจอจริงเป๊ะ แค่เปลี่ยนจาก <code class="inline">print</code> เป็น Widget</p>
+    </section>
+
+    <section id="techniques">
+      <h2>4. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — ตั้งชื่อ List เป็นพหูพจน์เสมอ</h3>
+      <p><code class="inline">tasks</code>, <code class="inline">questions</code>, <code class="inline">users</code> — เห็นชื่อรู้ทันทีว่าเป็นของหลายชิ้น ส่วนของชิ้นเดียวในลูปใช้เอกพจน์: <code class="inline">for (final task in tasks)</code></p>
+      <h3>เทคนิคที่ 2 — เช็ค isEmpty ก่อนใช้เสมอ</h3>
+      <p>List ว่างคือเรื่องปกติ (ตะกร้ายังไม่มีสินค้า, ยังไม่มีแชท) โค้ดที่ดีเช็คก่อน — ในเฟส 3 นี่จะกลายเป็น "Empty State" หน้าจอสวยๆ ที่แอปดีๆ ทุกตัวมี</p>
+      <h3>เทคนิคที่ 3 — for-in เมื่อไม่ต้องใช้เลขช่อง, for ธรรมดาเมื่อต้องใช้</h3>
+      <p>แค่หยิบของทุกชิ้น → <code class="inline">for (final q in questions)</code> สั้นกว่าปลอดภัยกว่า · ต้องรู้ว่าชิ้นที่เท่าไหร่ (แสดง "ข้อ 3") → <code class="inline">for (int i = ...)</code> แบบในตัวอย่าง</p>
+      <h3>เทคนิคที่ 4 — ต่อท่อ where + map ได้เหมือนสายพานโรงงาน</h3>
+      <p><code class="inline">scores.where((s) =&gt; s &gt;= 60).map((s) =&gt; 'ผ่าน: $s').toList()</code> — คัดกรองก่อน แล้วค่อยแปลงร่าง อ่านจากซ้ายไปขวาเหมือนเล่าขั้นตอน นี่คือสไตล์ที่โค้ด Flutter จริงใช้หนาแน่นมาก</p>
+    </section>
+
+    <section id="prod">
+      <h2>5. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "หน้าค้นหาสินค้า"</div>
+        <p>ทุกครั้งที่คุณพิมพ์ค้นหาในแอปช้อปปิ้ง เบื้องหลังคือ <code class="inline">.where()</code> ตรงๆ</p>
+      </div>
+      <pre><code class="language-dart">// โครงเดียวกับโค้ดหลังบ้านของหน้าค้นหาจริง
+final products = ['iPhone 17', 'iPad Pro', 'MacBook Air', 'AirPods Pro'];
+
+List&lt;String&gt; search(String keyword) {
+  return products
+      .where((p) =&gt; p.toLowerCase().contains(keyword.toLowerCase()))
+      .toList();
+}
+
+// search('pro') → ['iPad Pro', 'AirPods Pro']
+// (สังเกต normalize ด้วย toLowerCase ทั้งสองฝั่ง — เทคนิคบทที่ 5 อยู่ทุกที่จริงๆ)</code></pre>
+      <p>และ <code class="inline">.map()</code> คือหัวใจของทุกหน้าจอที่แสดงข้อมูล: เซิร์ฟเวอร์ส่งข้อมูลดิบมา 100 รายการ → <code class="inline">.map()</code> แปลงเป็นการ์ดสวยๆ 100 ใบ — ตอนถึงเฟส 4 คุณจะเขียนบรรทัดแบบนี้กับข้อมูลจริงจากอินเทอร์เน็ต</p>
+    </section>
+
+    <section id="clean">
+      <h2>6. 🧹 ตัวอย่าง Clean Code</h2>
+      <pre><code class="language-dart">// ❌ ตัวแปรเบิ้ล — เพิ่มข้อมูลใหม่ต้องแก้โค้ดทุกจุด
+final question1 = 'Flutter ใช้ภาษาอะไร?';
+final question2 = 'ไฟล์รายการ package ชื่ออะไร?';
+final question3 = 'คำสั่งดูสถานะ git คืออะไร?';
+print(question1); print(question2); print(question3);
+// เพิ่มข้อ 4 = เพิ่มตัวแปร + เพิ่ม print + แก้ตัวนับคะแนน + ... ลืมสักจุดคือบั๊ก</code></pre>
+      <pre><code class="language-dart">// ✅ List เดียว — โครงสร้างข้อมูลทำงานแทนเรา
+final questions = [
+  'Flutter ใช้ภาษาอะไร?',
+  'ไฟล์รายการ package ชื่ออะไร?',
+  'คำสั่งดูสถานะ git คืออะไร?',
+  // เพิ่มข้อใหม่: วางบรรทัดเดียวตรงนี้ จบ — ลูป/ตัวนับ/สรุปผล ถูกอัตโนมัติ
+];
+for (final q in questions) {
+  print(q);
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 สัญญาณเตือน</div>
+        <p>เมื่อไหร่ที่ตั้งชื่อตัวแปรลงท้ายด้วยเลข (<code class="inline">item1</code>, <code class="inline">item2</code>, <code class="inline">item3</code>) — หยุด แล้วถามตัวเองว่า "นี่ควรเป็น List ไหม?" คำตอบคือใช่เกือบ 100%</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>7. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "RangeError (index): Invalid value: Not in inclusive range 0..2: 3"</div>
+        <p><strong>สาเหตุ:</strong> หยิบของเกินชั้น — List มี 3 ชิ้น (ช่อง 0,1,2) แต่ขอช่อง [3] มักเกิดจากลืมว่า index เริ่มที่ 0 หรือใช้ <code class="inline">&lt;=</code> ในลูปแทน <code class="inline">&lt;</code><br>
+        <strong>วิธีแก้:</strong> ช่องสุดท้ายคือ <code class="inline">length - 1</code> เสมอ · ลูปมาตรฐาน: <code class="inline">i &lt; list.length</code> (ไม่ใช่ &lt;=)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② "Concurrent modification during iteration"</div>
+        <p><strong>สาเหตุ:</strong> ลบ/เพิ่มของบนชั้น ขณะที่สายพานกำลังวนหยิบของอยู่ (เช่น removeAt ใน for-in)<br>
+        <strong>วิธีแก้:</strong> อย่าแก้ชั้นที่กำลังวน — ใช้ <code class="inline">.where()</code> สร้างชั้นใหม่ที่คัดแล้วแทน: <code class="inline">tasks = tasks.where((t) =&gt; t != 'งานที่จะลบ').toList();</code></p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ ลืม .toList() แล้วผลลัพธ์ใช้ต่อไม่ได้</div>
+        <p><strong>สาเหตุ:</strong> <code class="inline">.where()</code>/<code class="inline">.map()</code> คืนของชนิด Iterable (สายพานที่ยังไหลอยู่) ไม่ใช่ List<br>
+        <strong>วิธีแก้:</strong> ต่อ <code class="inline">.toList()</code> ปิดท้ายเมื่ออยากได้ List จริงๆ — จำเป็นนิสัย: where/map แล้วปิดด้วย toList()</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>8. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ชั้นวางของฉัน</div>
+        <p>สร้าง <code class="inline">List&lt;String&gt;</code> รายการสิ่งที่ต้องทำ 5 อย่าง แล้ว (1) พิมพ์ทั้งหมดพร้อมเลขข้อด้วย for (2) <code class="inline">.add()</code> เพิ่ม 1 อย่าง (3) <code class="inline">.removeAt(0)</code> แล้วสังเกตว่าเลขข้อขยับยังไง (4) พิมพ์เฉพาะรายการที่มีคำว่า "อ่าน" ด้วย <code class="inline">.where()</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — ตู้ล็อกเกอร์</div>
+        <p>สร้าง <code class="inline">Map&lt;String, dynamic&gt;</code> โปรไฟล์ตัวเอง 5 ฟิลด์ พิมพ์แนะนำตัวจาก Map, ลองอ่าน key ที่ไม่มีแล้วกันด้วย <code class="inline">??</code>, แล้วสร้าง <code class="inline">List&lt;Map&gt;</code> เก็บโปรไฟล์เพื่อน 3 คน วนพิมพ์ทุกคนด้วย for-in</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — Quiz เวอร์ชัน Collection</div>
+        <p>refactor quiz.dart: เก็บคำถาม-คำตอบเป็น <code class="inline">List&lt;Map&lt;String, String&gt;&gt;</code> (แต่ละข้อคือ <code class="inline">{'q': '...', 'a': '...'}</code>), main() ยังสั้นเหมือนเดิมโดย playRound รับ Map ทั้งก้อน, จบเกมใช้ <code class="inline">.where()</code> นับจำนวนข้อที่ตอบถูก — commit ด้วย <code class="inline">refactor: store questions in a list of maps</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>9. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายได้ว่า List กับ Map ต่างกันยังไง ใช้ตอนไหน</li>
+        <li>ตอบได้ทันทีว่า List 10 ชิ้น ช่องแรกและช่องสุดท้ายคือ index อะไร</li>
+        <li>ใช้ .add() .removeAt() .length .isEmpty .contains() ได้</li>
+        <li>เขียน .where() และ .map() พร้อม .toList() ได้เอง</li>
+        <li>Quiz เก็บคำถามใน Collection แล้ว — เพิ่มข้อใหม่ = เพิ่มบรรทัดเดียว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">List</code></td><td>เก็บของหลายชิ้นเรียงลำดับ</td><td>ชั้นวางหนังสือเรียงเลขช่อง</td></tr>
+        <tr><td><code class="inline">Map</code></td><td>เก็บของแบบ ป้าย→ค่า</td><td>ตู้ล็อกเกอร์ติดป้ายชื่อ</td></tr>
+        <tr><td>index</td><td>เลขช่องใน List (เริ่มที่ 0!)</td><td>เลขช่องบนชั้น</td></tr>
+        <tr><td>key / value</td><td>ป้าย / ของข้างใน ของ Map</td><td>ป้ายล็อกเกอร์ / ของในล็อกเกอร์</td></tr>
+        <tr><td>for-in</td><td>วนหยิบของทีละชิ้นโดยไม่สนเลขช่อง</td><td>สายพานอัตโนมัติ</td></tr>
+        <tr><td><code class="inline">.where()</code></td><td>คัดกรองเฉพาะชิ้นที่ผ่านเกณฑ์</td><td>เครื่องคัดกรอง</td></tr>
+        <tr><td><code class="inline">.map()</code></td><td>แปลงทุกชิ้นเป็นรูปแบบใหม่</td><td>เครื่องแปลงร่าง</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>List = ชั้นวาง (index เริ่ม 0) · Map = ล็อกเกอร์ (key→value) · where คัดกรอง map แปลงร่าง · เห็นตัวแปรลงท้ายด้วยเลขเมื่อไหร่ = ควรเป็น List</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่6_ฟังก์ชัน.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 6: ฟังก์ชัน</div>
+        </a>
+        <a href="บทที่8_OOP.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 8: OOP — Class และ Object</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 2 · บทที่ 7<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

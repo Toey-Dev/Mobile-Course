@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 2 — โครงสร้างโปรเจกต์ + Git | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fa; --surface:#ffffff; --ink:#1f2430; --ink-soft:#5b6373;
+    --muted:#8a93a6; --line:#e6e9ef; --brand:#3f51b5; --brand-soft:#eef0fb;
+    --code-bg:#282c34; --ok:#1f9d6b; --ok-soft:#e8f6ef; --warn:#c77700; --warn-soft:#fdf3e2;
+    --why:#0b72b9; --why-soft:#e7f2fb; --prod:#7b3fbf; --prod-soft:#f2ebfb;
+    --radius:12px; --maxw:860px;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Sarabun","Noto Sans Thai",Roboto,Arial,sans-serif;
+    --mono:"SF Mono", "JetBrains Mono",Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+       font-size:16.5px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  #progress{position:fixed;top:0;left:0;height:3px;background:var(--brand);width:0;z-index:100;transition:width .1s;}
+  .wrap{display:flex;max-width:1240px;margin:0 auto;}
+  #sidebar{position:sticky;top:0;align-self:flex-start;width:280px;height:100vh;
+           overflow-y:auto;padding:26px 18px;border-right:1px solid var(--line);
+           background:var(--surface);flex:0 0 280px;}
+  #sidebar .brand{font-weight:700;color:var(--brand);font-size:15px;letter-spacing:.3px;}
+  #sidebar .sub{color:var(--muted);font-size:12.5px;margin:2px 0 18px;}
+  #toc a{display:block;padding:6px 12px;border-radius:8px;color:var(--ink-soft);
+         text-decoration:none;font-size:13.5px;line-height:1.5;margin:1px 0;border-left:2px solid transparent;}
+  #toc a:hover{background:var(--brand-soft);color:var(--brand);}
+  #toc a.active{background:var(--brand-soft);color:var(--brand);border-left-color:var(--brand);font-weight:600;}
+  #toc a.lvl2{padding-left:24px;font-size:12.5px;color:var(--muted);}
+  main{flex:1;min-width:0;padding:40px 48px 120px;}
+  .content{max-width:var(--maxw);margin:0 auto;}
+  .hero{background:linear-gradient(135deg,#3f51b5,#5c6bc0);color:#fff;border-radius:16px;
+        padding:30px 34px;margin-bottom:34px;}
+  .hero .week{display:inline-block;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:30px;font-size:13px;font-weight:600;}
+  .hero h1{margin:14px 0 8px;font-size:30px;line-height:1.25;}
+  .hero p{margin:0;opacity:.92;font-size:15px;}
+  .hero .meta{margin-top:16px;display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;opacity:.95;}
+  h2{font-size:24px;margin:48px 0 14px;padding-top:10px;border-top:1px solid var(--line);}
+  h2:first-of-type{border-top:none;}
+  h3{font-size:19px;margin:30px 0 10px;color:var(--ink);}
+  h4{font-size:16px;margin:22px 0 8px;color:var(--ink-soft);}
+  p{margin:12px 0;}
+  ul,ol{margin:12px 0;padding-left:24px;}
+  li{margin:6px 0;}
+  a{color:var(--brand);}
+  strong{font-weight:700;}
+  .lead{font-size:17.5px;color:var(--ink-soft);}
+  .box{border-radius:var(--radius);padding:16px 18px;margin:18px 0;border:1px solid var(--line);background:var(--surface);}
+  .box .t{font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:15px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.why{background:var(--why-soft);border-color:#cfe6f7;} .box.why .t{color:var(--why);}
+  .box.tip{background:var(--ok-soft);border-color:#c8ead8;} .box.tip .t{color:var(--ok);}
+  .box.warn{background:var(--warn-soft);border-color:#f3e2c0;} .box.warn .t{color:var(--warn);}
+  .box.concept{background:var(--brand-soft);border-color:#d6dafb;} .box.concept .t{color:var(--brand);}
+  .box.prod{background:var(--prod-soft);border-color:#e1d2f5;} .box.prod .t{color:var(--prod);}
+  pre{position:relative;margin:16px 0;border-radius:12px;overflow:hidden;background:var(--code-bg);}
+  pre code,pre code.hljs{display:block;padding:18px 18px;font-family:var(--mono);font-size:14px;
+       line-height:1.65;overflow-x:auto;color:#d7dae0;background:transparent;}
+  pre code .hljs-comment{color:#7f848e;}
+  .copy-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.12);color:#cfd3dc;
+            border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:var(--font);}
+  .copy-btn:hover{background:rgba(255,255,255,.22);color:#fff;}
+  .copy-btn.done{background:var(--ok);color:#fff;}
+  code.inline{background:#eceef3;color:#c0341d;padding:2px 7px;border-radius:6px;font-family:var(--mono);font-size:13.5px;}
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:14.5px;background:var(--surface);border-radius:10px;overflow:hidden;}
+  th,td{border:1px solid var(--line);padding:10px 13px;text-align:left;vertical-align:top;}
+  th{background:var(--brand-soft);color:var(--brand);font-weight:700;}
+  tr:nth-child(even) td{background:#fafbfd;}
+  .ascii{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+         font-family:var(--mono);font-size:13px;line-height:1.5;white-space:pre;overflow-x:auto;color:var(--ink-soft);}
+  .checklist{list-style:none;padding-left:0;}
+  .checklist li{padding-left:30px;position:relative;}
+  .checklist li:before{content:"\2610";position:absolute;left:4px;color:var(--brand);font-size:18px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .card.bad{border-color:#f0c9c2;background:#fdf1ef;}
+  .card.good{border-color:#c8ead8;background:#f1faf5;}
+  .card .h{font-weight:700;margin-bottom:8px;font-size:14px;}
+  .card.bad .h{color:#c0341d;} .card.good .h{color:var(--ok);}
+  .pill{display:inline-block;background:var(--brand-soft);color:var(--brand);padding:2px 10px;border-radius:20px;font-size:12.5px;font-weight:600;margin:2px 4px 2px 0;}
+  .footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;}
+  .nav-next{display:flex;justify-content:space-between;gap:14px;margin-top:30px;}
+  .nav-next a{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;text-decoration:none;color:var(--ink);}
+  .nav-next a:hover{border-color:var(--brand);}
+  .nav-next .lbl{font-size:12px;color:var(--muted);}
+  .nav-next .ttl{font-weight:700;color:var(--brand);}
+  #menu-toggle{display:none;}
+  @media(max-width:880px){
+    #sidebar{position:fixed;left:-300px;z-index:50;transition:left .25s;box-shadow:0 0 30px rgba(0,0,0,.1);}
+    #sidebar.open{left:0;}
+    #menu-toggle{display:flex;position:fixed;top:14px;left:14px;z-index:60;background:var(--brand);color:#fff;
+                 border:none;border-radius:10px;width:44px;height:44px;font-size:20px;align-items:center;justify-content:center;cursor:pointer;}
+    main{padding:64px 20px 100px;}
+    .grid2{grid-template-columns:1fr;}
+    .hero h1{font-size:24px;}
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">สัปดาห์ที่ 1 · บทที่ 2</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ร้านอาหาร</a>
+      <a href="#run-story" class="lvl2">— flutter run เกิดอะไรขึ้น</a>
+      <a href="#files" class="lvl1">2. เจาะแต่ละไฟล์/โฟลเดอร์</a>
+      <a href="#package" class="lvl1">3. เพิ่ม package แรก</a>
+      <a href="#git" class="lvl1">4. Git = จุดเซฟในเกม</a>
+      <a href="#gitignore" class="lvl2">— .gitignore</a>
+      <a href="#techniques" class="lvl1">5. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">6. ตัวอย่างงานจริง</a>
+      <a href="#clean" class="lvl1">7. Clean Code: แยกไฟล์</a>
+      <a href="#errors" class="lvl1">8. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">9. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">10. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 สัปดาห์ที่ 1 · บทที่ 2</span>
+      <h1>โครงสร้างโปรเจกต์ Flutter และ Git พื้นฐาน</h1>
+      <p>เปิดโฟลเดอร์แล้วรู้ว่าอะไรอยู่ตรงไหน ทำไมถึงอยู่ตรงนั้น · เพิ่ม package เป็น · ใช้ Git จนเป็นนิสัย</p>
+      <div class="meta">
+        <span>⏱️ 1.5–2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 1 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">บทที่แล้วเรารันแอปได้ แต่ยังเหมือน "ขับรถโดยไม่รู้ว่าใต้ฝากระโปรงมีอะไร" — บทนี้จะเปิดฝากระโปรงให้ดูทุกชิ้น และสอนเครื่องมือที่ dev ทั้งโลกใช้เก็บงานทุกวัน: <strong>Git</strong></p>
+      <p>จบบทนี้คุณจะ:</p>
+      <ul>
+        <li>อธิบายได้ว่าไฟล์/โฟลเดอร์แต่ละตัวในโปรเจกต์มีไว้ทำไม อะไรแตะได้ อะไรอย่าแตะ</li>
+        <li>เพิ่ม package จากตลาด pub.dev มาใช้จริง (เปลี่ยนฟอนต์แอปเป็นฟอนต์ไทยสวยๆ)</li>
+        <li>ใช้ <code class="inline">git status / add / commit / log / diff</code> ได้คล่อง และรู้ว่าทำไมมืออาชีพ commit เล็กและบ่อย</li>
+        <li>แยกไฟล์หน้าจอออกจาก <code class="inline">main.dart</code> แบบ clean ก่อนที่มันจะบวมเป็น 800 บรรทัด</li>
+      </ul>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ — เกินนี้ไม่มี สบายใจได้)</div>
+        <p><span class="pill">pubspec.yaml</span><span class="pill">package</span><span class="pill">dependency</span><span class="pill">repository</span><span class="pill">commit</span><span class="pill">stage</span><span class="pill">.gitignore</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: โปรเจกต์ Flutter คือ "ร้านอาหาร" ทั้งร้าน</h2>
+      <p>จำได้ไหมครับ บทที่แล้วเราเปรียบ Flutter เป็น <strong>ครัวกลางที่เสิร์ฟได้ทั้งหน้าร้านและเดลิเวอรี</strong> — บทนี้เราจะเดินสำรวจ "ร้าน" ทั้งร้านกัน ว่าแต่ละห้องมีไว้ทำอะไร</p>
+      <h3>ฉากที่ 1 — เดินเข้าร้าน</h3>
+      <div class="ascii">        🏪 my_first_app/  (ร้านอาหารของเรา)
+        │
+        ├── 👨‍🍳 lib/            = ครัวกลาง — ที่ที่เรา "ทำอาหาร" (เขียนโค้ด) 95% ของเวลา
+        │     └── main.dart      = เตาหลักของครัว ทุกจานเริ่มจากตรงนี้
+        │
+        ├── 📱 android/  🍎 ios/  = หน้าร้าน 2 สาขา — โครงสร้างเฉพาะของแต่ละแพลตฟอร์ม
+        │                          (ปกติไม่ต้องเข้าไปยุ่ง เหมือนระบบไฟฟ้า-ประปาของอาคาร)
+        │
+        ├── 📋 pubspec.yaml       = สมุดสั่งวัตถุดิบ — อยากใช้ของจากตลาด เขียนสั่งที่นี่
+        │
+        ├── 🧪 test/              = ห้องชิมอาหาร — ตรวจรสชาติก่อนเสิร์ฟลูกค้า
+        │
+        └── 🚫 .gitignore         = รายการของที่ "ไม่ต้องขนย้าย" ตอนย้ายร้าน
+                                    (ของที่สร้างใหม่ได้เสมอ เช่น กล่องโฟม ถุงพลาสติก)</div>
+      <h3 id="run-story">ฉากที่ 2 — เมื่อสั่ง <code class="inline">flutter run</code> เกิดอะไรขึ้น</h3>
+      <div class="ascii">   คุณกด flutter run
+        │
+        ▼
+   ① Flutter เปิดสมุด pubspec.yaml ── "จานนี้ใช้วัตถุดิบอะไรบ้าง?"
+        │
+        ▼
+   ② ไปหยิบวัตถุดิบ (packages) จากตลาด pub.dev มาเตรียมไว้
+        │
+        ▼
+   ③ เข้าครัว lib/main.dart ── เริ่มปรุงจากฟังก์ชัน main()
+        │
+        ▼
+   ④ เสิร์ฟผ่าน "หน้าร้าน" ที่ตรงกับเครื่องคุณ (android/ หรือ ios/)
+        │
+        ▼
+   📱 แอปขึ้นจอ!</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไมต้องเห็นภาพนี้</div>
+        <p>เวลาเกิด error คุณจะรู้ทันทีว่าปัญหาอยู่ "ฉากไหน" — วัตถุดิบขาด (ฉาก ② ปัญหา pubspec) หรืออาหารปรุงผิด (ฉาก ③ ปัญหาโค้ดเรา) หรือหน้าร้านมีปัญหา (ฉาก ④ ปัญหา build) การรู้ว่าพังที่ฉากไหน = แก้ได้เร็วขึ้น 10 เท่า และนี่คือเหตุผลที่หลักสูตรนี้ใช้ "ภาพเล่าเรื่อง" นำก่อนโค้ดเสมอ: <strong>สมองจำเรื่องราวได้ดีกว่ารายการข้อเท็จจริง</strong></p>
+      </div>
+    </section>
+
+    <section id="files">
+      <h2>2. 🧠 เจาะแต่ละไฟล์/โฟลเดอร์ — อะไรแตะได้ อะไรอย่าแตะ</h2>
+      <table>
+        <tr><th>ไฟล์/โฟลเดอร์</th><th>คืออะไร</th><th>คุณจะแตะบ่อยแค่ไหน</th></tr>
+        <tr><td><code class="inline">lib/</code></td><td>โค้ด Dart ทั้งหมดของแอป</td><td>🔥 ทุกวัน — บ้านหลักของคุณ</td></tr>
+        <tr><td><code class="inline">lib/main.dart</code></td><td>จุดเริ่มต้นของแอป</td><td>🔥 ทุกวัน (หัวข้อ 7 จะสอนวิธีแยกไฟล์)</td></tr>
+        <tr><td><code class="inline">pubspec.yaml</code></td><td>รายการ package, ชื่อแอป, เวอร์ชัน, assets</td><td>🟡 บ่อย — ทุกครั้งที่เพิ่มของใหม่</td></tr>
+        <tr><td><code class="inline">test/</code></td><td>โค้ดทดสอบอัตโนมัติ</td><td>🟡 บ่อยขึ้นเรื่อยๆ ตามโปรเจกต์โต</td></tr>
+        <tr><td><code class="inline">android/</code>, <code class="inline">ios/</code></td><td>โครงสร้างเฉพาะแพลตฟอร์ม</td><td>🟢 นานๆ ครั้ง (ตั้งค่า permission, ไอคอน)</td></tr>
+        <tr><td><code class="inline">build/</code></td><td>ผลลัพธ์จากการ build — สร้างใหม่ได้เสมอ</td><td>⛔ ไม่ต้องแตะ ไม่ต้องเก็บ</td></tr>
+        <tr><td><code class="inline">.dart_tool/</code></td><td>ไฟล์ภายในของเครื่องมือ Dart</td><td>⛔ ไม่ต้องแตะ</td></tr>
+        <tr><td><code class="inline">analysis_options.yaml</code></td><td>กฎตรวจคุณภาพโค้ด (lint)</td><td>🟢 ตั้งครั้งเดียว แก้เมื่ออยากเข้มขึ้น</td></tr>
+      </table>
+      <div class="box concept">
+        <div class="t">🧠 หลักคิด dev: "ของที่เราเขียน" vs "ของที่เครื่องมือสร้าง"</div>
+        <p>แยกให้ออกระหว่าง <strong>ของที่เราเขียน</strong> (lib, test, pubspec) กับ <strong>ของที่เครื่องมือสร้าง</strong> (build, .dart_tool) — กลุ่มหลังพังก็ลบทิ้งแล้วสร้างใหม่ได้เสมอ นี่คือเหตุผลที่คำแนะนำแก้ปัญหายอดฮิต <code class="inline">flutter clean</code> (ลบของที่สร้าง) ถึงได้ผลบ่อย</p>
+      </div>
+    </section>
+
+    <section id="package">
+      <h2>3. 💻 ลงมือจริง: เพิ่ม package แรกจากตลาด pub.dev</h2>
+      <p><strong>pub.dev</strong> คือ "ตลาดวัตถุดิบ" ของ Flutter — โค้ดสำเร็จรูปนับหมื่นตัวที่คนทั่วโลกแบ่งปันไว้ ใช้ฟรี เราจะลองเพิ่มฟอนต์สวยๆ ด้วย package <code class="inline">google_fonts</code></p>
+      <h3>ขั้นที่ 1 — สั่งวัตถุดิบ</h3>
+      <pre><code class="language-bash">flutter pub add google_fonts</code></pre>
+      <p>คำสั่งนี้เขียน <code class="inline">google_fonts: ^x.x.x</code> เพิ่มใน <code class="inline">pubspec.yaml</code> ให้อัตโนมัติ และดาวน์โหลดมาไว้ในเครื่อง</p>
+      <h3>ขั้นที่ 2 — ใช้งานใน main.dart (แก้ 2 จุด)</h3>
+      <pre><code class="language-dart">import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // ① import วัตถุดิบใหม่
+
+// ...ภายใน Text เดิมของเรา แก้ style:
+Text(
+  'สวัสดีชาวโลก! 🌏',
+  style: GoogleFonts.kanit(              // ② ใช้ฟอนต์ Kanit
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+  ),
+),</code></pre>
+      <h3>ขั้นที่ 3 — ดูผล</h3>
+      <p>กดบันทึก → Hot Restart (กด <code class="inline">R</code>) → ฟอนต์เปลี่ยน! 🎉</p>
+      <div class="box why">
+        <div class="t">🤔 ทำไมครั้งนี้ต้อง Hot Restart ไม่ใช่ Hot Reload</div>
+        <p>จำตารางบทที่ 1 ได้ไหมครับ — เพิ่ม package ใหม่คือการเปลี่ยน "วัตถุดิบตั้งต้น" ของแอป (บางกรณีต้องถึงขั้นหยุดแล้ว <code class="inline">flutter run</code> ใหม่) Hot Reload อัปเดตเฉพาะโค้ดที่ปรุงอยู่ ไม่ได้ไปหยิบวัตถุดิบใหม่จากตลาด</p>
+      </div>
+    </section>
+
+    <section id="git">
+      <h2>4. 🖼️ ภาพเล่าเรื่อง: Git คือ "จุดเซฟในเกม"</h2>
+      <p>เคยเล่นเกมที่มี save point ไหมครับ — ก่อนสู้บอส เราเซฟไว้ก่อน ถ้าแพ้ก็ย้อนกลับมาที่จุดเซฟ ไม่ต้องเริ่มเกมใหม่ทั้งหมด <strong>Git ทำแบบเดียวกันกับโค้ดของคุณ</strong></p>
+      <div class="ascii"> การทำงานของคุณบนไฟล์                     ประวัติที่ Git จำไว้ (repository)
+┌──────────────────────────┐             ┌────────────────────────────────┐
+│  แก้ไฟล์ A, B ...         │             │  ● commit 3 "เพิ่มฟอนต์ Kanit"  │
+│  (ยังไม่เซฟเข้า Git)       │             │  │                             │
+│           │              │   commit    │  ● commit 2 "เพิ่มไอคอน"        │
+│           ▼              │  ────────►  │  │                             │
+│  git add  (เลือกของที่จะ   │             │  ● commit 1 "Hello World"      │
+│  เซฟ = จัดของขึ้นโต๊ะ)      │             │                                │
+└──────────────────────────┘             │  ⏪ ย้อนกลับไปจุดไหนก็ได้เสมอ     │
+                                         └────────────────────────────────┘</div>
+      <h3>เรื่องเล่า 3 ฉากที่เกิดขึ้นทุกวันในชีวิต dev</h3>
+      <div class="ascii">ฉาก ①  แก้โค้ดจนพอใจ          →  งานอยู่ใน "โต๊ะทำงาน" (ยังไม่ปลอดภัย)
+ฉาก ②  git add .              →  ยกงานขึ้น "โต๊ะเตรียมเซฟ" (stage — เลือกได้ว่าเอาชิ้นไหน)
+ฉาก ③  git commit -m "..."    →  📸 ถ่ายรูปเก็บเข้าอัลบั้มถาวร พร้อมป้ายบอกว่ารูปนี้คืออะไร</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไมต้องมีขั้น stage (git add) คั่นกลาง</div>
+        <p>เพื่อให้เลือกได้ว่า commit นี้จะรวมไฟล์ไหน — เหมือนถ่ายรูปหมู่ที่เราจัดคนเข้าเฟรมก่อนกดชัตเตอร์ งานจริงเราแก้หลายเรื่องพร้อมกันบ่อยมาก ขั้นนี้ทำให้แยก commit เป็นเรื่องๆ ได้ (<strong>1 commit = 1 เรื่อง</strong> คือมาตรฐานมืออาชีพ)</p>
+      </div>
+      <h3>คำสั่งที่ใช้จริง 90% ของชีวิต มีแค่ 5 ตัวนี้</h3>
+      <pre><code class="language-bash">git status    # ตอนนี้มีอะไรเปลี่ยนบ้าง? (ใช้บ่อยสุด — สั่งก่อนทำอะไรเสมอ)
+git add .     # ยกทุกไฟล์ที่แก้ ขึ้นโต๊ะเตรียมเซฟ
+git commit -m "feat: add Kanit font"   # เซฟถาวร พร้อมข้อความอธิบาย
+git log --oneline   # ดูอัลบั้มประวัติทั้งหมด
+git diff      # ดูว่าแก้อะไรไปบ้างแบบบรรทัดต่อบรรทัด (ก่อน commit ควรดูเสมอ)</code></pre>
+      <h3 id="gitignore"><code class="inline">.gitignore</code> — รายการของที่ไม่ต้องขนย้าย</h3>
+      <p>เปิดไฟล์ <code class="inline">.gitignore</code> ในโปรเจกต์ดู จะเห็นรายชื่ออย่าง <code class="inline">/build/</code>, <code class="inline">.dart_tool/</code> — นี่คือการบอก Git ว่า <strong>"ของพวกนี้ไม่ต้องจำ"</strong> เพราะเป็นของที่สร้างใหม่ได้เสมอและมีขนาดใหญ่มาก</p>
+      <div class="box warn">
+        <div class="t">⚠️ ทำไมสำคัญ</div>
+        <p>repo ที่ commit โฟลเดอร์ <code class="inline">build/</code> เข้าไปจะบวมหลายร้อย MB, โคลนช้า, และคนในทีมตีกันเพราะไฟล์ build ของแต่ละเครื่องไม่เหมือนกัน — ข่าวดีคือ <code class="inline">flutter create</code> เขียน <code class="inline">.gitignore</code> มาตรฐานให้แล้ว หน้าที่คุณคือ <strong>อย่าลบมัน</strong> และรู้ว่ามันมีไว้ทำไม</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>5. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — commit เล็กและบ่อย ดีกว่า commit ใหญ่วันละครั้ง</h3>
+      <p>ทำฟีเจอร์เสร็จ 1 เรื่อง → commit ทันที เช่น เปลี่ยนฟอนต์เสร็จ = 1 commit, เพิ่มไอคอน = อีก 1 commit ถ้าพังจะย้อนกลับได้ละเอียดระดับ "เรื่อง" ไม่ใช่ย้อนทีเสียงานทั้งวัน</p>
+      <h3>เทคนิคที่ 2 — ใช้ <code class="inline">git status</code> เป็น "เข็มทิศ" เวลาหลงทาง</h3>
+      <p>ไม่แน่ใจว่าแก้อะไรไปบ้าง? ลืมว่าทำถึงไหน? <code class="inline">git status</code> + <code class="inline">git diff</code> ตอบได้เสมอ นิสัยนี้ช่วยแม้กระทั่งตอนกลับมาเปิดโปรเจกต์หลังหยุดไปหลายวัน</p>
+      <h3>เทคนิคที่ 3 — ก่อนทดลองอะไรเสี่ยงๆ ให้ commit ก่อน</h3>
+      <p>อยากลองรื้อ layout ใหม่ทั้งหน้า? commit สถานะที่ทำงานได้ไว้ก่อน แล้วรื้อได้เต็มที่ ถ้าเละก็กลับมาได้ด้วย <code class="inline">git checkout -- .</code> (ทิ้งการแก้ทั้งหมด กลับไปจุดเซฟล่าสุด) — นี่คือ "สู้บอสแบบมี save point"</p>
+      <h3>เทคนิคที่ 4 — เขียนข้อความ commit ให้ "ตัวเองในอนาคต" อ่าน</h3>
+      <p><code class="inline">git log</code> ของคุณคือไดอารี่การทำงาน ข้อความแบบ <code class="inline">"แก้บั๊ก"</code> บอกอะไรไม่ได้เลย แต่ <code class="inline">"fix: ปุ่มเพิ่มงานไม่ทำงานเมื่อช่องข้อความว่าง"</code> อ่านปุ๊บรู้ปั๊บแม้ผ่านไป 6 เดือน</p>
+    </section>
+
+    <section id="prod">
+      <h2>6. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "บั๊กด่วนตอนบ่ายสาม"</div>
+        <p>คุณกำลังทำฟีเจอร์ใหม่ค้างอยู่ครึ่งทาง จู่ๆ หัวหน้าทักมา: <em>"ลูกค้าเจอบั๊กบนแอปจริง แก้ด่วนเลย!"</em> — งานที่ค้างอยู่ยังไม่เสร็จ commit ก็ยังไม่ได้ จะทิ้งก็เสียดาย ทำไงดี?</p>
+      </div>
+      <pre><code class="language-bash">git stash          # 📦 เก็บงานค้างใส่กล่องชั่วคราว — ไฟล์กลับไปสะอาดเหมือนจุดเซฟล่าสุด
+# ...แก้บั๊กด่วน ทดสอบ commit เรียบร้อย...
+git stash pop      # 📤 หยิบงานค้างออกจากกล่อง กลับมาทำต่อเหมือนไม่มีอะไรเกิดขึ้น</code></pre>
+      <p>นี่คือเหตุการณ์ที่เกิดขึ้น <strong>ทุกสัปดาห์</strong> ในทีมจริง และเป็นเหตุผลว่าทำไม dev ที่ใช้ Git คล่องถึงทำงานในทีมได้ราบรื่นกว่า</p>
+      <h3>ภาพการทำงานเป็นทีมจริง (จะได้เจอเมื่อฝึกงาน/ทำงาน)</h3>
+      <div class="ascii">งานจริงไม่มีใครแก้โค้ดบนเส้นหลัก (main) ตรงๆ:
+
+  main ──●──────────────●─────────●──►  (เส้นนี้ต้อง "ใช้งานได้เสมอ")
+          \            ▲ merge
+           \          /  (ผ่านการรีวิวจากเพื่อนร่วมทีมก่อน = Pull Request)
+            ●────●───●
+            branch "feature/add-login"  (ห้องทดลองส่วนตัว พังได้ไม่กระทบใคร)</div>
+      <p>ตอนนี้คุณทำงานคนเดียว ยังไม่ต้องใช้ branch ทุกวันก็ได้ แต่จำภาพนี้ไว้ — บทท้ายๆ เราจะฝึกจริง และวันแรกที่เข้าทีม คุณจะขอบคุณตัวเองที่เข้าใจภาพนี้มาก่อน</p>
+    </section>
+
+    <section id="clean">
+      <h2>7. 🧹 ตัวอย่าง Clean Code: แยกไฟล์ก่อนที่ main.dart จะกลายเป็น "ลิ้นชักรวมของ"</h2>
+      <p>โปรเจกต์มือใหม่เกือบทุกคนเจอปัญหาเดียวกัน: เขียนทุกอย่างใน <code class="inline">main.dart</code> จนยาว 800 บรรทัด หาอะไรไม่เจอ — มาดูวิธีป้องกันตั้งแต่ตอนนี้</p>
+      <div class="grid2">
+        <div class="card bad"><div class="h">❌ แบบรีบๆ — ทุกอย่างกองใน main.dart</div><p style="margin:0;font-size:14px">MyApp, HomeScreen, SettingsScreen, ปุ่มพิเศษ 5 แบบ, ฟังก์ชันคำนวณ ฯลฯ ปนกัน 800 บรรทัด → หาโค้ดไม่เจอ ทีมแก้ไฟล์เดียวกันชนกันตลอด</p></div>
+        <div class="card good"><div class="h">✅ แบบมืออาชีพ — หนึ่งไฟล์ หนึ่งหน้าที่</div><p style="margin:0;font-size:14px">main.dart เหลือแค่จุดสตาร์ท ~15 บรรทัด หน้าจอแต่ละหน้ามี "บ้าน" ของตัวเองใน <code class="inline">lib/screens/</code></p></div>
+      </div>
+      <div class="ascii">lib/
+├── main.dart                 # เหลือแค่จุดสตาร์ท (สั้นมาก ~15 บรรทัด)
+└── screens/
+    └── home_screen.dart      # หน้าจอหลัก แยกบ้านของตัวเอง</div>
+      <pre><code class="language-dart">// lib/screens/home_screen.dart
+import 'package:flutter/material.dart';
+
+/// หน้าจอหลัก — ย้ายมาจาก main.dart ทั้งก้อน ไม่ต้องแก้อะไรข้างใน
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(/* ...โค้ดเดิมจากบทที่ 1... */);
+  }
+}</code></pre>
+      <pre><code class="language-dart">// lib/main.dart — สะอาด อ่านจบใน 10 วินาที
+import 'package:flutter/material.dart';
+import 'screens/home_screen.dart'; // ดึงหน้าจอจากไฟล์ของมันเอง
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'แอปแรกของฉัน',
+      theme: ThemeData(colorSchemeSeed: Colors.indigo),
+      home: const HomeScreen(),
+    );
+  }
+}</code></pre>
+      <h3>กฎการตั้งชื่อไฟล์ที่ทีมทั่วโลกใช้</h3>
+      <table>
+        <tr><th>สิ่งที่ตั้งชื่อ</th><th>มาตรฐาน</th><th>ตัวอย่าง</th></tr>
+        <tr><td>ไฟล์</td><td><code class="inline">snake_case</code> (ตัวเล็ก + ขีดล่าง)</td><td><code class="inline">home_screen.dart</code> ✅ / <code class="inline">HomeScreen.dart</code> ❌</td></tr>
+        <tr><td>คลาส</td><td><code class="inline">PascalCase</code> (ขึ้นต้นตัวใหญ่ทุกคำ)</td><td><code class="inline">HomeScreen</code> ✅ / <code class="inline">home_screen</code> ❌</td></tr>
+        <tr><td>ตัวแปร/ฟังก์ชัน</td><td><code class="inline">camelCase</code> (คำแรกตัวเล็ก)</td><td><code class="inline">taskCount</code> ✅ / <code class="inline">task_count</code> ❌</td></tr>
+      </table>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>ชื่อไฟล์ควรบอกได้ทันทีว่าข้างในคืออะไร โดยไม่ต้องเปิด — <code class="inline">home_screen.dart</code> เปิดมาก็ต้องเจอ <code class="inline">HomeScreen</code> เท่านั้น ไม่มีแขกแปลกหน้า</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>8. ⚠️ ข้อผิดพลาดที่เจอบ่อย (พร้อมวิธีอ่านและวิธีแก้)</h2>
+      <div class="box warn">
+        <div class="t">① commit แล้วแต่ไฟล์ไม่ไปด้วย</div>
+        <p><strong>อาการ:</strong> <code class="inline">git commit</code> บอก "nothing to commit" หรือ commit แล้วแต่ GitHub ไม่เห็นไฟล์ใหม่<br>
+        <strong>สาเหตุ:</strong> ลืมขั้น <code class="inline">git add</code> (ลืมยกของขึ้นโต๊ะก่อนถ่ายรูป)<br>
+        <strong>วิธีแก้:</strong> <code class="inline">git status</code> ดูก่อน — ไฟล์สีแดง = ยังไม่ add → <code class="inline">git add .</code> → commit ใหม่</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② flutter pub get ล้มเหลว: "version solving failed"</div>
+        <p><strong>อาการ:</strong> เพิ่ม package แล้วขึ้น error ยาวๆ มีคำว่า "because ... depends on ..."<br>
+        <strong>สาเหตุ:</strong> package ที่ขอ เข้ากันไม่ได้กับเวอร์ชัน Flutter/Dart ของเครื่อง หรือกับ package อื่น<br>
+        <strong>วิธีแก้:</strong> อ่านบรรทัดแรกของ error หา "ชื่อ package คู่กรณี" → ไปดูหน้า package นั้นบน pub.dev แท็บ Versions เลือกเวอร์ชันที่รองรับ SDK ของเรา <em>(นี่คือทักษะอ่าน error จากบทที่ 1 มาใช้จริงครั้งแรก!)</em></p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ แก้ pubspec.yaml แล้วแอปพังทันที</div>
+        <p><strong>อาการ:</strong> ขึ้น "Error on line 15: expected ..." ทั้งที่แค่เพิ่มบรรทัดเดียว<br>
+        <strong>สาเหตุ:</strong> ไฟล์ .yaml เข้มงวดเรื่อง "ย่อหน้า" มาก — เว้นวรรคผิด 1 ช่องก็พัง (ห้ามใช้ Tab!)<br>
+        <strong>วิธีแก้:</strong> ดูบรรทัดที่ error บอก เทียบย่อหน้ากับบรรทัดข้างเคียงให้ตรงกันเป๊ะ · เคล็ดลับ: ใช้ <code class="inline">flutter pub add ชื่อpackage</code> แทนการพิมพ์เองในไฟล์ จะไม่พลาดเลย</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>9. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — สำรวจ</div>
+        <p>เปิด <code class="inline">git log --oneline</code> ดูประวัติ commit ของ <code class="inline">my_first_app</code> แล้วสั่ง <code class="inline">git status</code>, แก้ข้อความ 1 จุดใน main.dart, ดู <code class="inline">git diff</code> ว่า Git เห็นการแก้ของเรายังไง แล้ว commit ด้วยข้อความมาตรฐาน conventional commits</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — เพิ่มวัตถุดิบ</div>
+        <p>เพิ่ม package <code class="inline">google_fonts</code> ตามหัวข้อ 3 เปลี่ยนฟอนต์แอปเป็น Kanit (หรือฟอนต์ไทยตัวอื่นที่ชอบ) แล้ว commit ด้วยข้อความ <code class="inline">feat: use Kanit font from google_fonts</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — จัดบ้าน</div>
+        <p>แยก <code class="inline">HomeScreen</code> ออกจาก <code class="inline">main.dart</code> ไปไว้ที่ <code class="inline">lib/screens/home_screen.dart</code> ตามหัวข้อ 7 ให้แอปยังรันได้เหมือนเดิม และ <code class="inline">flutter test</code> ยังผ่าน แล้ว commit ด้วยข้อความ <code class="inline">refactor: move HomeScreen to its own file</code> — push ทั้งหมดขึ้น GitHub</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>10. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <p>ก่อนไปบทต่อไป ตรวจว่าทำครบแล้ว:</p>
+      <ul class="checklist">
+        <li>อธิบายได้ว่า <code class="inline">lib/</code>, <code class="inline">pubspec.yaml</code>, <code class="inline">android/</code>/<code class="inline">ios/</code>, <code class="inline">.gitignore</code> มีไว้ทำไม</li>
+        <li>เพิ่ม package จาก pub.dev และใช้งานได้จริง</li>
+        <li>ใช้ <code class="inline">git status → add → commit</code> ได้โดยไม่ต้องเปิดดูตัวอย่าง</li>
+        <li>อธิบายได้ว่าทำไมห้าม commit โฟลเดอร์ <code class="inline">build/</code></li>
+        <li>แยกไฟล์หน้าจอออกจาก <code class="inline">main.dart</code> สำเร็จ (แบบฝึกหัดระดับ 3)</li>
+        <li>push ขึ้น GitHub แล้วเห็น commit ใหม่บนเว็บ</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">pubspec.yaml</code></td><td>ไฟล์รายการของที่โปรเจกต์ใช้</td><td>สมุดสั่งวัตถุดิบ</td></tr>
+        <tr><td>package</td><td>โค้ดสำเร็จรูปจากคนอื่น</td><td>วัตถุดิบจากตลาด</td></tr>
+        <tr><td>dependency</td><td>package ที่โปรเจกต์เรา "พึ่งพา"</td><td>รายการในสมุดสั่งของ</td></tr>
+        <tr><td>repository (repo)</td><td>โฟลเดอร์ที่ Git จำประวัติให้</td><td>อัลบั้มรูปถาวร</td></tr>
+        <tr><td>commit</td><td>จุดเซฟถาวร 1 จุด พร้อมคำอธิบาย</td><td>รูปถ่าย 1 ใบในอัลบั้ม</td></tr>
+        <tr><td>stage (<code class="inline">git add</code>)</td><td>ขั้นเลือกของก่อนเซฟ</td><td>จัดคนเข้าเฟรมก่อนกดชัตเตอร์</td></tr>
+        <tr><td><code class="inline">.gitignore</code></td><td>รายการไฟล์ที่ Git ไม่ต้องจำ</td><td>ของที่ไม่ต้องขนตอนย้ายบ้าน</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>โปรเจกต์ Flutter = ร้านอาหารที่เราทำงานในครัว (<code class="inline">lib/</code>) สั่งวัตถุดิบผ่านสมุด (<code class="inline">pubspec.yaml</code>) โดยไม่ต้องยุ่งกับระบบอาคาร (<code class="inline">android/</code>, <code class="inline">ios/</code>) · Git = จุดเซฟในเกมที่ทำให้กล้าทดลอง · แยกไฟล์ตั้งแต่โปรเจกต์ยังเล็ก = ของขวัญให้ตัวเองในอนาคต</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่1_เริ่มต้น_Flutter.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 1: เริ่มต้น Flutter</div>
+        </a>
+        <a href="บทที่3_HotReloadและวงจรการพัฒนา.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 3: Hot Reload และวงจรการพัฒนา</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · สัปดาห์ที่ 1 · บทที่ 2<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script>
+  // ครอบด้วย if กันกรณีเปิดแบบออฟไลน์ (โหลด highlight.js จาก CDN ไม่ได้)
+  if (window.hljs) { hljs.highlightAll(); }
+  document.querySelectorAll('pre').forEach(function(pre){
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'คัดลอก';
+    btn.addEventListener('click', function(){
+      var code = pre.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(function(){
+        btn.textContent = '✓ คัดลอกแล้ว';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.textContent='คัดลอก'; btn.classList.remove('done'); }, 1600);
+      });
+    });
+    pre.appendChild(btn);
+  });
+  window.addEventListener('scroll', function(){
+    var h = document.documentElement;
+    var scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    document.getElementById('progress').style.width = scrolled + '%';
+  });
+  var links = Array.from(document.querySelectorAll('#toc a'));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  window.addEventListener('scroll', function(){
+    var pos = window.scrollY + 120;
+    var current = -1;
+    sections.forEach(function(sec, i){ if(sec && sec.offsetTop <= pos) current = i; });
+    links.forEach(function(a){ a.classList.remove('active'); });
+    if(current >= 0) links[current].classList.add('active');
+  });
+  var sb = document.getElementById('sidebar');
+  var mt = document.getElementById('menu-toggle');
+  mt.addEventListener('click', function(){ sb.classList.toggle('open'); });
+  document.querySelectorAll('#toc a').forEach(function(a){
+    a.addEventListener('click', function(){ sb.classList.remove('open'); });
+  });
+</script>
+</body>
+</html>

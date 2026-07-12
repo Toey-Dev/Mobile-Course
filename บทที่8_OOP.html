@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 8 — OOP: Class, Object และ Inheritance | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 2 · บทที่ 8</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: แม่พิมพ์ขนม</a>
+      <a href="#code" class="lvl1">2. สร้างพิมพ์เขียว Question</a>
+      <a href="#inherit" class="lvl2">— Inheritance</a>
+      <a href="#secret" class="lvl2">— ไขปริศนา StatelessWidget</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: models/</a>
+      <a href="#clean" class="lvl1">5. Clean Code: Map → Class</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 2 · บทที่ 8</span>
+      <h1>OOP: Class, Object และ Inheritance — คิดแบบพิมพ์เขียว</h1>
+      <p>ไขปริศนาที่ค้างมาตั้งแต่บทที่ 1: <code style="color:#fff">class MyApp extends StatelessWidget</code> แปลว่าอะไรกันแน่</p>
+      <div class="meta">
+        <span>⏱️ 2–2.5 ชั่วโมง (แนวคิดใหม่เยอะ ค่อยๆ อ่าน)</span>
+        <span>📋 ต้องผ่านบทที่ 7 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">บทที่แล้วเราเก็บคำถามเป็น Map — ใช้ได้ แต่พิมพ์ key ผิดเมื่อไหร่ได้ null เงียบๆ เมื่อนั้น บทนี้เราจะสร้าง "พิมพ์เขียว" ของตัวเองที่ปลอดภัยกว่า และมันคือหัวใจของ Flutter ทั้งเฟรมเวิร์ก</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">class</span><span class="pill">object</span><span class="pill">property</span><span class="pill">method</span><span class="pill">constructor</span><span class="pill">extends</span><span class="pill">@override</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: แม่พิมพ์ขนม</h2>
+      <p>ร้านขนมที่ต้องทำคุกกี้วันละพันชิ้น ไม่มีใครปั้นทีละชิ้นด้วยมือ — เขาสร้าง <strong>แม่พิมพ์</strong> ครั้งเดียว แล้วกดออกมากี่ชิ้นก็ได้:</p>
+      <div class="ascii">        🍪 แม่พิมพ์ (class)                     🍪🍪🍪 ขนมจริง (objects)
+   ┌─────────────────────────┐
+   │  พิมพ์เขียว "Question"    │              q1 = Question(text: '1+1=?',  answer: '2')
+   │  กำหนดว่าทุกชิ้นต้องมี:     │   กดพิมพ์ →   q2 = Question(text: 'เมืองหลวงไทย?', answer: 'กรุงเทพ')
+   │  · text    (โจทย์)       │              q3 = Question(text: 'ภาษาของ Flutter?', answer: 'dart')
+   │  · answer  (เฉลย)        │
+   │  · check() (วิธีตรวจ)     │              แต่ละชิ้นหน้าตาเหมือนกัน (โครงเดียวกัน)
+   └─────────────────────────┘              แต่ "ไส้" ต่างกัน (ข้อมูลของใครของมัน)</div>
+      <h3>แล้ว inheritance (การสืบทอด) ล่ะ? — ฉากที่สอง</h3>
+      <div class="ascii">            🍪 แม่พิมพ์แม่: "ขนม"  (มี: อบ(), ราคา)
+                       │ extends = "สืบทอดทุกอย่างจากแม่ แล้วเพิ่มของตัวเอง"
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+   🍪 คุกกี้ช็อกชิป   🥐 ครัวซองต์      🎂 เค้กวันเกิด
+   (เพิ่ม: ช็อกชิป)  (เพิ่ม: ทาเนย)    (เพิ่ม: จุดเทียน() และ
+                                     "อบ()" แบบของตัวเอง = @override)
+
+   ลูกทุกตัว "อบได้ มีราคา" โดยไม่ต้องเขียนซ้ำ — เพราะสืบทอดจากแม่</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไม OOP ถึงเป็นหัวใจของโค้ดที่ขยายได้</div>
+        <p>พิมพ์เขียวเขียนครั้งเดียว ใช้ผลิตได้ไม่จำกัด และต่อยอดจากของเดิมได้โดยไม่ต้องรื้อ — แอปใหญ่ๆ ที่มีโค้ดเป็นแสนบรรทัดอยู่รอดได้เพราะหลักการนี้</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: สร้างพิมพ์เขียว Question</h2>
+      <pre><code class="language-dart">/// พิมพ์เขียวของ "คำถาม 1 ข้อ" — ทุกข้อจะมีโครงเหมือนกันเป๊ะ
+class Question {
+  // property (สมบัติประจำตัว): ข้อมูลที่ขนมแต่ละชิ้นถือไว้
+  final String text;
+  final String answer;
+
+  // constructor: "เครื่องกดพิมพ์" — วิธีสร้างขนมชิ้นใหม่จากพิมพ์นี้
+  // this.text = รับค่ามาใส่ property ชื่อ text ของชิ้นนี้
+  const Question({required this.text, required this.answer});
+
+  // method (ท่าประจำตัว): ฟังก์ชันที่ผูกติดกับขนมชิ้นนั้น
+  bool check(String userAnswer) {
+    return userAnswer.trim().toLowerCase() == answer.toLowerCase();
+  }
+}
+
+void main() {
+  // กดพิมพ์ออกมาเป็น object จริง 2 ชิ้น
+  final q1 = Question(text: 'Flutter ใช้ภาษาอะไรเขียน?', answer: 'dart');
+  final q2 = Question(text: 'ไฟล์รายการ package ชื่ออะไร?', answer: 'pubspec.yaml');
+
+  print(q1.text);              // เข้าถึง property ด้วยจุด
+  print(q1.check('DART'));     // true — เรียก method ด้วยจุด (normalize ในตัวแล้ว!)
+  print(q2.check('pubspec'));  // false
+
+  // พลังจริง: List ของ Question — Collection บทที่แล้ว + Class บทนี้
+  final quiz = [q1, q2];
+  for (final q in quiz) {
+    print('${q.text} (เฉลย ${q.answer})');
+  }
+}</code></pre>
+      <p><strong>เทียบกับ Map จะเห็นความต่างชัดๆ:</strong> พิมพ์ <code class="inline">q1.txet</code> (สะกดผิด) → <strong>เส้นแดงขึ้นทันทีตั้งแต่ยังไม่รัน</strong> เพราะพิมพ์เขียวประกาศไว้ชัดว่ามีอะไรบ้าง ส่วน <code class="inline">map['txet']</code> → เงียบๆ แล้วได้ null ไปพังที่อื่น</p>
+      <h3 id="inherit">Inheritance — ต่อยอดจากพิมพ์แม่</h3>
+      <pre><code class="language-dart">/// คำถามพิเศษ: ให้คะแนน 2 เท่า — สืบทอดทุกอย่างจาก Question แล้วเพิ่ม/แก้บางจุด
+class BonusQuestion extends Question {
+  const BonusQuestion({required super.text, required super.answer});
+  // super.text = ส่งต่อค่าไปให้ constructor ของแม่
+
+  int get points => 2;   // ของใหม่ที่แม่ไม่มี
+}</code></pre>
+      <h3 id="secret">🤯 ไขปริศนาที่ค้างมา 7 บท</h3>
+      <pre><code class="language-dart">class MyApp extends StatelessWidget {   // ← บรรทัดนี้จากบทที่ 1!
+  const MyApp({super.key});             // ← constructor + ส่งค่าให้แม่
+
+  @override                             // ← "ฉันจะทำท่านี้แบบของฉันเอง"
+  Widget build(BuildContext context) {  // ← method ที่แม่สั่งให้ลูกทุกตัวต้องมี
+    return MaterialApp(...);
+  }
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 อ่านออกแล้วใช่ไหมครับ</div>
+        <p><strong>MyApp คือพิมพ์เขียวที่สืบทอดจาก StatelessWidget</strong> (พิมพ์แม่ที่ทีม Flutter เขียนไว้ให้) — แม่กำหนดว่า "ลูกทุกตัวต้องมีท่า <code class="inline">build()</code> บอกว่าหน้าตาตัวเองเป็นยังไง" แล้วเราก็ <code class="inline">@override</code> ใส่หน้าตาของเราลงไป ทั้งเฟรมเวิร์ก Flutter คือ OOP ที่คุณเพิ่งเรียนจบนี่เอง</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — เจอ "ข้อมูลที่เดินทางด้วยกันเสมอ" = สร้าง class</h3>
+      <p>ชื่อ+ราคา+รูป ของสินค้า, โจทย์+เฉลย ของคำถาม, ชื่อ+อีเมล ของผู้ใช้ — ข้อมูลที่ไปไหนไปกันเป็นชุด ควรอยู่ในพิมพ์เขียวเดียวกัน ไม่ใช่ตัวแปรกระจัดกระจายหรือ Map หลวมๆ</p>
+      <h3>เทคนิคที่ 2 — method คือ "ความรู้ที่อยู่กับข้อมูล"</h3>
+      <p>วิธีตรวจคำตอบ (<code class="inline">check</code>) อยู่ใน Question ไม่ใช่ลอยอยู่ใน main — ใครหยิบ Question ไปใช้ที่ไหน ก็ได้วิธีตรวจที่ถูกต้อง (รวม normalize) ไปด้วยเสมอ ไม่ต้องเขียนใหม่และไม่มีวันลืม trim</p>
+      <h3>เทคนิคที่ 3 — ใช้ const constructor เมื่อข้อมูลไม่เปลี่ยน</h3>
+      <p><code class="inline">const Question({...})</code> + property เป็น final ทั้งหมด = object ที่สร้างแล้วแก้ไม่ได้ (immutable) — Flutter รักของแบบนี้มาก (จำ "ใช้ const แล้วแอปเร็วขึ้น" จากบทที่ 1 ได้ไหม นี่คือที่มา)</p>
+      <h3>เทคนิคที่ 4 — สืบทอดเมื่อ "เป็นชนิดหนึ่งของ" เท่านั้น</h3>
+      <p>BonusQuestion <strong>เป็น</strong> Question ชนิดหนึ่ง → extends ได้ · แต่ Question ไม่ได้ <strong>เป็น</strong> Quiz ชนิดหนึ่ง (มันเป็น "ส่วนหนึ่งของ") → ใช้การเก็บใน List แทน ถามตัวเองด้วยประโยค "A เป็น B ไหม?" ก่อน extends ทุกครั้ง</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 โฟลเดอร์ models/ — สิ่งแรกที่เปิดดูเมื่อเข้าทีมใหม่</div>
+        <p>แอปจริงทุกตัวมีโฟลเดอร์ <code class="inline">lib/models/</code> เก็บพิมพ์เขียวของข้อมูลทั้งแอป — วันแรกที่เข้าทีม รุ่นพี่จะบอกว่า "อยากรู้ว่าแอปนี้ทำอะไร ไปอ่าน models ก่อน"</p>
+      </div>
+      <pre><code class="language-dart">// lib/models/product.dart — หน้าตา model จริงในแอปอีคอมเมิร์ซ
+class Product {
+  final String id;
+  final String name;
+  final double price;
+  final int stock;
+
+  const Product({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.stock,
+  });
+
+  // ความรู้เรื่อง "ของหมดไหม" อยู่กับตัวสินค้าเอง — ทั้งแอปถามคำถามนี้ที่เดียว
+  bool get isOutOfStock => stock <= 0;
+}</code></pre>
+      <p>พอถึงเฟส 4 ตอนดึงข้อมูลจากอินเทอร์เน็ต ข้อมูลดิบ (JSON) จะถูกแปลงเข้า model แบบนี้ทันทีที่รับมา — เพราะทีมจริงเรียนรู้มานานแล้วว่า ปล่อย Map หลวมๆ วิ่งทั่วแอป = บั๊กสะกดผิดตามมาเป็นฝูง</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: จาก Map หลวมๆ สู่ Class ที่ปลอดภัย</h2>
+      <pre><code class="language-dart">// ❌ Map ทั่วแอป — สะกดผิดคือบั๊กเงียบ
+final q = {'text': 'Flutter ใช้ภาษาอะไร?', 'answer': 'dart'};
+print(q['txet']);        // สะกดผิด → null เงียบๆ ไปพังตอนรัน ไม่มีใครเตือน
+// ตรวจคำตอบ? ต้องเขียน trim().toLowerCase() เองทุกจุด — ลืมสักจุด = บั๊ก</code></pre>
+      <pre><code class="language-dart">// ✅ Class — คอมไพเลอร์เป็นบอดี้การ์ด
+final q = Question(text: 'Flutter ใช้ภาษาอะไร?', answer: 'dart');
+// print(q.txet);        // ← เส้นแดงทันที ยังไม่ทันรันก็รู้ว่าผิด
+print(q.check(' DART ')); // วิธีตรวจ (รวม normalize) มากับตัว object เสมอ</code></pre>
+      <table>
+        <tr><th>ประเด็น</th><th>❌ Map</th><th>✅ Class</th></tr>
+        <tr><td>สะกด key/ชื่อผิด</td><td>null เงียบๆ ตอนรัน</td><td>เส้นแดงตั้งแต่ตอนเขียน</td></tr>
+        <tr><td>ชนิดข้อมูล</td><td>dynamic เดาเอาเอง</td><td>ประกาศชัดทุก property</td></tr>
+        <tr><td>ความรู้ (วิธีตรวจ ฯลฯ)</td><td>กระจายทั่วโค้ด</td><td>อยู่กับข้อมูลใน method</td></tr>
+        <tr><td>คนใหม่อ่านโค้ด</td><td>ต้องไล่หาว่ามี key อะไร</td><td>เปิด class เดียวเห็นครบ</td></tr>
+      </table>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① สับสนระหว่างพิมพ์เขียวกับของจริง</div>
+        <p><strong>สาเหตุ:</strong> property เป็นของขนมแต่ละชิ้น จะใช้ได้ต้องกดพิมพ์ (สร้าง object) ก่อน<br>
+        <strong>วิธีแก้:</strong> จำว่า class คือแบบแปลน ยังกินไม่ได้ — ต้องสร้าง object (<code class="inline">final q = Question(...)</code>) ก่อนเสมอจึงจะ <code class="inline">.text</code> ได้</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② "Missing concrete implementation of 'X'"</div>
+        <p><strong>สาเหตุ:</strong> extends พิมพ์แม่ที่สั่งว่า "ลูกทุกตัวต้องมี method นี้" แต่เราไม่ได้เขียน (เจอบ่อยสุดตอนลืมเขียน <code class="inline">build()</code> ใน Widget)<br>
+        <strong>วิธีแก้:</strong> อ่านชื่อ method ใน error แล้วเขียนเติมพร้อม <code class="inline">@override</code> · ใน VS Code: คลิกหลอดไฟ 💡 → "Create missing override" ได้เลย</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ ลืม required แล้ว constructor บ่น "must have a default"</div>
+        <p><strong>สาเหตุ:</strong> named parameter ใน constructor ที่ไม่ใส่ required และไม่มีค่า default — Dart ไม่รู้ว่าถ้าคนสร้างไม่ส่งค่ามา จะเอาอะไรใส่<br>
+        <strong>วิธีแก้:</strong> property ที่ต้องมีเสมอ → <code class="inline">required this.x</code> · property ที่มีค่าตั้งต้นได้ → ใส่ default เช่น <code class="inline">this.points = 1</code></p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — พิมพ์เขียวแรก</div>
+        <p>สร้าง class <code class="inline">Book</code> (title, author, price) พร้อม constructor แบบ named + required, method <code class="inline">describe()</code> คืนข้อความแนะนำหนังสือ — สร้าง object 3 เล่ม เก็บใน List แล้ววนเรียก describe()</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — สืบทอด</div>
+        <p>สร้าง class <code class="inline">Animal</code> มี name และ method <code class="inline">speak()</code> แล้วสร้าง <code class="inline">Dog</code> และ <code class="inline">Cat</code> ที่ extends Animal พร้อม <code class="inline">@override speak()</code> เป็นเสียงของตัวเอง — เก็บทั้งหมดใน <code class="inline">List&lt;Animal&gt;</code> วนเรียก speak() แล้วสังเกตว่าแต่ละตัวส่งเสียงต่างกันทั้งที่อยู่ List เดียวกัน (นี่คือ polymorphism — ยังไม่ต้องจำชื่อ แค่เห็นความเจ๋งพอ)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — Quiz เวอร์ชัน OOP (ผลงานจบเฟส!)</div>
+        <p>refactor quiz.dart ครั้งใหญ่: สร้าง class <code class="inline">Question</code> (พร้อม check()) และ class <code class="inline">Quiz</code> ที่ถือ <code class="inline">List&lt;Question&gt;</code> + score + method <code class="inline">play()</code> — main() เหลือแค่สร้าง Quiz แล้วเรียก play() (2–3 บรรทัด!) เพิ่ม BonusQuestion ที่ให้ 2 คะแนนอย่างน้อย 1 ข้อ — commit ด้วย <code class="inline">refactor: convert quiz to OOP</code> <strong>และ push ขึ้น GitHub ให้เรียบร้อย</strong></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายความต่าง class (พิมพ์เขียว) กับ object (ของจริง) ด้วยคำพูดตัวเองได้</li>
+        <li>เขียน class พร้อม property, constructor (named + required), method ได้เอง</li>
+        <li>อธิบายได้ว่า extends และ @override ทำอะไร</li>
+        <li>อ่าน <code class="inline">class MyApp extends StatelessWidget</code> แล้วอธิบายได้ทุกคำ</li>
+        <li>Quiz เป็น OOP เต็มตัว และ push ขึ้น GitHub แล้ว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>class</td><td>พิมพ์เขียว/แม่พิมพ์</td><td>แม่พิมพ์ขนม</td></tr>
+        <tr><td>object</td><td>ของจริงที่สร้างจากพิมพ์</td><td>ขนมแต่ละชิ้น</td></tr>
+        <tr><td>property</td><td>ข้อมูลประจำตัวของ object</td><td>ไส้ของขนมชิ้นนั้น</td></tr>
+        <tr><td>method</td><td>ฟังก์ชันประจำตัวของ object</td><td>ท่าประจำตัว</td></tr>
+        <tr><td>constructor</td><td>วิธีสร้าง object ชิ้นใหม่</td><td>เครื่องกดพิมพ์</td></tr>
+        <tr><td><code class="inline">extends</code></td><td>สืบทอดจากพิมพ์แม่</td><td>สูตรต่อยอดจากสูตรแม่</td></tr>
+        <tr><td><code class="inline">@override</code></td><td>ทำ method ของแม่ในแบบของตัวเอง</td><td>"ท่านี้ฉันขอทำเอง"</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>class = แม่พิมพ์ object = ขนม · ข้อมูลที่เดินทางด้วยกัน + ความรู้เกี่ยวกับมัน ควรอยู่ในพิมพ์เดียวกัน · extends = ต่อยอดโดยไม่รื้อของเดิม · Flutter ทั้งเฟรมเวิร์กคือ OOP ที่คุณเพิ่งอ่านออกแล้ว</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่7_List_Map_Collection.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 7: List, Map และ Collection</div>
+        </a>
+        <a href="บทที่9_Async_เบื้องต้น.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 9: รู้จัก Async/await เบื้องต้น</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 2 · บทที่ 8<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

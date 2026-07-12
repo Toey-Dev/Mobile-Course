@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 4 — ตัวแปรและ Null Safety | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 2 · บทที่ 4 (เปิดเฟส)</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: โกดังกล่อง</a>
+      <a href="#quiz" class="lvl1">2. เริ่มโปรเจกต์ Quiz CLI</a>
+      <a href="#vfc" class="lvl2">— var / final / const</a>
+      <a href="#nullsafety" class="lvl2">— Null safety</a>
+      <a href="#concept" class="lvl1">3. ทำไมต้องประกาศชนิด</a>
+      <a href="#techniques" class="lvl1">4. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">5. ตัวอย่างงานจริง</a>
+      <a href="#clean" class="lvl1">6. Clean Code</a>
+      <a href="#errors" class="lvl1">7. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">8. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">9. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 2 · บทที่ 4 — เริ่มภาษา Dart!</span>
+      <h1>ตัวแปร ชนิดข้อมูล และ Null Safety</h1>
+      <p>เก็บข้อมูลให้ถูกกล่อง เข้าใจว่าทำไม Dart เข้มงวดเรื่อง null และเริ่มสร้างเกม Quiz บน Terminal</p>
+      <div class="meta">
+        <span>⏱️ 1.5–2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านเฟส 1 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">เฟสนี้เราพักหน้าจอสวยๆ ไว้ก่อน มาสร้าง "สมอง" ของแอปกันด้วยภาษา Dart ล้วนๆ — โปรเจกต์ต่อเนื่องของเฟสคือ <strong>เกม Quiz บน Terminal</strong> ที่จะเก่งขึ้นทุกบทจนจบเฟส 2</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">variable</span><span class="pill">String</span><span class="pill">int / double</span><span class="pill">bool</span><span class="pill">final / const</span><span class="pill">null</span><span class="pill">nullable (?)</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: โกดังกล่องติดป้าย</h2>
+      <p>โปรแกรมทุกโปรแกรมคือ "โกดังเก็บข้อมูล + คนงานที่หยิบของไปประมวลผล" — <strong>ตัวแปร (variable) คือกล่องติดป้ายชื่อในโกดังนั้น</strong></p>
+      <div class="ascii">        🏬 โกดังของโปรแกรม Quiz
+
+   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+   │ 📦 question   │  │ 📦 score      │  │ 📦 isPassed   │
+   │ ป้าย: String  │  │ ป้าย: int     │  │ ป้าย: bool    │
+   │ ของ: "1+1=?"  │  │ ของ: 10      │  │ ของ: true    │
+   └──────────────┘  └──────────────┘  └──────────────┘
+     เก็บข้อความ        เก็บจำนวนเต็ม      เก็บ จริง/เท็จ
+
+   กฎโกดัง Dart: กล่องป้าย int ห้ามยัดข้อความ! (จับได้ตั้งแต่ยังไม่รัน)</div>
+      <h3>แล้ว null คืออะไร? — ฉากที่สอง</h3>
+      <div class="ascii">   ┌──────────────┐
+   │ 📦 nickname   │   คนงานเดินมาเปิดกล่อง...
+   │ ป้าย: String  │   😱 กล่องว่างเปล่า! (null)
+   │ ของ: (ไม่มี)  │   โปรแกรม crash ทันที
+   └──────────────┘
+
+   ทางแก้ของ Dart: บังคับติดป้ายตั้งแต่แรกว่า "กล่องนี้อาจว่างได้" → String?
+   ใครจะเปิดกล่องที่มีป้าย ? ต้องเช็คก่อนเสมอ — คอมไพเลอร์คอยจับตาให้</div>
+      <div class="box tip">
+        <div class="t">💡 เกร็ดประวัติศาสตร์</div>
+        <p>Tony Hoare ผู้คิดค้นค่า null เรียกมันว่า <strong>"ความผิดพลาดพันล้านดอลลาร์"</strong> เพราะบั๊กจากการเปิดกล่องว่าง (null error) สร้างความเสียหายมหาศาลทั่วโลกมา 50 ปี — Dart เกิดทีหลังเลยออกแบบระบบ null safety มาปิดจุดนี้ตั้งแต่ต้น นี่คือเหตุผลที่แอป Flutter crash ยากกว่าแอปยุคเก่า</p>
+      </div>
+    </section>
+
+    <section id="quiz">
+      <h2>2. 💻 ลงมือจริง: เริ่มโปรเจกต์ Quiz CLI</h2>
+      <p>สร้างโฟลเดอร์ใหม่ชื่อ <code class="inline">quiz_cli</code> (อยู่นอก <code class="inline">my_first_app</code>) แล้วสร้างไฟล์ <code class="inline">quiz.dart</code> ข้างในด้วยโค้ดนี้:</p>
+      <pre><code class="language-dart">// quiz.dart — จุดเริ่มต้นเกม Quiz (จะพัฒนาต่อทุกบทจนจบเฟส 2)
+void main() {
+  // ตัวแปรพื้นฐาน 4 ชนิดที่ใช้บ่อยสุด
+  String question = 'Flutter ใช้ภาษาอะไรเขียน?'; // ข้อความ
+  String answer = 'Dart';
+  int score = 0;          // จำนวนเต็ม
+  double version = 3.0;   // ทศนิยม
+  bool isReady = true;    // จริง/เท็จ
+
+  // String interpolation: ฝังค่าตัวแปรในข้อความด้วย $ — ใช้บ่อยมากใน Flutter
+  print('=== เกม Quiz เวอร์ชัน $version ===');
+  print('พร้อมเล่นไหม: $isReady');
+  print('คำถาม: $question');
+  print('เฉลย: $answer (ตอนนี้คะแนน: $score)');
+}</code></pre>
+      <p>รันด้วยคำสั่ง:</p>
+      <pre><code class="language-bash">dart run quiz.dart</code></pre>
+      <div class="box why">
+        <div class="t">🤔 ทำไมรันด้วย dart ไม่ใช่ flutter</div>
+        <p>Dart คือภาษา ส่วน Flutter คือชุดเครื่องมือสร้าง UI ที่ใช้ภาษา Dart — โปรแกรมที่ไม่มีหน้าจอแบบนี้ใช้ <code class="inline">dart</code> ตรงๆ ได้เลย (ติดมากับ Flutter อยู่แล้ว) · ทางเลือกไม่ต้องติดตั้งอะไร: เว็บ <strong>dartpad.dev</strong> วางโค้ดแล้วกดรันได้ทันที เหมาะกับการทดลองสั้นๆ</p>
+      </div>
+      <h3 id="vfc">var, final, const — สามระดับของ "ความเปลี่ยนแปลงได้"</h3>
+      <pre><code class="language-dart">var playerName = 'มายด์';     // Dart เดาชนิดให้ (String) — เปลี่ยนค่าได้
+playerName = 'บีม';           // ✓ ได้
+
+final startedAt = DateTime.now(); // กำหนดค่าได้ครั้งเดียวตอนรัน — เปลี่ยนไม่ได้
+const maxQuestions = 10;          // ค่าตายตัวตั้งแต่ก่อนรัน — เปลี่ยนไม่ได้
+
+// จำง่ายๆ:  เปลี่ยนได้ = var · ล็อกตอนรัน = final · ล็อกตั้งแต่เขียน = const</code></pre>
+      <h3 id="nullsafety">Null safety — หัวใจของบทนี้</h3>
+      <pre><code class="language-dart">String name = 'มายด์';   // กล่องนี้ "ต้องมีของเสมอ" — ใส่ null ไม่ได้
+String? nickname;        // เครื่องหมาย ? = กล่องนี้ "อาจว่างได้"
+
+// จะใช้กล่องที่อาจว่าง ต้องมีแผนสำรองเสมอ:
+print(nickname ?? 'ยังไม่ตั้งชื่อเล่น');  // ?? = "ถ้าว่าง ให้ใช้ค่านี้แทน"
+
+// ⚠️ เครื่องหมาย ! = "ฉันมั่นใจว่าไม่ว่าง เปิดเลย!" — ถ้าพลาด = crash
+// มือใหม่ควรเลี่ยง ! แล้วใช้ ?? หรือเช็ค if แทน (บทหน้า)</code></pre>
+    </section>
+
+    <section id="concept">
+      <h2>3. 🧠 คอนเซปต์: ทำไมต้อง "ประกาศชนิด" ให้เข้มงวด</h2>
+      <p>ภาษาบางภาษายอมให้กล่องเดียวเก็บอะไรก็ได้สลับไปมา ฟังดูสะดวก แต่เหมือน <strong>โกดังที่ไม่ติดป้าย</strong> — วันหนึ่งคนงานหยิบกล่อง "ราคาสินค้า" ไปบวกเลข แต่ข้างในดันเป็นข้อความ "สามร้อยบาท" → พังตอนลูกค้ากำลังจ่ายเงิน</p>
+      <p>Dart จับปัญหานี้<strong>ตั้งแต่ตอนเขียน</strong> (ขึ้นเส้นแดงใน VS Code ทันที) ไม่ใช่ตอนแอปอยู่ในมือผู้ใช้ — ยิ่งจับบั๊กได้เร็ว ราคาที่จ่ายยิ่งถูก:</p>
+      <div class="ascii">จับได้ตอนเขียน (เส้นแดงใน editor)   →  ฟรี แก้ 5 วินาที
+จับได้ตอนรันทดสอบ                   →  เสียเวลาไล่หา
+หลุดไปถึงมือผู้ใช้                    →  แอปได้รีวิว 1 ดาว ★</div>
+    </section>
+
+    <section id="techniques">
+      <h2>4. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — เริ่มด้วย final เสมอ เปลี่ยนเป็น var เมื่อจำเป็น</h3>
+      <p>ตัวแปรส่วนใหญ่ในโปรแกรมจริงตั้งค่าครั้งเดียวแล้วไม่เปลี่ยน การล็อกด้วย <code class="inline">final</code> ทำให้ใครมาอ่านรู้ทันทีว่า "ค่านี้นิ่ง ไม่ต้องระวังใครแอบเปลี่ยน" — ลดภาระสมองตอนไล่โค้ด</p>
+      <h3>เทคนิคที่ 2 — ตั้งชื่อ bool ให้อ่านเป็นประโยคคำถาม</h3>
+      <p><code class="inline">isReady</code>, <code class="inline">hasAnswered</code>, <code class="inline">canSubmit</code> — เห็นชื่อก็รู้ว่าตอบ ใช่/ไม่ใช่ ไม่ต้องไปดูว่าเก็บอะไร (เทียบกับ <code class="inline">status</code> ที่ต้องเดา)</p>
+      <h3>เทคนิคที่ 3 — ใช้ ?? วางแผนสำรองให้ข้อมูลที่อาจว่าง</h3>
+      <p>ทุกจุดที่ข้อมูลมาจาก "ข้างนอก" (ผู้ใช้กรอก, โหลดจากเน็ต) อาจว่างได้เสมอ นิสัยเขียน <code class="inline">ค่าที่อาจว่าง ?? ค่าสำรอง</code> จะติดตัวไปช่วยมากตอนทำแอปจริงเฟส 4</p>
+      <h3>เทคนิคที่ 4 — interpolation ทำอะไรได้มากกว่าฝังตัวแปร</h3>
+      <p><code class="inline">'คะแนน: ${score + 10}'</code> — ใส่นิพจน์คำนวณใน <code class="inline">${...}</code> ได้เลย ใช้จัดข้อความแสดงผลได้ยืดหยุ่นมาก</p>
+    </section>
+
+    <section id="prod">
+      <h2>5. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "โปรไฟล์ผู้ใช้ที่ยังไม่ล็อกอิน"</div>
+        <p>แทบทุกแอปมีหน้าที่แสดงชื่อผู้ใช้ — แล้วถ้าผู้ใช้<strong>ยังไม่ได้ล็อกอิน</strong>ล่ะ? นี่คือจุดที่แอปยุคเก่า crash กันเป็นประจำ</p>
+      </div>
+      <pre><code class="language-dart">// โค้ดจริงที่เจอในทุกแอป — จัดการ "ข้อมูลที่อาจยังไม่มี" อย่างปลอดภัย
+String? loggedInUser;   // ยังไม่ล็อกอิน = null (ว่างอย่างตั้งใจ)
+
+// จุดแสดงผล: มีแผนสำรองเสมอ ไม่มีทาง crash
+print('สวัสดี ${loggedInUser ?? 'ผู้มาเยือน'} 👋');
+// ยังไม่ล็อกอิน → "สวัสดี ผู้มาเยือน 👋"
+// ล็อกอินแล้ว   → "สวัสดี มายด์ 👋"</code></pre>
+      <p>ในทีมจริง ตอน code review ถ้าใครเขียน <code class="inline">loggedInUser!</code> (มั่นใจว่าไม่ว่าง) จะถูกถามทันทีว่า <em>"มั่นใจได้ยังไงว่าตรงนี้ล็อกอินแล้วเสมอ?"</em> — เครื่องหมาย <code class="inline">!</code> ทุกตัวในโค้ดคือความเสี่ยงที่ต้องอธิบายได้</p>
+    </section>
+
+    <section id="clean">
+      <h2>6. 🧹 ตัวอย่าง Clean Code</h2>
+      <pre><code class="language-dart">// ❌ แบบรีบๆ — ชนิดหลวม ชื่อกำกวม
+var a = 'Flutter ใช้ภาษาอะไรเขียน?';
+var b = 'Dart';
+dynamic c = 0;        // dynamic = ปิดระบบตรวจชนิด! อะไรก็ยัดได้ = กลับไปยุคมืด
+var flag = true;      // flag ของอะไร? ต้องไล่อ่านโค้ดถึงรู้</code></pre>
+      <pre><code class="language-dart">// ✅ แบบมืออาชีพ — ชนิดชัด ชื่อเล่าเรื่อง ล็อกค่าที่ไม่เปลี่ยน
+final String question = 'Flutter ใช้ภาษาอะไรเขียน?';
+final String correctAnswer = 'Dart';
+int score = 0;                 // ตั้งใจให้เปลี่ยนได้ (คะแนนต้องเพิ่ม) เลยไม่ใส่ final
+final bool isGameReady = true; // อ่านออกเสียงได้เป็นประโยค</code></pre>
+      <table>
+        <tr><th>ประเด็น</th><th>❌ แบบรีบ</th><th>✅ แบบ clean</th></tr>
+        <tr><td>ชื่อตัวแปร</td><td><code class="inline">a</code>, <code class="inline">b</code>, <code class="inline">flag</code> — ต้องเดา</td><td><code class="inline">question</code>, <code class="inline">correctAnswer</code> — เล่าเรื่องเอง</td></tr>
+        <tr><td>ชนิดข้อมูล</td><td><code class="inline">dynamic</code> ปิดระบบป้องกัน</td><td>ระบุชัด คอมไพเลอร์ช่วยจับผิดให้</td></tr>
+        <tr><td>การล็อกค่า</td><td>ทุกอย่าง <code class="inline">var</code></td><td><code class="inline">final</code> เป็นค่าเริ่มต้น — คนอ่านสบายใจ</td></tr>
+      </table>
+    </section>
+
+    <section id="errors">
+      <h2>7. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "The non-nullable local variable 'x' must be assigned before it can be used"</div>
+        <p><strong>สาเหตุ:</strong> ประกาศกล่องแบบ "ต้องมีของ" (ไม่มี <code class="inline">?</code>) แต่ยังไม่ใส่ของ แล้วรีบใช้<br>
+        <strong>วิธีแก้:</strong> ใส่ค่าตั้งแต่ประกาศ (<code class="inline">String name = '';</code>) หรือถ้าตั้งใจให้ว่างได้ ใส่ <code class="inline">?</code> (<code class="inline">String? name;</code>)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② "A value of type 'String' can't be assigned to a variable of type 'int'"</div>
+        <p><strong>สาเหตุ:</strong> ยัดของผิดกล่อง เช่น <code class="inline">int age = '25';</code> ('25' มีเครื่องหมายคำพูด = ข้อความ ไม่ใช่ตัวเลข)<br>
+        <strong>วิธีแก้:</strong> เอาเครื่องหมายคำพูดออก (<code class="inline">age = 25</code>) หรือถ้าได้ข้อความมาจริงๆ แปลงด้วย <code class="inline">int.parse('25')</code></p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ "Null check operator used on a null value" (แอป crash)</div>
+        <p><strong>สาเหตุ:</strong> ใช้ <code class="inline">!</code> เปิดกล่องที่มั่นใจว่าไม่ว่าง... แต่มันว่าง — นี่คือ crash อันดับต้นๆ ของมือใหม่<br>
+        <strong>วิธีแก้:</strong> แทบทุกครั้งที่อยากพิมพ์ <code class="inline">!</code> ให้เปลี่ยนเป็น <code class="inline">??</code> ค่าสำรอง หรือเช็คก่อนใช้ · กฎง่ายๆ: <em>"เห็น ! ในโค้ดตัวเอง = จุดเสี่ยงที่ต้องอธิบายได้ว่าทำไมปลอดภัย"</em></p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>8. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — โกดังของฉัน</div>
+        <p>สร้างไฟล์ <code class="inline">profile.dart</code> ประกาศตัวแปรแนะนำตัวเอง 5 ตัว (ชื่อ String, อายุ int, ส่วนสูง double, กำลังเรียน Flutter bool, ชื่อเล่น String? ที่เป็น null) แล้ว print แนะนำตัวด้วย interpolation โดยชื่อเล่นต้องใช้ <code class="inline">??</code> แสดง "ไม่มีชื่อเล่น" แทน</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — Quiz ข้อแรก</div>
+        <p>ต่อยอด <code class="inline">quiz.dart</code> — เพิ่มตัวแปร <code class="inline">userAnswer</code> (จำลองคำตอบผู้เล่น) แล้ว print ผลเทียบ <code class="inline">print('ตอบถูกไหม: ${userAnswer == correctAnswer}')</code> ลองเปลี่ยนค่าดูทั้งกรณีถูกและผิด</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — นามบัตร Terminal</div>
+        <p>เขียน <code class="inline">card.dart</code> พิมพ์นามบัตรของคุณในกรอบสวยงามด้วยอักขระ <code class="inline">═ ║ ╔ ╗ ╚ ╝</code> โดยข้อมูลทุกชิ้นอยู่ในตัวแปร (ห้าม hardcode ในบรรทัด print) มีอย่างน้อย 1 ฟิลด์ nullable พร้อมค่าสำรอง — เสร็จแล้ว <code class="inline">git init</code> โฟลเดอร์ <code class="inline">quiz_cli</code> แล้ว commit ทั้งหมด</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>9. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายความต่างของ String / int / double / bool พร้อมยกตัวอย่าง</li>
+        <li>บอกได้ว่า var / final / const ต่างกันตรงไหน และทำไมควรเริ่มจาก final</li>
+        <li>อธิบายได้ว่า <code class="inline">String?</code> ต่างจาก <code class="inline">String</code> ยังไง และ <code class="inline">??</code> ใช้ทำอะไร</li>
+        <li>รู้ว่าทำไมควรเลี่ยง <code class="inline">!</code> และ <code class="inline">dynamic</code></li>
+        <li>รัน <code class="inline">dart run quiz.dart</code> ผ่าน และ commit โปรเจกต์ quiz_cli แล้ว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>variable</td><td>ที่เก็บข้อมูล มีชื่อเรียก</td><td>กล่องติดป้ายในโกดัง</td></tr>
+        <tr><td><code class="inline">String</code></td><td>ข้อความ</td><td>กล่องเก็บตัวหนังสือ</td></tr>
+        <tr><td><code class="inline">int</code> / <code class="inline">double</code></td><td>จำนวนเต็ม / ทศนิยม</td><td>กล่องเก็บตัวเลข 2 แบบ</td></tr>
+        <tr><td><code class="inline">bool</code></td><td>จริง/เท็จ</td><td>สวิตช์เปิด-ปิด</td></tr>
+        <tr><td><code class="inline">final</code> / <code class="inline">const</code></td><td>ค่าที่ล็อกแล้วเปลี่ยนไม่ได้</td><td>กล่องซีลถาวร</td></tr>
+        <tr><td>null</td><td>ความว่างเปล่า ไม่มีของ</td><td>กล่องเปล่า</td></tr>
+        <tr><td>nullable (<code class="inline">?</code>)</td><td>ประกาศว่า "อาจว่างได้"</td><td>ป้ายเตือน "กล่องนี้อาจว่าง"</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>ตัวแปรคือกล่องติดป้ายชนิด · Dart เข้มงวดเพื่อจับบั๊กตอนเขียน ไม่ใช่ตอนแอปอยู่ในมือผู้ใช้ · null คือกล่องว่าง — ประกาศ <code class="inline">?</code> และวางแผนสำรองด้วย <code class="inline">??</code> เสมอ</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่3_HotReloadและวงจรการพัฒนา.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 3: Hot Reload และ Dev Loop</div>
+        </a>
+        <a href="บทที่5_เงื่อนไขและลูป.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 5: เงื่อนไขและลูป</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 2 · บทที่ 4<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

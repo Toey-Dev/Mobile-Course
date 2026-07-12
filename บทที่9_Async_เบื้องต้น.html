@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 9 — รู้จัก Async/await เบื้องต้น | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 2 · บทที่ 9 (บทปิดเฟส)</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: บัตรคิว</a>
+      <a href="#code" class="lvl1">2. เซิร์ฟเวอร์ปลอม + await</a>
+      <a href="#rules" class="lvl2">— กฎ 3 ข้อ</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง</a>
+      <a href="#clean" class="lvl1">5. Clean Code</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 2 · บทที่ 9 — บทปิดเฟส</span>
+      <h1>รู้จัก Async/await เบื้องต้น: งานที่ต้องรอ</h1>
+      <p>บทนี้แค่ "ทำความรู้จัก" พอ — เจาะลึกจริงตอนเรียก API ในบทที่ 19 ซึ่งคุณจะมีเหตุผลต้องใช้มันจริงๆ</p>
+      <div class="meta">
+        <span>⏱️ 1–1.5 ชั่วโมง (บทเบาๆ ปิดเฟส)</span>
+        <span>📋 ต้องผ่านบทที่ 8 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 4 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">งานบางอย่างในโปรแกรม "ต้องรอ" — โหลดข้อมูลจากเน็ต อ่านไฟล์ รอผู้ใช้ ถ้ารอแบบผิดวิธี แอปจะค้างทั้งแอป บทนี้เรียนวิธีรอแบบมืออาชีพด้วยระบบ "บัตรคิว" ของ Dart</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (4 คำ — บทเบาๆ ตั้งใจให้พักสมอง)</div>
+        <p><span class="pill">Future</span><span class="pill">async</span><span class="pill">await</span><span class="pill">Future.delayed</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: บัตรคิวร้านกาแฟ</h2>
+      <p>ลองนึกภาพร้านกาแฟสองแบบ:</p>
+      <div class="ascii">☕ ร้านแบบ "รอหน้าเคาน์เตอร์" (synchronous)     ☕ ร้านแบบ "บัตรคิว" (asynchronous)
+
+ลูกค้า: สั่งลาเต้                              ลูกค้า: สั่งลาเต้
+บาริสต้า: รอตรงนี้นะ 3 นาที                    บาริสต้า: รับบัตรคิวไปก่อนครับ 🎫
+ลูกค้า: ยืนเฉยๆ บล็อกแถว...                    ลูกค้า: ไปนั่งเล่นมือถือ หาที่นั่ง
+คนข้างหลัง: 😡 แถวไม่ขยับเลย                   (ร้านยังรับออเดอร์คนถัดไปได้ตลอด)
+                                             เสียงเรียก: "คิว 42 ลาเต้ได้แล้วครับ!"
+                                             ลูกค้า: เดินไปรับ ☕</div>
+      <p>ในโลกโปรแกรม: <strong>งานที่ต้องรอ</strong> ถ้ารอแบบยืนบล็อกแถว = <strong>แอปค้างทั้งแอป</strong> ผู้ใช้กดอะไรไม่ได้เลย — Dart จึงใช้ระบบบัตรคิว:</p>
+      <div class="ascii">   สั่งงานที่ต้องรอ  ──────►  ได้ "บัตรคิว" มาทันที (นี่แหละคือ Future)
+                              │
+   โปรแกรมทำอย่างอื่นต่อได้    │  งานเสร็จเมื่อไหร่
+                              ▼
+                     ค่าจริงมาส่งตามบัตรคิว</div>
+      <div class="box tip">
+        <div class="t">💡 Future = บัตรคิว ไม่ใช่กาแฟ</div>
+        <p><code class="inline">Future&lt;String&gt;</code> แปลว่า "บัตรคิวที่สัญญาว่าเดี๋ยวจะได้ String" — ผิดพลาดคลาสสิกของมือใหม่คือเอาบัตรคิวไปดื่มแทนกาแฟ (ใช้ Future ราวกับเป็นค่าจริง) เดี๋ยวเจอในหัวข้อข้อผิดพลาด</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: จำลองการโหลดคำถามจาก "เซิร์ฟเวอร์ปลอม"</h2>
+      <p>เกม Quiz จริงๆ ควรโหลดคำถามจากอินเทอร์เน็ต — ตอนนี้ยังไม่ถึงบทนั้น เราจะ "จำลองการรอ" ด้วย <code class="inline">Future.delayed</code> แทน:</p>
+      <pre><code class="language-dart">// จำลองเซิร์ฟเวอร์: ขอคำถามแล้วต้องรอ 2 วินาที (เหมือนรอโหลดจากเน็ตจริง)
+Future&lt;List&lt;String&gt;&gt; fetchQuestions() {
+  return Future.delayed(
+    const Duration(seconds: 2),                  // แกล้งช้า 2 วินาที
+    () =&gt; ['Flutter ใช้ภาษาอะไร?', 'ไฟล์ package ชื่ออะไร?'],
+  );
+}
+
+// ฟังก์ชันที่ "มีการรอ" ข้างใน ต้องติดป้าย async ที่หลังวงเล็บ
+Future&lt;void&gt; main() async {
+  print('เปิดเกม... กำลังโหลดคำถาม ⏳');
+
+  // await = "รอตรงนี้จนบัตรคิวถูกเรียก แล้วค่อยไปบรรทัดถัดไป"
+  final questions = await fetchQuestions();
+
+  print('โหลดเสร็จ! ได้ ${questions.length} ข้อ:');
+  for (final q in questions) {
+    print('- $q');
+  }
+}</code></pre>
+      <p>รันแล้วสังเกต: ข้อความแรกขึ้นทันที → <strong>เงียบ 2 วินาที</strong> → ผลลัพธ์มา — คุณเพิ่งเขียนโปรแกรมที่ "รอเป็น" ครั้งแรก</p>
+      <h3 id="rules">กฎ 3 ข้อที่ครอบคลุม 90% ของการใช้งาน</h3>
+      <ol>
+        <li>งานที่ต้องรอ คืนค่าเป็น <code class="inline">Future&lt;ชนิดข้อมูล&gt;</code> — บัตรคิวที่ระบุว่ารออะไรอยู่</li>
+        <li>อยากได้ค่าจริงจากบัตรคิว → <code class="inline">await</code> หน้ามัน</li>
+        <li>ฟังก์ชันไหนมี <code class="inline">await</code> ข้างใน → ต้องติด <code class="inline">async</code> หลังวงเล็บพารามิเตอร์</li>
+      </ol>
+      <div class="box why">
+        <div class="t">🤔 ทำไมบทนี้สอนแค่นี้</div>
+        <p>เพราะ async จะ "เข้าใจจริง" ก็ต่อเมื่อมีของที่ต้องรอจริงๆ — ตอนนี้ให้จำหน้าตาโค้ดได้พอ พอถึงบทที่ 19 (เรียก API สภาพอากาศจริงจากอินเทอร์เน็ต) เราจะกลับมาเรียนซ้ำเชิงลึกพร้อมเหตุผลครบๆ การเจอสองรอบแบบนี้คือวิธีที่สมองจำได้ดีที่สุด</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — อ่านลายเซ็นฟังก์ชันก็รู้ว่าต้องรอไหม</h3>
+      <p>เปิดเอกสารเจอ <code class="inline">Future&lt;String&gt; loadName()</code> → รู้ทันทีว่า "ฟังก์ชันนี้ต้องรอ และจะได้ String" — ชนิดข้อมูลเล่าเรื่องให้ฟังก่อนอ่านโค้ดสักบรรทัด</p>
+      <h3>เทคนิคที่ 2 — ตั้งชื่อฟังก์ชัน async ด้วยกริยาที่สื่อการรอ</h3>
+      <p><code class="inline">fetchQuestions</code>, <code class="inline">loadProfile</code>, <code class="inline">saveScore</code> — วงการนิยมใช้ fetch/load/save/send กับงาน async พอเห็นชื่อก็เดาได้ว่ามี Future เกี่ยวข้อง</p>
+      <h3>เทคนิคที่ 3 — print ก่อน-หลัง await คือเครื่องมือเรียนรู้ที่ดีที่สุด</h3>
+      <p>สงสัยว่าโค้ดวิ่งลำดับไหน? แปะ <code class="inline">print('ก่อนรอ')</code> / <code class="inline">print('หลังรอ')</code> รอบ await แล้วดูจังหวะที่ข้อความขึ้น — ทำแบบฝึกหัดระดับ 1 แล้วคุณจะ "เห็น" การรอด้วยตาตัวเอง</p>
+      <h3>เทคนิคที่ 4 — Future.delayed คือเพื่อนรักตอน dev</h3>
+      <p>แอปจริงใช้จำลอง "เน็ตช้า" เพื่อทดสอบว่าหน้าจอ loading สวยไหม ผู้ใช้เน็ตอ่อนเห็นอะไร — เทคนิคนี้ทีมจริงใช้กันทุกวัน และคุณจะใช้มันตอนทำ Loading State ในบทที่ 20</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "หน้าฟีดที่ต้องโหลด 3 อย่างพร้อมกัน"</div>
+        <p>เปิดแอปโซเชียลหนึ่งครั้ง เบื้องหลังคือ async หลายงานพร้อมกัน: โหลดโปรไฟล์ + โหลดฟีด + โหลดแจ้งเตือน — ถ้าทำทีละอย่างต่อคิวกัน (รอ 1 วิ × 3 งาน = 3 วิ) ผู้ใช้หนีไปแล้ว ทีมจริงจึงยิงพร้อมกัน</p>
+      </div>
+      <pre><code class="language-dart">// รอทั้ง 3 บัตรคิวพร้อมกัน — เสร็จเมื่องานที่ช้าสุดเสร็จ (1 วิ ไม่ใช่ 3 วิ)
+final results = await Future.wait([
+  fetchProfile(),
+  fetchFeed(),
+  fetchNotifications(),
+]);</code></pre>
+      <p>ทุกวินาทีที่ผู้ใช้ต้องรอ = โอกาสที่เขาจะปิดแอป — บริษัทใหญ่วัดกันจริงจังว่าหน้าแรกโหลดกี่มิลลิวินาที และเครื่องมือของสงครามความเร็วนี้คือ async ที่คุณเพิ่งรู้จักวันนี้ (<code class="inline">Future.wait</code> แค่โชว์ให้เห็นภาพ ยังไม่ต้องใช้เป็นตอนนี้)</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code</h2>
+      <pre><code class="language-dart">// ❌ ลืม await — บั๊กเงียบที่เจอบ่อยที่สุดในโลก async
+void main() {
+  final questions = fetchQuestions();   // ลืม await!
+  print(questions);                     // Instance of 'Future&lt;List&lt;String&gt;&gt;'
+  // ได้ "บัตรคิว" มา print แทนที่จะได้คำถาม — ไม่ crash แต่ผลลัพธ์ผิดเงียบๆ
+}</code></pre>
+      <pre><code class="language-dart">// ✅ await ครบ + ตั้งชื่อสื่อความหมาย + บอกผู้ใช้ว่ากำลังรอ
+Future&lt;void&gt; main() async {
+  print('กำลังโหลดคำถาม ⏳');            // บอกเสมอว่ากำลังเกิดอะไร (นิสัย UX ที่ดี
+  final questions = await fetchQuestions(); // เริ่มปลูกได้ตั้งแต่บน Terminal!)
+  print('พร้อมเล่น! (${questions.length} ข้อ)');
+}</code></pre>
+      <div class="box tip">
+        <div class="t">💡 ยามที่ตั้งไว้ตั้งแต่บทที่ 2</div>
+        <p>จำกฎ lint <code class="inline">unawaited_futures</code> ใน <code class="inline">analysis_options.yaml</code> ของเราได้ไหมครับ — มันคือยามที่คอยเตือนตอน "ลืม await" นี่แหละ ตั้งไว้ตั้งแต่วันแรกเพราะรู้ว่าวันนี้จะมาถึง</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① print แล้วได้ "Instance of 'Future&lt;...&gt;'"</div>
+        <p><strong>สาเหตุ:</strong> ลืม await — ได้บัตรคิวมาใช้แทนค่าจริง<br>
+        <strong>วิธีแก้:</strong> เติม await หน้าการเรียกฟังก์ชันที่คืน Future และเช็คว่าฟังก์ชันเราติด async แล้ว — นี่คือ error ที่เจอบ่อยที่สุดของ async ทั่วโลก เจอเมื่อไหร่ หา await ที่หายไป</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② "The await expression can only be used in an async function"</div>
+        <p><strong>สาเหตุ:</strong> ใช้ await ในฟังก์ชันที่ไม่ได้ติดป้าย async<br>
+        <strong>วิธีแก้:</strong> เติม async หลังวงเล็บ: <code class="inline">Future&lt;void&gt; main() async { ... }</code> — จำเป็นคู่กัน: มี await ที่ไหน ต้องมี async ที่หัวฟังก์ชันนั้น</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ โปรแกรมจบก่อนงานเสร็จ</div>
+        <p><strong>สาเหตุ:</strong> main() ไม่ await งานสุดท้าย — โปรแกรมวิ่งถึงบรรทัดจบแล้วปิดตัว ทั้งที่บัตรคิวยังไม่ถูกเรียก<br>
+        <strong>วิธีแก้:</strong> await ทุกงานที่อยากเห็นผลลัพธ์ก่อน main จบ</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — เห็นการรอด้วยตา</div>
+        <p>เขียนฟังก์ชัน <code class="inline">Future&lt;String&gt; brewCoffee()</code> ที่รอ 3 วินาทีแล้วคืน "ลาเต้ร้อน ☕" — ใน main ให้ print "สั่งกาแฟ", "รอ...", await, แล้ว print ผล จับเวลาดูว่าตรง 3 วินาทีจริงไหม แล้วลอง<strong>ลบ await ออก</strong>ดูว่าเกิดอะไรขึ้น (สำคัญมาก — เจอบั๊กนี้ตอนฝึก ดีกว่าเจอตอนทำงาน)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — ลำดับการรอ</div>
+        <p>เขียน 3 ฟังก์ชัน async: <code class="inline">washBeans()</code> (1 วิ), <code class="inline">grindBeans()</code> (2 วิ), <code class="inline">brew()</code> (1 วิ) แต่ละตัว print ตอนเสร็จ — เรียกตามลำดับด้วย await ทั้งสามตัว แล้วสังเกตว่าเวลารวมคือ 4 วินาที (งานต่อคิวกัน) — โบนัส: ลองครอบด้วย <code class="inline">Future.wait([...])</code> แล้วดูว่าเวลารวมเปลี่ยนเป็นเท่าไหร่ เพราะอะไร</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — Quiz ฉบับสมบูรณ์ (ผลงานจบเฟส 2!)</div>
+        <p>รวมทุกบทเข้าด้วยกัน: Quiz แบบ OOP จากบทที่ 8 + เพิ่ม <code class="inline">Future&lt;List&lt;Question&gt;&gt; loadQuestions()</code> ที่จำลองโหลด 2 วินาทีก่อนเกมเริ่ม (แสดง "กำลังโหลด...") — จบเกมแสดงคะแนน + เกรด — commit, push, แล้วเขียน README สั้นๆ ให้ repo quiz_cli ตามแบบ README ของ my_first_app</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบาย Future ด้วยคำเปรียบ "บัตรคิว" ให้เพื่อนฟังได้</li>
+        <li>ท่องกฎ 3 ข้อได้: คืน Future&lt;T&gt; / อยากได้ค่า → await / มี await → ติด async</li>
+        <li>เคยเจอ "Instance of 'Future'" ด้วยตัวเองและรู้วิธีแก้แล้ว</li>
+        <li>Quiz ฉบับสมบูรณ์ (OOP + จำลองโหลด) อยู่บน GitHub พร้อม README</li>
+      </ul>
+      <div class="box tip">
+        <div class="t">🎉 จบเฟส 2!</div>
+        <p>คุณเขียนตรรกะครบเครื่องแล้ว: ตัวแปร เงื่อนไข ลูป ฟังก์ชัน Collection OOP และรู้จัก async — "สมอง" พร้อมแล้ว เฟสหน้ากลับไปสร้าง "หน้าตา" กัน</p>
+      </div>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">Future</code></td><td>ค่าที่ "เดี๋ยวจะมา"</td><td>บัตรคิวร้านกาแฟ</td></tr>
+        <tr><td><code class="inline">async</code></td><td>ป้ายบอกว่าฟังก์ชันนี้มีการรอ</td><td>ร้านที่ใช้ระบบคิว</td></tr>
+        <tr><td><code class="inline">await</code></td><td>รอจนบัตรคิวถูกเรียก แล้วรับค่าจริง</td><td>นั่งรอเสียงเรียกคิว</td></tr>
+        <tr><td><code class="inline">Future.delayed</code></td><td>สร้างการรอปลอมๆ ไว้ฝึก/ทดสอบ</td><td>เครื่องจับเวลาซ้อม</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>งานที่ต้องรอคืนบัตรคิว (Future) ไม่ใช่ค่าจริง · await = รอรับของจริง, async = ป้ายหน้าร้าน · ลืม await = บั๊กเงียบอันดับ 1 · เจอกันอีกครั้งแบบเต็มสูบบทที่ 19</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่8_OOP.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 8: OOP — Class และ Object</div>
+        </a>
+        <a href="บทที่10_Widget_Stateless_Stateful.html">
+          <div class="lbl">บทต่อไป (เริ่มเฟส 3!) →</div>
+          <div class="ttl">บทที่ 10: Widget — Stateless vs Stateful</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 2 · บทที่ 9<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

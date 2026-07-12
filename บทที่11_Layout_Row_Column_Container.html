@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 11 — Layout: Row, Column, Container | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 3 · บทที่ 11</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: มองโลกเป็นกล่อง</a>
+      <a href="#axis" class="lvl2">— แกนหลัก / แกนขวาง</a>
+      <a href="#code" class="lvl1">2. สามผู้ช่วย + Header Card</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: Figma → โค้ด</a>
+      <a href="#clean" class="lvl1">5. Clean Code: แตก Widget ย่อย</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 3 · บทที่ 11</span>
+      <h1>Layout: Row, Column, Container — จัดวางแบบกล่องซ้อนกล่อง</h1>
+      <p>มองหน้าจอเป็นกล่องซ้อนกล่อง แล้วสร้าง header card สวยๆ ให้แอป To-Do</p>
+      <div class="meta">
+        <span>⏱️ 2–2.5 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 10 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">บทที่แล้วของทุกอย่างกองอยู่กลางจอ — บทนี้เรียนวิธีจัดวางที่ Flutter ใช้ทั้งเฟรมเวิร์ก: <strong>กล่องซ้อนกล่อง</strong> เข้าใจหลักเดียวนี้แล้ว จะสร้างหน้าจอแบบไหนก็ได้ในอนาคต</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">Row</span><span class="pill">Column</span><span class="pill">Container</span><span class="pill">Padding / EdgeInsets</span><span class="pill">SizedBox</span><span class="pill">Expanded</span><span class="pill">main / cross axis</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: มองโลกเป็นกล่อง</h2>
+      <p>เปิดแอปโปรดของคุณตอนนี้ แล้วลองมองใหม่: <strong>ทุกหน้าจอคือกล่องซ้อนกล่อง</strong> — ไม่มีข้อยกเว้น</p>
+      <div class="ascii">   สิ่งที่ตาเห็น                        สิ่งที่ dev เห็น (X-ray vision)
+
+  ┌─────────────────────┐            ┌─ Column (กล่องเรียงแนวตั้ง) ──┐
+  │  [รูป] ชื่อร้าน  ⭐4.9 │            │ ┌─ Row (เรียงแนวนอน) ──────┐ │
+  │                     │            │ │ [รูป] [Column ชื่อ+ดาว]    │ │
+  │  ═══ เมนูแนะนำ ═══   │            │ └──────────────────────────┘ │
+  │  ☕ ลาเต้      55.-  │            │ ┌─ Row ────────────────────┐ │
+  │  🍰 เค้ก       89.-  │            │ │ [ไอคอน] [ชื่อ]     [ราคา] │ │
+  │                     │            │ └──────────────────────────┘ │
+  └─────────────────────┘            └──────────────────────────────┘
+
+     กฎเดียวที่ต้องจำ:  เรียงลงล่าง = Column · เรียงไปขวา = Row
+     ทุกดีไซน์ในโลกแตกเป็นสองอย่างนี้ซ้อนกันได้เสมอ</div>
+      <h3 id="axis">แล้วแกนหลัก-แกนขวาง (main/cross axis) คืออะไร? — ฉากที่สอง</h3>
+      <div class="ascii">   Column: แกนหลักวิ่งลง ⬇           Row: แกนหลักวิ่งไปขวา ➡
+   ┌───────────┐                    ┌─────────────────────────┐
+   │  [ A ]    │  mainAxis =        │  [A]  [B]  [C]          │
+   │  [ B ]    │  แนวตั้ง            └─────────────────────────┘
+   │  [ C ]    │                     mainAxis = แนวนอน
+   └───────────┘  crossAxis =        crossAxis = แนวตั้ง
+                  แนวนอน
+   mainAxisAlignment   = จัดเรียงตามแกนหลัก   (ชิดบน/กลาง/ล่าง หรือ ซ้าย/กลาง/ขวา)
+   crossAxisAlignment  = จัดเรียงตามแกนขวาง   (แกนที่เหลืออีกแกน)</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไมต้องเข้าใจสองแกนนี้ให้แน่น</div>
+        <p>คำถาม layout ของมือใหม่ 80% ("ทำไมมันไม่อยู่กลาง", "ทำไมชิดซ้ายหมด") ตอบได้ด้วยการถามกลับว่า "คุณกำลังจัดแกนไหนอยู่?" — mainAxisAlignment กับ crossAxisAlignment จัดคนละแกนกัน สลับกันเมื่อไหร่ งงเมื่อนั้น</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: สามผู้ช่วยจัดกล่อง + Header Card ของ To-Do</h2>
+      <h3>Container — กล่องอเนกประสงค์ (ใส่สี ขอบ มุมโค้ง ระยะห่าง)</h3>
+      <pre><code class="language-dart">Container(
+  padding: const EdgeInsets.all(16),        // ระยะห่าง "ข้างใน" กล่อง
+  margin: const EdgeInsets.only(bottom: 12), // ระยะห่าง "ข้างนอก" กล่อง
+  decoration: BoxDecoration(
+    color: Colors.teal.shade50,
+    borderRadius: BorderRadius.circular(12), // มุมโค้ง
+  ),
+  child: const Text('ฉันอยู่ในกล่องสวยๆ'),
+)</code></pre>
+      <p><strong>ภาพจำ padding vs margin:</strong> กล่องพัสดุ — padding = กันกระแทก<strong>ในกล่อง</strong> (ของกับผนังกล่อง) · margin = ระยะ<strong>ระหว่างกล่อง</strong>กับกล่องข้างๆ</p>
+      <h3>SizedBox — ช่องว่างที่ระบุขนาดแน่นอน</h3>
+      <pre><code class="language-dart">Column(children: [
+  Text('บรรทัดแรก'),
+  SizedBox(height: 8),    // เว้น 8 พิกเซล — วิธีเว้นช่องที่ใช้บ่อยที่สุด
+  Text('บรรทัดสอง'),
+])</code></pre>
+      <h3>Expanded — "ขอพื้นที่ที่เหลือทั้งหมด"</h3>
+      <pre><code class="language-dart">Row(children: [
+  Icon(Icons.task_alt),
+  SizedBox(width: 8),
+  Expanded(                       // ← ดันข้อความให้กินพื้นที่ที่เหลือ
+    child: Text('ชื่องานที่อาจยาวมากกกกกก...'),  // ยาวเกิน = ตัดขึ้นบรรทัดใหม่ ไม่ล้นจอ
+  ),
+  Text('14:00'),                  // เวลาชิดขวาพอดี
+])</code></pre>
+      <h3>ประกอบร่าง: Header Card ให้ To-Do (เพิ่มใน build ของ _HomeScreenState)</h3>
+      <pre><code class="language-dart">// วางไว้บนสุดของ body — สรุปสถานการณ์งานวันนี้ในกล่องเดียว
+Container(
+  margin: const EdgeInsets.all(16),
+  padding: const EdgeInsets.all(20),
+  decoration: BoxDecoration(
+    color: Colors.teal,
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Row(
+    children: [
+      const Icon(Icons.checklist, color: Colors.white, size: 40),
+      const SizedBox(width: 16),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,  // ชิดซ้ายตามแกนขวาง
+          children: [
+            const Text('งานวันนี้',
+                style: TextStyle(color: Colors.white70, fontSize: 14)),
+            Text('${_tasks.length} รายการ',
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    ],
+  ),
+)</code></pre>
+      <p>อ่านโครง "จากนอกเข้าใน" (เทคนิคบทที่ 1): Container (กล่องสีเขียว) → Row (ไอคอน | ข้อความ) → Column (ข้อความ 2 บรรทัด) — hot reload แล้วเห็นการ์ดสรุปงานสวยๆ ทันที</p>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — วาดกรอบบนกระดาษก่อนเขียนโค้ด</h3>
+      <p>เจอดีไซน์ที่อยากทำ ให้หยิบปากกาตีกรอบ: อะไรเรียงลงล่าง = Column อะไรเรียงข้าง = Row ตีเสร็จค่อยพิมพ์ — มือโปรทำแบบนี้จริงๆ เร็วกว่านั่งเดาในหัวมาก</p>
+      <h3>เทคนิคที่ 2 — ข้อความใน Row ให้ครอบ Expanded ไว้ก่อนเสมอ</h3>
+      <p>ข้อความจากผู้ใช้/ข้อมูลจริงยาวแค่ไหนไม่มีใครรู้ — Expanded ทำให้มันตัดบรรทัดแทนที่จะล้นจอ (นี่คือวัคซีนป้องกัน error อันดับ 1 ของบทนี้ล่วงหน้า)</p>
+      <h3>เทคนิคที่ 3 — ใช้ Widget Inspector ตอบคำถาม "ทำไมมันอยู่ตรงนั้น"</h3>
+      <p>เครื่องมือจากบทที่ 3 กลับมาสำคัญมาก: คลิกองค์ประกอบที่วางตัวแปลกๆ → Inspector โชว์ขอบเขตกล่องจริง → เห็นทันทีว่ากล่องไหนกินพื้นที่เกิน/ขาด</p>
+      <h3>เทคนิคที่ 4 — เว้นช่องด้วย SizedBox ให้เป็นค่าที่มีระบบ</h3>
+      <p>เลือกชุดค่าตายตัว (เช่น 4, 8, 16, 24) แล้วใช้แค่ชุดนี้ทั้งแอป — UI จะดู "เป็นระเบียบอย่างอธิบายไม่ถูก" นี่คือความลับพื้นฐานของดีไซน์ระบบ (design system) ที่ทีมจริงใช้</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "แปลงแบบจาก Figma เป็นโค้ด"</div>
+        <p>งานประจำของ Flutter dev คือรับแบบจากดีไซเนอร์ (ไฟล์ Figma) มาแปลงเป็นจอจริง — ขั้นตอนที่ทีมจริงใช้:</p>
+      </div>
+      <div class="ascii">① เปิดแบบ → ตีกรอบใหญ่สุดก่อน: ทั้งหน้าเรียงลงล่าง = Column
+② ไล่ทีละแถบ: แถบไหนมีของเรียงข้างกัน = Row
+③ ระบุ "ใครยืด ใครคงที่": รูปโปรไฟล์คงที่ 48px, ชื่อยืด (Expanded), เวลาคงที่
+④ วัดระยะห่างจากแบบ → แปลงเป็น SizedBox/Padding ตามชุดค่า 4/8/16/24
+⑤ เขียนโค้ดจากนอกเข้าใน + hot reload เทียบกับแบบทุก 2-3 บรรทัด</div>
+      <p>การ์ดสรุปที่คุณเพิ่งเขียนคือผลลัพธ์ของกระบวนการนี้เป๊ะ — ฝึกวงจรนี้จนชิน แล้ว "แปลงแบบเป็นจอ" จะกลายเป็นทักษะขายได้ของคุณ</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: แตกกล่องลึกเป็น Widget ย่อย</h2>
+      <p>Layout ซ้อนลึกคือธรรมชาติของ Flutter แต่ "ซ้อนลึกในไฟล์เดียว" คือทางสู่โค้ดอ่านไม่ออก:</p>
+      <pre><code class="language-dart">// ❌ build เดียว 80 บรรทัด — วงเล็บปิดไล่ไม่ถูก
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Column(children: [
+      Container( /* header 25 บรรทัด */ ),
+      Container( /* summary 20 บรรทัด */ ),
+      Column( /* รายการงาน 30 บรรทัด */ ),
+    ]),   // ← บรรทัดนี้ปิดอะไรบ้าง? ไม่มีใครอยากนับ
+  );
+}</code></pre>
+      <pre><code class="language-dart">// ✅ แตกเป็น Widget ย่อยชื่อสื่อความหมาย — build กลายเป็นสารบัญ (แบบ main() บทที่ 6)
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: Column(
+      children: [
+        _TaskSummaryCard(taskCount: _tasks.length),  // อ่านชื่อก็รู้ว่าคืออะไร
+        _TaskListSection(tasks: _tasks),
+      ],
+    ),
+  );
+}
+
+/// การ์ดสรุปงาน — Stateless เพราะรับข้อมูลมาแสดงเฉยๆ (ตารางบทที่ 10)
+class _TaskSummaryCard extends StatelessWidget {
+  const _TaskSummaryCard({required this.taskCount});
+  final int taskCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container( /* โค้ด header card จากหัวข้อ 2 */ );
+  }
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 กฎหัวแม่มือ</div>
+        <p>Widget ซ้อนเกิน ~4 ชั้น หรือ build ยาวเกิน ~40 บรรทัด = ถึงเวลาแตก Widget ย่อย — ใน VS Code คลิกขวาที่ Widget → <strong>Refactor → Extract Widget</strong> ทำให้อัตโนมัติเลย</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① แถบเหลือง-ดำ "BOTTOM OVERFLOWED BY 42 PIXELS"</div>
+        <p><strong>สาเหตุ:</strong> ของในกล่องใหญ่กว่ากล่อง — Column/Row มีลูกเกินพื้นที่จอ<br>
+        <strong>วิธีแก้:</strong> ถามก่อนว่า "อะไรควรหด/เลื่อนได้" — ข้อความยาว → ครอบ Expanded · เนื้อหายาวทั้งจอ → เปลี่ยนเป็นเลื่อนได้ (บทหน้าเจอ ListView พอดี) · แถบเหลือง-ดำโผล่เฉพาะตอน dev — แต่อย่าปล่อยผ่าน มันคือบั๊กจริง</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② "Incorrect use of ParentDataWidget"</div>
+        <p><strong>สาเหตุ:</strong> ใช้ Expanded นอก Row/Column — Expanded คือคำสั่ง "ขอพื้นที่จากแม่" มันเลยต้องเป็นลูกตรงของ Row/Column เท่านั้น (วางใน Container/Center = พัง)<br>
+        <strong>วิธีแก้:</strong> เช็คว่าแม่ตรงของ Expanded คือ Row หรือ Column ไหม ถ้าไม่ใช่ ย้ายหรือถอดออก</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ จัดกึ่งกลางไม่ได้สักที / Container ไม่ยอมกว้างเต็มจอ</div>
+        <p><strong>สาเหตุ:</strong> กล่องหลายชนิด "หดตามลูก" โดยธรรมชาติ — Container ที่ไม่กำหนดขนาดจะใหญ่เท่า child เท่านั้น<br>
+        <strong>วิธีแก้:</strong> อยากกว้างเต็มจอ → <code class="inline">width: double.infinity</code> · อยากอยู่กลางจอ → ครอบด้วย Center · ไม่แน่ใจว่ากล่องไหนขนาดเท่าไหร่ → Widget Inspector ดูขอบเขตจริงทันที</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — เล่นแกน</div>
+        <p>สร้างหน้าทดลอง: Column ที่มีกล่องสี 3 ใบ (Container 60×60 คนละสี) แล้วลองสลับค่า <code class="inline">mainAxisAlignment</code> (start/center/spaceBetween/spaceEvenly) และ <code class="inline">crossAxisAlignment</code> ทีละค่า สังเกตผลด้วย hot reload — จากนั้นเปลี่ยน Column เป็น Row แล้วดูว่าแกนสลับกันยังไง</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — Header Card</div>
+        <p>ใส่ header card จากหัวข้อ 2 เข้าแอป To-Do จริง แล้วอัปเกรด: เพิ่มข้อความวันที่ (มุมขวาบนของการ์ด) และทำให้ตัวเลขจำนวนงานอัปเดตเมื่อกดปุ่มเพิ่มงาน — commit ด้วย <code class="inline">feat: add summary header card</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — นามบัตรดิจิทัลกลับมาแล้ว</div>
+        <p>จำแบบฝึกหัดบทที่ 1 ได้ไหมครับ — คราวนี้ทำหน้า "โปรไฟล์ผู้ใช้" เต็มรูปแบบ: รูปโปรไฟล์ (<code class="inline">CircleAvatar</code>), ชื่อ, คำอธิบาย, และแถวสถิติ 3 ช่อง (งานทั้งหมด/เสร็จ/ค้าง — ใช้ Row + Expanded แบ่ง 3 ส่วนเท่ากัน) จัดระยะด้วยชุดค่า 8/16/24 เท่านั้น แตกเป็น Widget ย่อยอย่างน้อย 2 ตัว — commit ด้วย <code class="inline">feat: add profile page layout</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>มองหน้าจอแอปจริงแล้ว "ตีกรอบ" เป็น Row/Column ในหัวได้</li>
+        <li>อธิบายความต่าง mainAxisAlignment กับ crossAxisAlignment ได้</li>
+        <li>อธิบายความต่าง padding กับ margin ด้วยภาพกล่องพัสดุได้</li>
+        <li>รู้ว่าเมื่อไหร่ต้องใช้ Expanded และทำไมมันอยู่นอก Row/Column ไม่ได้</li>
+        <li>เคยเจอ (และแก้) แถบเหลือง-ดำ overflow ด้วยตัวเองแล้ว</li>
+        <li>To-Do มี header card และแตก Widget ย่อยแล้ว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">Row</code></td><td>เรียงลูกในแนวนอน</td><td>รถไฟ</td></tr>
+        <tr><td><code class="inline">Column</code></td><td>เรียงลูกในแนวตั้ง</td><td>ลิฟต์</td></tr>
+        <tr><td><code class="inline">Container</code></td><td>กล่องอเนกประสงค์ (สี ขอบ มุมโค้ง ระยะ)</td><td>กล่องพัสดุแต่งได้</td></tr>
+        <tr><td><code class="inline">Padding</code> / <code class="inline">EdgeInsets</code></td><td>ระยะห่างข้างในกล่อง</td><td>กันกระแทกในกล่อง</td></tr>
+        <tr><td><code class="inline">SizedBox</code></td><td>กล่องเปล่าขนาดตายตัว ไว้เว้นช่อง</td><td>บล็อกไม้คั่นระยะ</td></tr>
+        <tr><td><code class="inline">Expanded</code></td><td>ขอพื้นที่ที่เหลือทั้งหมดจากแม่</td><td>ฟองน้ำขยายเต็มช่อง</td></tr>
+        <tr><td>main / cross axis</td><td>แกนหลัก / แกนขวาง ของ Row/Column</td><td>ทางรถไฟ / ไม้หมอน</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>ทุกหน้าจอคือกล่องซ้อนกล่อง — ลงล่าง Column ไปขวา Row · จัดแกนให้ถูกตัว (main vs cross) · ข้อความใน Row ครอบ Expanded กันล้น · ซ้อนเกิน 4 ชั้นให้แตก Widget ย่อย</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่10_Widget_Stateless_Stateful.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 10: Widget — Stateless vs Stateful</div>
+        </a>
+        <a href="บทที่12_จัดการState.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 12: จัดการ State เชิงลึก</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 3 · บทที่ 11<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 10 — Widget: Stateless vs Stateful | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 3 · บทที่ 10 (เปิดเฟส)</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ป้ายสองแบบ</a>
+      <a href="#equation" class="lvl2">— UI = f(state)</a>
+      <a href="#code" class="lvl1">2. เริ่มโปรเจกต์ To-Do</a>
+      <a href="#choose" class="lvl1">3. เลือก Stateless หรือ Stateful</a>
+      <a href="#techniques" class="lvl1">4. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">5. ตัวอย่างงานจริง: ปุ่มหัวใจ</a>
+      <a href="#clean" class="lvl1">6. Clean Code</a>
+      <a href="#errors" class="lvl1">7. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">8. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">9. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 3 · บทที่ 10 — กลับสู่หน้าจอ!</span>
+      <h1>Widget: Stateless vs Stateful</h1>
+      <p>เขียนแอปที่ "หน้าจอเปลี่ยนตามการกด" เป็นครั้งแรก และเริ่มโปรเจกต์ต่อเนื่องของเฟส 3: แอป To-Do List</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องจบเฟส 2 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 6 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">ยินดีต้อนรับกลับสู่หน้าจอ! ความรู้ Dart ทั้งเฟส 2 จะถูกใช้ทุกบรรทัดจากนี้ไป — บทนี้คุณจะเข้าใจสมการหัวใจของ Flutter: <strong>UI = f(state)</strong> และสร้างแอปแรกที่ "มีชีวิต"</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (6 คำ)</div>
+        <p><span class="pill">StatefulWidget</span><span class="pill">State</span><span class="pill">setState</span><span class="pill">UI = f(state)</span><span class="pill">createState</span><span class="pill">rebuild</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: ป้ายหน้าร้านสองแบบ</h2>
+      <p>กลับมาที่ร้านอาหารของเราจากบทที่ 2 — คราวนี้ถึงเวลาติด "ป้ายหน้าร้าน" มีให้เลือกสองแบบ:</p>
+      <div class="ascii">🪧 ป้ายทาสี (StatelessWidget)              💡 ป้าย LED (StatefulWidget)
+
+   ┌─────────────────────┐                ┌─────────────────────┐
+   │   "ร้านป้าหนู"        │                │  คิวตอนนี้: [ 42 ]    │
+   │   เปิด 9:00-18:00    │                │  ▲ ตัวเลขเปลี่ยนได้     │
+   └─────────────────────┘                └─────────────────────┘
+   ทาสีครั้งเดียว ไม่เปลี่ยนอีกเลย            ข้างในมี "หน่วยความจำ" (state)
+   อยากแก้ = รื้อทำใหม่ทั้งป้าย              เก็บเลขคิวปัจจุบันไว้
+                                          กดปุ่ม → เลขในหน่วยความจำเปลี่ยน
+   เหมาะกับ: ชื่อร้าน โลโก้ เมนูถาวร          → ป้ายวาดตัวเองใหม่ทันที
+                                          เหมาะกับ: อะไรก็ตามที่ "เปลี่ยนได้"</div>
+      <h3 id="equation">สมการที่สำคัญที่สุดใน Flutter — จำภาพนี้ภาพเดียวพอ</h3>
+      <div class="ascii">              state (ข้อมูล)                  UI (หน้าจอ)
+            ┌──────────────┐   Flutter     ┌──────────────┐
+            │ queueNumber   │   วาดจาก      │  คิวตอนนี้: 42 │
+            │   = 42        │  ─────────►  │              │
+            └──────────────┘   ข้อมูลเสมอ   └──────────────┘
+                   ▲                              │
+                   │      setState(() { ... })     │ ผู้ใช้กดปุ่ม
+                   └──────────────────────────────┘
+
+     UI = f(state):  "หน้าจอคือผลลัพธ์จากการเอาข้อมูลไปวาด"
+     อยากให้จอเปลี่ยน → อย่าไปแก้จอ ให้แก้ "ข้อมูล" แล้วบอก Flutter ว่าข้อมูลเปลี่ยน</div>
+      <div class="box why">
+        <div class="t">🤔 นี่คือจุดที่ Flutter ต่างจากการคิดแบบสามัญสำนึก</div>
+        <p>มือใหม่มักคิดว่า "จะไปสั่งให้ข้อความบนจอเปลี่ยน" — ผิดครับ ใน Flutter เราแก้ <strong>ข้อมูล</strong> (state) แล้วประกาศผ่าน <code class="inline">setState</code> ว่า "ข้อมูลเปลี่ยนแล้วนะ" Flutter จะเรียก <code class="inline">build()</code> วาดหน้าจอใหม่จากข้อมูลล่าสุดให้เอง (เรียกว่า rebuild) — ทิศทางเดียวเสมอ: ข้อมูล → หน้าจอ</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: เริ่มโปรเจกต์ To-Do + ปุ่มแรกที่กดแล้วจอเปลี่ยน</h2>
+      <p>สร้างโปรเจกต์ใหม่ (โปรเจกต์ต่อเนื่องของเฟส 3 — จะพัฒนาต่อทุกบทจนจบเฟส):</p>
+      <pre><code class="language-bash">flutter create todo_app
+cd todo_app</code></pre>
+      <p>แทนที่ <code class="inline">lib/main.dart</code> ทั้งหมดด้วยโค้ดนี้:</p>
+      <pre><code class="language-dart">import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const TodoApp());
+}
+
+/// ตัวแอป — Stateless เพราะการตั้งค่าธีม/ชื่อแอปไม่เปลี่ยน (ป้ายทาสี)
+class TodoApp extends StatelessWidget {
+  const TodoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'To-Do List',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+/// หน้าจอหลัก — Stateful เพราะจำนวนงานจะ "เปลี่ยนได้" (ป้าย LED)
+/// สังเกต: StatefulWidget ต้องเขียน 2 คลาสคู่กันเสมอ
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State&lt;HomeScreen&gt; createState() =&gt; _HomeScreenState();
+  // คลาสที่ 1 (ตัว Widget): เบา สร้างใหม่ได้บ่อยๆ
+  // คลาสที่ 2 (ตัว State): "หน่วยความจำ" ที่อยู่ทนข้าม rebuild
+}
+
+class _HomeScreenState extends State&lt;HomeScreen&gt; {
+  // ⭐ นี่คือ state — ข้อมูลที่หน้าจอวาดจากมัน (ความรู้ List จากบทที่ 7!)
+  final List&lt;String&gt; _tasks = ['อ่านบทเรียนที่ 10'];
+
+  void _addTask() {
+    // ⭐ setState = "ประกาศว่าข้อมูลเปลี่ยน จอช่วยวาดใหม่ที"
+    setState(() {
+      _tasks.add('งานใหม่ชิ้นที่ ${_tasks.length + 1}');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // build ถูกเรียกใหม่ทุกครั้งที่ setState — หน้าจอจึงตรงกับข้อมูลล่าสุดเสมอ
+    return Scaffold(
+      appBar: AppBar(title: const Text('To-Do List')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.checklist, size: 72, color: Colors.teal),
+            const SizedBox(height: 12),
+            Text(
+              'มีงานทั้งหมด ${_tasks.length} รายการ',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            Text('ล่าสุด: ${_tasks.last}'),
+          ],
+        ),
+      ),
+      // ปุ่มลอยมุมขวาล่าง — ของแถมจาก Scaffold
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addTask,   // กดปุ่ม → เรียกฟังก์ชันของเรา
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}</code></pre>
+      <p>รัน <code class="inline">flutter run</code> แล้ว<strong>กดปุ่ม + ดูตัวเลขเปลี่ยน</strong> — นี่คือแอปแรกของคุณที่มีชีวิต! ลองคอมเมนต์ <code class="inline">setState(...)</code> ออกเหลือแค่ <code class="inline">_tasks.add(...)</code> แล้วกดปุ่มดู: <strong>ข้อมูลเปลี่ยนแต่จอนิ่ง</strong> — นี่แหละคือเหตุผลว่าทำไมต้องมี setState</p>
+    </section>
+
+    <section id="choose">
+      <h2>3. 🧠 คอนเซปต์: เลือก Stateless หรือ Stateful ยังไง</h2>
+      <p>ถามคำถามเดียว: <strong>"หน้าจอส่วนนี้ต้องเปลี่ยนตามการใช้งานไหม?"</strong></p>
+      <table>
+        <tr><th>ส่วนของแอป</th><th>เปลี่ยนได้ไหม</th><th>ใช้อะไร</th></tr>
+        <tr><td>โลโก้, ชื่อแอป, หน้า About</td><td>❌ นิ่งตลอด</td><td><code class="inline">StatelessWidget</code></td></tr>
+        <tr><td>ตัวนับ, ฟอร์ม, รายการที่เพิ่ม/ลบได้</td><td>✅ เปลี่ยนตามผู้ใช้</td><td><code class="inline">StatefulWidget</code></td></tr>
+        <tr><td>การ์ดแสดงข้อมูล 1 ชิ้น (รับข้อมูลมาโชว์เฉยๆ)</td><td>❌ ตัวมันไม่เปลี่ยนเอง</td><td><code class="inline">StatelessWidget</code> (ให้แม่ส่งข้อมูลมา)</td></tr>
+      </table>
+      <div class="box concept">
+        <div class="t">🧠 กฎมืออาชีพ: เริ่มจาก Stateless เสมอ</div>
+        <p>เปลี่ยนเป็น Stateful เฉพาะเมื่อจำเป็นจริง เหมือน <code class="inline">final</code> กับ <code class="inline">var</code> ในบทที่ 4: ของที่ไม่เปลี่ยนอ่านง่ายกว่า เร็วกว่า และผิดยากกว่า</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>4. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — พิมพ์ stful + Tab ใน VS Code</h3>
+      <p>โครง StatefulWidget 2 คลาสไม่ต้องจำ — VS Code มี snippet ให้: พิมพ์ <code class="inline">stful</code> กด Tab แล้วพิมพ์ชื่อคลาส โครงขึ้นครบ (<code class="inline">stless</code> สำหรับ Stateless) — dev จริงใช้ snippet กันทั้งนั้น</p>
+      <h3>เทคนิคที่ 2 — เก็บ state ให้เล็กที่สุด อย่าเก็บของที่คำนวณได้</h3>
+      <p>เก็บ <code class="inline">_tasks</code> (List) พอ — จำนวนงานคือ <code class="inline">_tasks.length</code> คำนวณสดใน build ได้เลย ถ้าเก็บ <code class="inline">_taskCount</code> แยกอีกตัว = มีข้อมูล 2 ชุดที่ต้องคอยให้ตรงกัน วันไหนลืมอัปเดตตัวหนึ่ง จอก็โกหกผู้ใช้ทันที</p>
+      <h3>เทคนิคที่ 3 — ใน setState ทำแค่ "แก้ข้อมูล"</h3>
+      <p>งานหนัก (โหลดข้อมูล คำนวณยาว) ทำนอก setState แล้วค่อย setState สั้นๆ ตอนจบ — setState มีหน้าที่เดียวคือประกาศว่า "เปลี่ยนแล้ว" ไม่ใช่ที่ทำงาน</p>
+      <h3>เทคนิคที่ 4 — ตัวแปร state ขึ้นต้นด้วย _ เสมอ</h3>
+      <p><code class="inline">_tasks</code>, <code class="inline">_addTask</code> — เครื่องหมาย <code class="inline">_</code> ใน Dart แปลว่า "ของส่วนตัวในไฟล์นี้" คนนอกมาแก้ state ของเราตรงๆ ไม่ได้ ต้องผ่าน method ที่เราเปิดให้ — วินัยข้อนี้จะสำคัญมากตอนแอปโต</p>
+    </section>
+
+    <section id="prod">
+      <h2>5. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "ปุ่มหัวใจใน Instagram"</div>
+        <p>กดหัวใจ → เปลี่ยนเป็นสีแดงทันที + ตัวเลขไลก์บวกหนึ่ง — เบื้องหลังคือ pattern เดียวกับที่คุณเพิ่งเขียนเป๊ะ</p>
+      </div>
+      <pre><code class="language-dart">class LikeButton extends StatefulWidget { /* ... */ }
+
+class _LikeButtonState extends State&lt;LikeButton&gt; {
+  bool _isLiked = false;   // state จิ๋วๆ ตัวเดียว (bool จากบทที่ 4)
+  int _likeCount = 1024;
+
+  void _toggleLike() {
+    setState(() {
+      _isLiked = !_isLiked;                     // สลับ จริง↔เท็จ
+      _likeCount += _isLiked ? 1 : -1;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(
+        _isLiked ? Icons.favorite : Icons.favorite_border,  // UI วาดจาก state
+        color: _isLiked ? Colors.red : Colors.grey,
+      ),
+      onPressed: _toggleLike,
+    );
+  }
+}</code></pre>
+      <p>ในทีมจริง หน้าจอหนึ่งหน้าประกอบจาก Widget เล็กๆ แบบนี้หลายสิบตัว แต่ละตัวถือ state เฉพาะของตัวเอง — ปุ่มไลก์รู้แค่เรื่องไลก์ ไม่ต้องรู้เรื่องคอมเมนต์ นี่คือ Single Responsibility ระดับ UI</p>
+    </section>
+
+    <section id="clean">
+      <h2>6. 🧹 ตัวอย่าง Clean Code</h2>
+      <pre><code class="language-dart">// ❌ state ซ้ำซ้อน ชื่อกำกวม ไม่มี _
+class _HomeScreenState extends State&lt;HomeScreen&gt; {
+  List&lt;String&gt; tasks = [];   // ไม่มี _ = คนนอกแก้ได้ อันตราย
+  int taskCount = 0;         // ซ้ำกับ tasks.length — รอวันไม่ตรงกัน
+  String title = 'To-Do';    // ค่านิ่งๆ ไม่ควรเป็น state เลย
+
+  void add() {               // ชื่อกำกวม: add อะไร?
+    tasks.add('งาน');
+    // ลืมอัปเดต taskCount แล้ว... จอแสดงเลขผิดทันที
+    setState(() {});
+  }
+}</code></pre>
+      <pre><code class="language-dart">// ✅ state น้อยที่สุด ชื่อชัด ของนิ่งเป็น const
+class _HomeScreenState extends State&lt;HomeScreen&gt; {
+  // state มีตัวเดียวจริงๆ: รายการงาน — ทุกอย่างที่เหลือคำนวณจากมัน
+  final List&lt;String&gt; _tasks = [];
+
+  void _addTask() {
+    setState(() =&gt; _tasks.add('งานใหม่ชิ้นที่ ${_tasks.length + 1}'));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('To-Do List')), // ค่านิ่ง → const ไปเลย
+      body: Text('ทั้งหมด ${_tasks.length} งาน'),        // คำนวณสด ไม่มีวันเพี้ยน
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addTask,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>state ทุกตัวคือภาระที่ต้องดูแลให้ถูกต้องตลอดชีวิตของหน้าจอ — ยิ่งถือน้อย ยิ่งผิดยาก ถามตัวเองก่อนเพิ่ม state ทุกครั้ง: "ตัวนี้คำนวณจากตัวอื่นได้ไหม?"</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>7. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① แก้ข้อมูลแล้วแต่จอไม่เปลี่ยน</div>
+        <p><strong>สาเหตุ:</strong> แก้ตัวแปร state ตรงๆ โดยไม่ผ่าน setState — Flutter ไม่รู้ว่าต้องวาดใหม่<br>
+        <strong>วิธีแก้:</strong> ครอบการแก้ด้วย <code class="inline">setState(() { ... });</code> เสมอ — นี่คือบั๊กอันดับ 1 ของบทนี้ ถ้าจอนิ่งผิดปกติ หา setState ที่หายไปก่อนเลย</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② งงว่าทำไม StatefulWidget ต้องมี 2 คลาส / ขีดล่างคืออะไร</div>
+        <p><strong>วิธีเข้าใจ:</strong> คลาสแรก (HomeScreen) = "ป้ายชื่อ" เบาๆ สร้างทิ้งได้บ่อย · คลาสสอง (_HomeScreenState) = "หน่วยความจำ" ที่อยู่ทน ถือ state จริง · <code class="inline">_</code> นำหน้า = ของส่วนตัว ไฟล์อื่นมองไม่เห็น (ตั้งใจ ไม่ใช่ความบังเอิญ) · ใช้ snippet <code class="inline">stful</code> สร้างเสมอ เดี๋ยวก็ชิน</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ "setState() called after dispose()"</div>
+        <p><strong>สาเหตุ:</strong> สั่งวาดใหม่หลังหน้าจอถูกปิดไปแล้ว (มักเจอคู่กับงาน async — รอโหลดเสร็จแล้วค่อย setState แต่ผู้ใช้กดออกจากหน้าไปก่อน)<br>
+        <strong>วิธีแก้:</strong> ตอนนี้แค่รู้จักชื่อมันพอ — จะเจอจริงและแก้จริงตอนบทที่ 19-20 (ถ้าเจอตอนนี้: เช็ค <code class="inline">if (mounted)</code> ก่อน setState)</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>8. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ป้าย LED แรก</div>
+        <p>ทำแอปตัวนับตามหัวข้อ 2 ให้รันได้ แล้วทดลอง 2 อย่าง: (1) คอมเมนต์ setState ออกแล้วกดปุ่ม — อธิบายให้ตัวเองฟังว่าทำไมจอนิ่ง (2) ใส่ <code class="inline">debugPrint('build ทำงาน!')</code> ใน build แล้วดู Debug Console ว่า build ถูกเรียกใหม่ทุกครั้งที่กดจริงไหม (เครื่องมือจากบทที่ 3)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — ปุ่มหัวใจของตัวเอง</div>
+        <p>สร้าง Widget <code class="inline">LikeButton</code> แยกคลาสตามตัวอย่างหัวข้อ 5 ให้กดสลับหัวใจแดง/เทา + ตัวเลขขึ้นลงได้จริง แล้วเอาไปวางใน HomeScreen — ฝึกการมี Stateful Widget ตัวเล็กซ้อนในหน้าใหญ่</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — โครง To-Do จริงจัง (ชิ้นส่วนแรกของโปรเจกต์เฟส!)</div>
+        <p>ต่อยอดแอปหัวข้อ 2: (1) แสดงรายการงานทุกชิ้นด้วย Column + <code class="inline">.map()</code> จากบทที่ 7: <code class="inline">children: _tasks.map((t) =&gt; Text('• $t')).toList()</code> (2) เพิ่มปุ่มลบงานล่าสุด (<code class="inline">_tasks.removeLast()</code> — อย่าลืมกัน List ว่างด้วย guard clause บทที่ 5!) (3) ถ้า List ว่าง แสดง "ยังไม่มีงาน 🎉" แทน — git init, commit ด้วย <code class="inline">feat: todo skeleton with add/remove and empty state</code> แล้ว push ขึ้น GitHub</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>9. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบาย UI = f(state) ด้วยคำพูดตัวเองได้ (ทำไมเราแก้ข้อมูล ไม่แก้จอ)</li>
+        <li>บอกได้ว่าเมื่อไหร่ใช้ Stateless เมื่อไหร่ใช้ Stateful และทำไมควรเริ่มจาก Stateless</li>
+        <li>เขียน StatefulWidget + setState ได้ (ใช้ snippet stful เป็น)</li>
+        <li>เคยเห็นกับตาแล้วว่า "แก้ข้อมูลโดยไม่ setState = จอนิ่ง"</li>
+        <li>โครงแอป To-Do (เพิ่ม/ลบ/empty state) อยู่บน GitHub แล้ว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">StatefulWidget</code></td><td>Widget ที่หน้าตาเปลี่ยนได้</td><td>ป้าย LED</td></tr>
+        <tr><td><code class="inline">State</code></td><td>คลาสหน่วยความจำที่ถือข้อมูลของ Widget</td><td>สมองของป้าย</td></tr>
+        <tr><td><code class="inline">setState</code></td><td>ประกาศว่าข้อมูลเปลี่ยน ให้วาดจอใหม่</td><td>กดปุ่มอัปเดตป้าย</td></tr>
+        <tr><td>UI = f(state)</td><td>หน้าจอคือผลลัพธ์จากข้อมูลเสมอ</td><td>ป้ายแสดงตามหน่วยความจำ</td></tr>
+        <tr><td><code class="inline">createState</code></td><td>จุดที่ Widget สร้างหน่วยความจำของตัวเอง</td><td>ติดตั้งสมองให้ป้าย</td></tr>
+        <tr><td>rebuild</td><td>การที่ Flutter เรียก build วาดใหม่</td><td>ป้ายรีเฟรชตัวเอง</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>Stateless = ป้ายทาสี Stateful = ป้าย LED · UI = f(state): แก้ข้อมูลผ่าน setState แล้ว Flutter วาดจอใหม่ให้เอง · เริ่มจาก Stateless เสมอ · state ยิ่งน้อยยิ่งดี — ของที่คำนวณได้ อย่าเก็บ</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่9_Async_เบื้องต้น.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 9: รู้จัก Async/await เบื้องต้น</div>
+        </a>
+        <a href="#" onclick="return false;">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 11: Layout — Row, Column, Container</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 3 · บทที่ 10<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>
