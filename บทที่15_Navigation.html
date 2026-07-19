@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 15 — Navigation: เปลี่ยนหน้า | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 3 · บทที่ 15</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: กองจาน</a>
+      <a href="#code" class="lvl1">2. หน้ารายละเอียดงาน</a>
+      <a href="#result" class="lvl2">— รับผลลัพธ์กลับ</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: เส้นทางสั่งซื้อ</a>
+      <a href="#clean" class="lvl1">5. Clean Code</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 3 · บทที่ 15</span>
+      <h1>Navigation: พาผู้ใช้ไปมาระหว่างหน้าจอ</h1>
+      <p>แตะงานแล้วเข้าหน้ารายละเอียด กดย้อนกลับได้ ส่งข้อมูลข้ามหน้า และรับผลลัพธ์กลับมา</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 14 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 6 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">To-Do ของเรามีหน้าเดียวมาตลอด — บทนี้ได้เวลา "เปิดประตูไปห้องถัดไป" แล้วแอปเราจะเริ่มหน้าตาเหมือนแอปจริงใน Store</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (6 คำ)</div>
+        <p><span class="pill">Navigator</span><span class="pill">push / pop</span><span class="pill">route</span><span class="pill">MaterialPageRoute</span><span class="pill">ส่งข้อมูลผ่าน constructor</span><span class="pill">รับผลลัพธ์ด้วย await</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: กองจานของหน้าจอ</h2>
+      <p>แอปมือถือจัดการหลายหน้าด้วยวิธีเดียวกับ <strong>การซ้อนจาน</strong>: หน้าใหม่ถูก "วางทับ" หน้าเดิม — หน้าเดิมไม่หายไปไหน แค่ถูกบัง รอวันที่จานข้างบนถูกยกออก</p>
+      <div class="ascii">   ผู้ใช้ทำอะไร                    กองจาน (Navigation Stack)
+
+   เปิดแอป                        ┌──────────────┐
+                                 │  หน้าหลัก      │   ← จานใบแรก
+                                 └──────────────┘
+
+   แตะงาน "ซื้อนม"                 ┌──────────────┐
+   → push หน้ารายละเอียด           │  รายละเอียด    │   ← จานใหม่วางทับ
+                                 ├──────────────┤
+                                 │  หน้าหลัก      │   ← ยังอยู่! แค่ถูกบัง
+                                 └──────────────┘      (state ไม่หาย)
+
+   กดปุ่ม ← ย้อนกลับ               ┌──────────────┐
+   → pop จานบนออก                 │  หน้าหลัก      │   ← โผล่กลับมา
+                                 └──────────────┘      เหมือนเดิมทุกอย่าง
+
+   push = วางจานทับ   ·   pop = ยกจานบนออก   ·   ปุ่ม back ของมือถือ = pop นั่นเอง</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไมต้องเป็น "กอง" (stack)</div>
+        <p>เพราะพฤติกรรมผู้ใช้คือ "เข้าไปลึกแล้วย้อนกลับทางเดิม" — เปิดแชท → เข้าห้อง → ดูรูป → กดกลับ → ห้องแชท → กดกลับ → รายชื่อ ลำดับย้อนกลับต้องตรงกับขาเข้าเป๊ะ โครงสร้างกองจานให้พฤติกรรมนี้ฟรีๆ และ Flutter จัดการให้หมดผ่าน <code class="inline">Navigator</code></p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: หน้ารายละเอียดงาน</h2>
+      <h3>ขั้นที่ 1 — สร้างหน้าใหม่ที่ "รับข้อมูลผ่าน constructor"</h3>
+      <p>สร้างไฟล์ <code class="inline">lib/screens/task_detail_screen.dart</code> (โครงสร้างโฟลเดอร์จากบทที่ 2):</p>
+      <pre><code class="language-dart">import 'package:flutter/material.dart';
+import '../models/task.dart';
+
+/// หน้ารายละเอียดงาน — Stateless เพราะรับข้อมูลมาแสดงเฉยๆ (ตารางบทที่ 10)
+/// สังเกต: หน้าใหม่ก็คือ Widget ธรรมดา + รับข้อมูลผ่าน constructor เหมือนที่เคยทำ
+class TaskDetailScreen extends StatelessWidget {
+  const TaskDetailScreen({super.key, required this.task});
+
+  final Task task;   // ← ข้อมูลเดินทางข้ามหน้า ด้วยท่าเดิมจากบทที่ 12!
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // AppBar ของหน้าที่ถูก push จะมีปุ่ม ← ย้อนกลับให้อัตโนมัติ (ไม่ต้องเขียนเอง!)
+      appBar: AppBar(title: const Text('รายละเอียดงาน')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(task.title,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(task.isDone ? '✅ เสร็จแล้ว' : '⏳ ยังไม่เสร็จ',
+                style: const TextStyle(fontSize: 16, color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+}</code></pre>
+      <h3>ขั้นที่ 2 — แตะแถวงานแล้ว push</h3>
+      <p>ในหน้าหลัก เพิ่ม onTap ให้แถวงาน (ผ่าน callback ของ TaskTile — ท่าเดิมบทที่ 12):</p>
+      <pre><code class="language-dart">onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      // builder = สูตรสร้างหน้าปลายทาง (route = เส้นทางไปหน้านั้น)
+      builder: (context) =&gt; TaskDetailScreen(task: task),
+    ),
+  );
+},</code></pre>
+      <p>รันแล้ว<strong>แตะงานดู</strong>: หน้ารายละเอียดสไลด์เข้ามา พร้อมปุ่ม ← ที่กดย้อนกลับได้ — คุณเพิ่งได้แอนิเมชันเปลี่ยนหน้าตามมาตรฐานของแต่ละแพลตฟอร์ม (iOS สไลด์จากขวา, Android เฟดขึ้น) ฟรีจาก MaterialPageRoute</p>
+      <h3 id="result">ขั้นที่ 3 — รับผลลัพธ์กลับจากหน้าปลายทาง</h3>
+      <p>ของจริงกว่านั้น: หน้ารายละเอียดมี <strong>ปุ่มลบ</strong> — แต่กระดานกลาง (_tasks) อยู่หน้าหลัก จะบอกกันยังไง? ใช้ท่า "pop พร้อมพัสดุ":</p>
+      <pre><code class="language-dart">// ── ฝั่งหน้ารายละเอียด: ปุ่มลบ ──
+ElevatedButton.icon(
+  icon: const Icon(Icons.delete),
+  label: const Text('ลบงานนี้'),
+  onPressed: () {
+    Navigator.pop(context, true);   // ยกจานออก + แนบผลลัพธ์ "true = ขอลบ" กลับไป
+  },
+)
+
+// ── ฝั่งหน้าหลัก: push แบบรอฟังคำตอบ (บัตรคิวจากบทที่ 9 กลับมา!) ──
+onTap: () async {
+  final shouldDelete = await Navigator.push&lt;bool&gt;(
+    context,
+    MaterialPageRoute(builder: (context) =&gt; TaskDetailScreen(task: task)),
+  );
+  // โค้ดตรงนี้ทำงาน "หลังหน้ารายละเอียดถูก pop กลับมา"
+  if (shouldDelete == true) {
+    setState(() =&gt; _tasks.remove(task));   // ลบที่กระดานกลาง — จอทุกจุดอัปเดต
+  }
+},</code></pre>
+      <p>สังเกต: push คืน <code class="inline">Future</code> — เพราะ "การรอผู้ใช้กลับมาจากอีกหน้า" ก็คืองานที่ต้องรอ (async บทที่ 9 ในบริบทจริงครั้งแรก!) และผลลัพธ์เป็น <code class="inline">bool?</code> เพราะผู้ใช้อาจกด ← เฉยๆ โดยไม่กดลบ (null safety บทที่ 4 ทำงานพอดี: เช็ค <code class="inline">== true</code> จึงปลอดภัยทั้ง null)</p>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — หนึ่งหน้า หนึ่งไฟล์ ใน lib/screens/ เสมอ</h3>
+      <p>ตั้งชื่อลงท้าย Screen (<code class="inline">TaskDetailScreen</code>, <code class="inline">SettingsScreen</code>) และไฟล์ snake_case ตรงกัน — พอแอปมี 15 หน้า โฟลเดอร์ screens จะเป็น "สารบัญแอป" ที่มองปราดเดียวรู้ว่ามีหน้าอะไรบ้าง</p>
+      <h3>เทคนิคที่ 2 — ส่ง object ทั้งก้อน ไม่ใช่แยกส่ง field</h3>
+      <p><code class="inline">TaskDetailScreen(task: task)</code> ✓ ไม่ใช่ <code class="inline">TaskDetailScreen(title: ..., isDone: ...)</code> ✗ — วันที่ Task มี field เพิ่ม (กำหนดส่ง, หมวดหมู่) แบบแรกไม่ต้องแก้อะไรเลย แบบหลังต้องไล่แก้ทุกจุดที่เรียก (เหตุผลเดียวกับที่สร้าง class ในบทที่ 8)</p>
+      <h3>เทคนิคที่ 3 — ผลลัพธ์จาก pop ถือว่า "อาจเป็น null เสมอ"</h3>
+      <p>ผู้ใช้มีทางกลับที่เราคุมไม่ได้เสมอ (ปุ่ม back ของเครื่อง, ปัดขอบจอ) ซึ่ง pop โดยไม่แนบค่า → เขียนเงื่อนไขแบบระบุชัด <code class="inline">if (result == true)</code> ไม่ใช่ <code class="inline">if (result != null)</code> แล้วเดาเอา</p>
+      <h3>เทคนิคที่ 4 — อย่าลืมว่าหน้าเดิม "ยังมีชีวิต" ใต้กอง</h3>
+      <p>จานล่างไม่ถูกทำลาย state ยังครบ — ดังนั้นไม่ต้องส่งข้อมูลกลับมา "สร้างหน้าเดิมใหม่" และในทางกลับกัน ระวังงานหนักที่หน้าเดิมยังรันต่อทั้งที่ถูกบังอยู่</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "เส้นทางสั่งซื้อของแอปช้อปปิ้ง"</div>
+        <p>ทุกการสั่งซื้อที่คุณเคยกด คือกองจานที่ออกแบบมาอย่างจงใจ:</p>
+      </div>
+      <div class="ascii">   หน้ารายการสินค้า → หน้าสินค้า → ตะกร้า → ที่อยู่จัดส่ง → จ่ายเงิน → สำเร็จ
+
+   กองจาน ณ ขั้นจ่ายเงิน:          การตัดสินใจออกแบบที่ทีมจริงถกกัน:
+   ┌────────────┐
+   │ จ่ายเงิน     │               · กด back จากหน้า "จ่ายเงิน" → กลับ "ที่อยู่" ✓
+   │ ที่อยู่จัดส่ง  │                 (ผู้ใช้แก้ที่อยู่ได้ ไม่ต้องเริ่มใหม่)
+   │ ตะกร้า      │               · แต่หน้า "สำเร็จ" ห้ามกด back กลับไป "จ่ายเงิน"!
+   │ หน้าสินค้า   │                 (เดี๋ยวจ่ายซ้ำ) → ทีมใช้ท่า pop ทั้งกองกลับหน้าแรก
+   │ หน้ารายการ   │               · ปิด popup ยืนยัน = pop(false), กดตกลง = pop(true)
+   └────────────┘                 — ท่าเดียวกับปุ่มลบที่คุณเพิ่งเขียนเป๊ะ</div>
+      <p>การออกแบบ "กด back แล้วเกิดอะไร" ในแต่ละจุด คือหัวข้อที่ PM, ดีไซเนอร์ และ dev ประชุมร่วมกันจริงจัง — เพราะ back ที่พฤติกรรมเพี้ยนคือสาเหตุอันดับต้นๆ ที่ผู้ใช้ลบแอป และตอนนี้คุณมีเครื่องมือครบที่จะร่วมวงสนทนานั้น</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: การเดินทางที่อ่านออก</h2>
+      <pre><code class="language-dart">// ❌ ยัดหน้าใหม่เป็น Widget ก้อนใหญ่ใน main.dart + ส่งข้อมูลแบบแตกกระจาย
+Navigator.push(context, MaterialPageRoute(builder: (context) =&gt; Scaffold(
+  appBar: AppBar(title: Text('รายละเอียด')),
+  body: Column(children: [
+    Text(title), Text(isDone ? 'เสร็จ' : 'ยัง'), // รับ field แยก 5 ตัว
+    /* ...อีก 40 บรรทัด... */
+  ]),
+)));   // ← หน้าทั้งหน้าไม่มีชื่อ ไม่มีบ้าน ทดสอบแยกไม่ได้ ใช้ซ้ำไม่ได้</code></pre>
+      <pre><code class="language-dart">// ✅ หน้ามีชื่อ มีบ้าน — จุด push อ่านเป็นภาษาคน
+final shouldDelete = await Navigator.push&lt;bool&gt;(
+  context,
+  MaterialPageRoute(builder: (context) =&gt; TaskDetailScreen(task: task)),
+);
+
+// รายละเอียดทั้งหมดอยู่ lib/screens/task_detail_screen.dart
+// — เปิดโฟลเดอร์ screens = เห็นสารบัญแอปทั้งเล่ม</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 บันไดเดิม ขั้นใหญ่ขึ้น</div>
+        <p>สังเกตอีกครั้ง: กฎ "หนึ่งไฟล์หนึ่งหน้าที่" (บทที่ 2) → ฟังก์ชันผอม (บทที่ 6) → Widget ย่อย (บทที่ 11) → <strong>หนึ่งหน้าหนึ่งไฟล์ (บทนี้)</strong> — หลักการเดียวกันตลอดทาง</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "Navigator operation requested with a context that does not include a Navigator"</div>
+        <p><strong>สาเหตุ:</strong> เรียก Navigator.push ด้วย context ที่อยู่ "เหนือ" MaterialApp — Navigator เกิดข้างใน MaterialApp การขอใช้จาก context ที่สูงกว่ามันเลยหาไม่เจอ (เจอบ่อยตอนใส่ปุ่มใน MyApp/build แรกสุดของแอป)<br>
+        <strong>วิธีแก้:</strong> ย้ายปุ่ม/การ push ไปอยู่ใน Widget ที่เป็นลูกของ MaterialApp (เช่นในหน้า HomeScreen) — เจอ error นี้ = เช็คว่ากำลัง push จากตรงไหนของต้นไม้ Widget</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② แก้ข้อมูลในหน้ารายละเอียด แล้วหน้าหลักไม่เปลี่ยน</div>
+        <p><strong>สาเหตุ:</strong> เพื่อนเก่าจากบทที่ 12 — "ความจริงสองชุด": หน้ารายละเอียดแก้ตัวแปรของตัวเอง (สำเนา) แต่กระดานกลางอยู่หน้าหลัก<br>
+        <strong>วิธีแก้:</strong> ยึดหลักเดิม: การแก้ข้อมูลต้องเกิดที่เจ้าของกระดาน — ส่งผลลัพธ์กลับด้วย pop(ค่า) แล้วให้หน้าหลัก setState เอง (แบบปุ่มลบในหัวข้อ 2) หรือส่ง callback ลงไปเหมือน TaskTile ก็ได้</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ คำเตือน "Do not use BuildContexts across async gaps"</div>
+        <p><strong>สาเหตุ:</strong> หลัง await (เช่นรอ push กลับมา) แล้วใช้ context ต่อ — ระหว่างที่รอ ผู้ใช้อาจปิดหน้านี้ไปแล้ว context เลยอาจ "ตายแล้ว" (ญาติของ "setState after dispose" ที่เจอชื่อในบทที่ 10)<br>
+        <strong>วิธีแก้:</strong> เช็คก่อนใช้: <code class="inline">if (!context.mounted) return;</code> หลัง await ก่อนแตะ context — ตอนนี้จำท่านี้ไว้ใช้ตามได้เลย เหตุผลลึกๆ จะชัดมากตอนเฟส 4</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ประตูบานแรก</div>
+        <p>สร้างหน้า <code class="inline">AboutScreen</code> ง่ายๆ (ชื่อแอป + ชื่อคุณ + เวอร์ชัน — layout จากบทที่ 11) แล้วเพิ่มปุ่ม ℹ️ บน AppBar หน้าหลัก (<code class="inline">actions:</code>) ให้ push ไปหน้านี้ กดย้อนกลับได้ — สังเกตแอนิเมชันเปลี่ยนหน้า</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — หน้ารายละเอียด</div>
+        <p>ทำ TaskDetailScreen ตามหัวข้อ 2 ให้ครบ: รับ Task ผ่าน constructor, แสดงชื่อ+สถานะ, แตะแถวในหน้าหลักแล้วเข้ามาดูได้ — commit ด้วย <code class="inline">feat: task detail screen with navigation</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — pop พร้อมพัสดุ</div>
+        <p>เพิ่มปุ่มลบในหน้ารายละเอียดตามขั้นที่ 3: pop(context, true) → หน้าหลัก await แล้วลบจริง + แสดง SnackBar "ลบแล้ว" (บทที่ 13) — โบนัสท้าทาย: เพิ่มปุ่ม "ติ๊กเสร็จ" ในหน้ารายละเอียดด้วย โดยห้ามสร้างความจริงสองชุด (คิดดูว่าจะใช้ pop ส่งผล หรือส่ง callback ลงไป — ทั้งคู่ถูก เลือกแล้วอธิบายได้ว่าทำไม) — commit ด้วย <code class="inline">feat: delete and toggle from detail screen</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบาย navigation stack ด้วยภาพกองจานได้ (push วางทับ / pop ยกออก)</li>
+        <li>สร้างหน้าใหม่ใน lib/screens/ และ push/pop ได้คล่อง</li>
+        <li>ส่งข้อมูลไปหน้าใหม่ผ่าน constructor (ทั้ง object ไม่แยก field)</li>
+        <li>รับผลลัพธ์กลับด้วย await Navigator.push + pop(ค่า) ได้</li>
+        <li>อธิบายได้ว่าทำไมผลลัพธ์จาก pop ต้องเผื่อ null เสมอ</li>
+        <li>To-Do มีหน้ารายละเอียดที่ลบงานได้จริง</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">Navigator</code></td><td>ผู้จัดการกองหน้าจอ</td><td>คนคุมกองจาน</td></tr>
+        <tr><td><code class="inline">push</code> / <code class="inline">pop</code></td><td>วางหน้าใหม่ทับ / ยกหน้าบนออก</td><td>วางจาน / ยกจาน</td></tr>
+        <tr><td>route</td><td>เส้นทางไปหนึ่งหน้า</td><td>ทางเดินไปห้องถัดไป</td></tr>
+        <tr><td><code class="inline">MaterialPageRoute</code></td><td>route มาตรฐานพร้อมแอนิเมชันประจำแพลตฟอร์ม</td><td>ประตูบานเลื่อนอัตโนมัติ</td></tr>
+        <tr><td>ส่งข้อมูลผ่าน constructor</td><td>หน้าใหม่รับข้อมูลแบบเดียวกับ Widget ทั่วไป</td><td>ยื่นแฟ้มให้ก่อนเข้าห้อง</td></tr>
+        <tr><td>รับผลลัพธ์ด้วย <code class="inline">await</code></td><td>push คืน Future ของค่าที่ pop แนบกลับ</td><td>รอคนออกจากห้องพร้อมคำตอบ</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>หลายหน้า = กองจาน: push วางทับ pop ยกออก หน้าล่างยังมีชีวิต · ข้อมูลไปหน้าใหม่ผ่าน constructor, ผลลัพธ์กลับผ่าน pop(ค่า) + await · การแก้ข้อมูลยังต้องเกิดที่เจ้าของกระดานเสมอ — navigation ไม่เปลี่ยนกฎของบทที่ 12</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่14_Debugging.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 14: Debugging</div>
+        </a>
+        <a href="บทที่16_Form_TextField.html">
+          <div class="lbl">บทต่อไป (ปิดเฟส 3!) →</div>
+          <div class="ttl">บทที่ 16: Form และ TextField</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 3 · บทที่ 15<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

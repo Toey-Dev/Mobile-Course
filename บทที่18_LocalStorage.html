@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 18 — Local Storage: ทำให้แอปจำได้ | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 4 · บทที่ 18</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: สมุดในตู้เซฟ</a>
+      <a href="#serialization" class="lvl2">— serialization + JSON</a>
+      <a href="#code" class="lvl1">2. ต่อท่อความจำถาวร 4 ขั้น</a>
+      <a href="#concept" class="lvl1">3. เลือกที่เก็บให้ถูกขนาดงาน</a>
+      <a href="#techniques" class="lvl1">4. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">5. ตัวอย่างงานจริง: แบบร่างรอด</a>
+      <a href="#clean" class="lvl1">6. Clean Code: สมุดอยู่ห้องเดียว</a>
+      <a href="#errors" class="lvl1">7. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">8. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">9. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 4 · บทที่ 18</span>
+      <h1>Local Storage: ทำให้แอป "จำ" ได้แม้ปิดเครื่อง</h1>
+      <p>ปิดแอปแล้วเปิดใหม่ งานทุกชิ้นยังอยู่ครบ — ต่อท่อเข้า TaskProvider ที่เดียว หน้าจอไม่ต้องแก้สักบรรทัด</p>
+      <div class="meta">
+        <span>⏱️ 2–2.5 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 17 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 6 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">ตอนนี้ปิดแอปเมื่อไหร่ งานหายเกลี้ยงเมื่อนั้น — บทนี้เรียนการแปลงข้อมูลเป็นข้อความ (serialization) เพื่อเก็บลงเครื่อง และคุณจะได้เจอ JSON ครั้งแรกในสเกลเล็ก ก่อนเจอของจริงจากเซิร์ฟเวอร์ในบทหน้า</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (6 คำ)</div>
+        <p><span class="pill">persistence</span><span class="pill">shared_preferences</span><span class="pill">key-value storage</span><span class="pill">toJson / fromJson</span><span class="pill">jsonEncode / jsonDecode</span><span class="pill">getInstance</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: กระดานไวท์บอร์ด กับสมุดบัญชีในตู้เซฟ</h2>
+      <p>ร้านอาหารของเรา (ที่มี "ห้องประชาสัมพันธ์" จากบทที่แล้ว) มีความลับที่น่าตกใจ: <strong>ทุกครั้งที่ปิดร้าน กระดานทุกแผ่นถูกลบเกลี้ยง</strong></p>
+      <div class="ascii">   🌆 ระหว่างเปิดร้าน (แอปกำลังรัน)          🌃 ปิดร้าน (ผู้ใช้ปิดแอป / OS ฆ่าแอป)
+
+   📋 กระดานไวท์บอร์ด (state ใน RAM)          ไฟดับทั้งอาคาร...
+   · เขียนเร็ว อ่านเร็ว                        กระดานถูกลบเกลี้ยง 😱
+   · แต่เป็น "หมึกลบได้"                       _tasks ทั้งหมดหายไปตลอดกาล
+
+                    ทางแก้ของร้านมืออาชีพ:
+
+   📔 สมุดบัญชีในตู้เซฟ (ไฟล์ในเครื่อง)
+   · เขียนช้ากว่ากระดาน แต่ "หมึกถาวร" — ไฟดับกี่รอบก็ไม่หาย (persistence)
+   · กติกา 2 ข้อ:
+     ① กระดานเปลี่ยนเมื่อไหร่ → จดลงสมุดทันที (save ทุกการแก้)
+     ② เปิดร้านเช้ามา → เปิดสมุด คัดลอกขึ้นกระดาน (load ตอนเปิดแอป)</div>
+      <h3 id="serialization">แต่มีปัญหาหนึ่ง — สมุดเล่มนี้เขียนได้แค่ "ข้อความ"</h3>
+      <div class="ascii">   Task object ในหน่วยความจำ            ข้อความในสมุด (JSON)
+   ┌──────────────────┐
+   │ 📦 Task           │    แบนให้เป็น    [{"title":"อ่านหนังสือ","isDone":false},
+   │  title: "อ่าน..."  │   ──────────►    {"title":"ซื้อนม","isDone":true}]
+   │  isDone: false    │    toJson +
+   │  toggle()         │    jsonEncode    ◄──────────
+   └──────────────────┘                   พองกลับเป็น object: jsonDecode + fromJson
+
+   เหมือนถ่ายรูปของจริงเก็บในสมุด (แบน 2 มิติ) แล้ววันหลังปั้นกลับจากรูปได้เป๊ะ
+   กระบวนการนี้ชื่อ serialization — และ "ภาษากลาง" ที่ทั้งโลกใช้เขียนรูปนี้คือ JSON</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไมบทนี้เจอ JSON ก่อนบทที่ 19</div>
+        <p>วันนี้คุณจะใช้ JSON กับข้อมูล "ของตัวเอง" ในสเกลเล็กก่อน (แบนเอง พองเอง เห็นครบวงจร) — พอถึงบทหน้าที่ JSON ถูกส่งมาจากเซิร์ฟเวอร์จริงทีละเป็นพันบรรทัด คุณจะอ่านมันออกเหมือนเจอเพื่อนเก่า</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: ต่อท่อความจำถาวร (4 ขั้น)</h2>
+      <h3>ขั้นที่ 1 — ติดตั้งสมุดบัญชี</h3>
+      <pre><code class="language-bash">flutter pub add shared_preferences</code></pre>
+      <p><code class="inline">shared_preferences</code> คือที่เก็บแบบ <strong>key-value</strong> — จำตู้ล็อกเกอร์ของ Map (บทที่ 7) ได้ไหมครับ นี่คือตู้ล็อกเกอร์เวอร์ชันหมึกถาวร: <code class="inline">'tasks'</code> → ข้อความ JSON ของเรา</p>
+      <h3>ขั้นที่ 2 — สอน Task ให้ "ถ่ายรูป" และ "คืนชีพจากรูป" (lib/models/task.dart)</h3>
+      <pre><code class="language-dart">class Task {
+  Task({required this.title, this.isDone = false});
+
+  final String title;
+  bool isDone;
+
+  void toggle() =&gt; isDone = !isDone;
+
+  /// ถ่ายรูป: Task → Map (ขั้นแรกของการแบนเป็นข้อความ)
+  Map&lt;String, dynamic&gt; toJson() =&gt; {'title': title, 'isDone': isDone};
+
+  /// คืนชีพจากรูป: Map → Task (factory = constructor พิเศษที่สร้างจากข้อมูลดิบ)
+  factory Task.fromJson(Map&lt;String, dynamic&gt; json) {
+    return Task(
+      title: json['title'] as String,
+      // ?? = เกราะจากบทที่ 4: ถ้าข้อมูลเก่าไม่มีฟิลด์นี้ ใช้ค่าตั้งต้นแทน ไม่พัง
+      isDone: json['isDone'] as bool? ?? false,
+    );
+  }
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักการเดิมจากบทที่ 8</div>
+        <p><strong>ความรู้เรื่องงาน อยู่กับตัวงาน</strong> — วิธีแปลงร่างของ Task ก็อยู่ในคลาส Task ไม่กระจายไปที่อื่น</p>
+      </div>
+      <h3>ขั้นที่ 3 — ห้องประชาสัมพันธ์รับหน้าที่จดสมุด (lib/providers/task_provider.dart)</h3>
+      <pre><code class="language-dart">import 'dart:convert';                                    // jsonEncode / jsonDecode
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/task.dart';
+
+class TaskProvider extends ChangeNotifier {
+  static const _storageKey = 'tasks';   // ป้ายล็อกเกอร์เป็น const — กันพิมพ์ผิด
+  final List&lt;Task&gt; _tasks = [];
+
+  List&lt;Task&gt; get tasks =&gt; List.unmodifiable(_tasks);
+  int get doneCount =&gt; _tasks.where((t) =&gt; t.isDone).length;
+
+  /// 📔 จดกระดานลงสมุด — private เพราะเป็นเรื่องภายในห้อง
+  Future&lt;void&gt; _saveTasks() async {
+    final prefs = await SharedPreferences.getInstance();  // ขอกุญแจตู้เซฟ (ต้องรอ = async บท 9)
+    final jsonString = jsonEncode(_tasks.map((t) =&gt; t.toJson()).toList());
+    await prefs.setString(_storageKey, jsonString);       // เขียนหมึกถาวร
+  }
+
+  /// 🌅 เปิดร้าน: อ่านสมุดขึ้นกระดาน — เรียกครั้งเดียวตอนแอปเริ่ม
+  Future&lt;void&gt; loadTasks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_storageKey);
+    if (jsonString == null) return;       // เปิดร้านครั้งแรก สมุดยังว่าง (guard clause บท 5)
+
+    final list = jsonDecode(jsonString) as List&lt;dynamic&gt;;
+    _tasks
+      ..clear()
+      ..addAll(list.map((e) =&gt; Task.fromJson(e as Map&lt;String, dynamic&gt;)));
+    // (.. คือ cascade: "ทำกับ object เดิมต่อเนื่อง" — ท่าย่อ อ่านเจอจะได้ไม่งง)
+    notifyListeners();                    // 📢 ประกาศ: กระดานพร้อมแล้ว ทุกจอวาดเลย
+  }
+
+  void addTask(String title) {
+    _tasks.add(Task(title: title));
+    notifyListeners();
+    _saveTasks();   // กติกาข้อ ①: กระดานเปลี่ยน → จดสมุดทันที
+  }                 // (ตั้งใจไม่ await — จอไม่ต้องยืนรอคนจดสมุด)
+
+  void toggleTask(Task task) {
+    task.toggle();
+    notifyListeners();
+    _saveTasks();
+  }
+
+  void removeTask(Task task) {
+    _tasks.remove(task);
+    notifyListeners();
+    _saveTasks();
+  }
+}</code></pre>
+      <h3>ขั้นที่ 4 — เปิดร้านพร้อมอ่านสมุด (main.dart แก้บรรทัดเดียว!)</h3>
+      <pre><code class="language-dart">ChangeNotifierProvider(
+  create: (context) =&gt; TaskProvider()..loadTasks(),   // สร้างเสร็จ สั่งอ่านสมุดทันที
+  child: const TodoApp(),
+),</code></pre>
+      <div class="box tip">
+        <div class="t">💡 ทดสอบของจริง</div>
+        <p>เพิ่มงาน 2–3 ชิ้น ติ๊กบางชิ้น → <strong>ปิดแอปจริงๆ</strong> (ไม่ใช่แค่ hot restart — ปัดทิ้งจาก recent apps หรือหยุดแล้ว flutter run ใหม่) → เปิดมา... <strong>ทุกอย่างยังอยู่ครบ ทั้งชื่อและสถานะติ๊ก</strong> 🎉 และสังเกตความงามของสถาปัตยกรรมบทที่ 17: หน้าจอทุกหน้าไม่ถูกแก้เลยสักบรรทัด — เพราะการเก็บข้อมูลเป็น "เรื่องของข้อมูล" มันเลยจบในห้องประชาสัมพันธ์ที่เดียว</p>
+      </div>
+    </section>
+
+    <section id="concept">
+      <h2>3. 🧠 คอนเซปต์: เลือกที่เก็บให้ถูกขนาดงาน</h2>
+      <p><code class="inline">shared_preferences</code> ไม่ใช่คำตอบเดียว — มันคือตัวเลือกที่ "เล็กและพอดี" กับงานตอนนี้:</p>
+      <table>
+        <tr><th>ที่เก็บ</th><th>เหมาะกับ</th><th>ตัวอย่าง</th></tr>
+        <tr><td><code class="inline">shared_preferences</code></td><td>ของชิ้นเล็ก, key-value, อ่านทั้งก้อน</td><td>ธีม, ภาษา, รายการไม่กี่สิบชิ้น (To-Do เราอยู่นี่)</td></tr>
+        <tr><td>ฐานข้อมูลจริง (sqflite / Drift / Isar)</td><td>ข้อมูลเยอะ, ค้นหา/กรองซับซ้อน, หลายตาราง</td><td>แชทหมื่นข้อความ, แคตตาล็อกสินค้า</td></tr>
+        <tr><td>Secure storage (<code class="inline">flutter_secure_storage</code>)</td><td>ของลับ</td><td>token ล็อกอิน, รหัสผ่าน</td></tr>
+      </table>
+      <div class="box concept">
+        <div class="t">🧠 หลักคิด</div>
+        <p>เริ่มจากเครื่องมือเล็กสุดที่พอ แล้วอัปเกรดเมื่อเจ็บจริง — ทีมที่เริ่มด้วยฐานข้อมูลเต็มระบบสำหรับเก็บธีมมืด/สว่าง คือทีมที่เพิ่มความซับซ้อนฟรีโดยไม่มีใครได้อะไร (ฐานข้อมูลจริงเป็นบทเสริมท้ายหลักสูตร)</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>4. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — Save ทุกการแก้ ไม่มีปุ่ม "บันทึก"</h3>
+      <p>แอปมือถือไม่เหมือนโปรแกรมคอมพิวเตอร์ยุคเก่า: OS ฆ่าแอปได้ทุกวินาที (สายเรียกเข้า, แรมเต็ม, ผู้ใช้ปัดทิ้ง) — จึงไม่มีจังหวะ "ค่อยกดเซฟ" การจดสมุดต้องเกิดอัตโนมัติทุกการแก้ และเพราะเราแก้ข้อมูลผ่าน method ของ provider เท่านั้น (บทที่ 17) จุดที่ต้องเติม <code class="inline">_saveTasks()</code> จึงมีแค่ไม่กี่บรรทัด — วินัยเก่ากำลังจ่ายดอกเบี้ย</p>
+      <h3>เทคนิคที่ 2 — ?? ใน fromJson คือเกราะข้ามเวอร์ชัน</h3>
+      <p>วันหนึ่งแอปเวอร์ชันใหม่เพิ่มฟิลด์ dueDate — แต่ผู้ใช้เก่ามีข้อมูลที่ "ไม่มีฟิลด์นี้" อยู่ในเครื่อง! <code class="inline">json['dueDate'] ?? ค่าตั้งต้น</code> ทำให้ข้อมูลเก่าเปิดได้ไม่พัง — ปัญหานี้ชื่อ data migration และเป็นเรื่องที่แอปจริงต้องคิดทุกครั้งที่แก้ model</p>
+      <h3>เทคนิคที่ 3 — key เป็น static const เสมอ</h3>
+      <p><code class="inline">'tasks'</code> กับ <code class="inline">'task'</code> คือคนละล็อกเกอร์ — พิมพ์ผิดหนึ่งตัวอักษร ข้อมูล "หายทั้งก้อน" แบบไม่มี error ใดๆ (บั๊กเงียบตระกูลเดียวกับ Map บทที่ 8) รวม key ไว้เป็นค่าคงที่ที่เดียว ปิดประตูบั๊กตระกูลนี้ถาวร</p>
+      <h3>เทคนิคที่ 4 — อย่าเอาของผิดประเภทใส่สมุดเล่มนี้</h3>
+      <p>รูปภาพ/ไฟล์ใหญ่ → เก็บเป็นไฟล์จริง · token/รหัสผ่าน → secure storage เท่านั้น (shared_preferences ไม่เข้ารหัส!) · ข้อมูลหลักหมื่นรายการ → ฐานข้อมูล — สมุดบัญชีมีไว้จดตัวเลข ไม่ใช่แปะรูปติดทั้งอัลบั้ม</p>
+    </section>
+
+    <section id="prod">
+      <h2>5. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "แบบร่างที่รอดจากสายเรียกเข้า"</div>
+        <p>ผู้ใช้คนหนึ่งพิมพ์โพสต์ยาว 20 นาทีในแอปโซเชียล — จู่ๆ สายเรียกเข้า คุยไป 10 นาที ระหว่างนั้น OS ฆ่าแอปเงียบๆ เพราะแรมเต็ม... เปิดแอปกลับมา:</p>
+      </div>
+      <div class="ascii">   แอปที่ไม่ได้ทำการบ้าน:  โพสต์หายเกลี้ยง → ผู้ใช้โกรธ → รีวิว 1 ดาว → ลบแอป
+   แอปมืออาชีพ:          "มีแบบร่างที่ยังไม่ได้โพสต์" — ข้อความอยู่ครบทุกตัวอักษร ❤️
+
+   เบื้องหลังของแอปมืออาชีพ คือ pattern เดียวกับที่คุณเพิ่งเขียนเป๊ะ:
+   ทุกครั้งที่ผู้ใช้พิมพ์ (หยุดพิมพ์ ~1 วิ) → จดร่างลงเครื่อง (save)
+   เปิดหน้าเขียนโพสต์ → เช็คว่ามีร่างค้างไหม (load) → ถามผู้ใช้ว่าเอาต่อไหม</div>
+      <p>ลองสังเกตแอปที่คุณใช้ทุกวัน: Line จำห้องแชทที่เลื่อนค้าง, YouTube จำวินาทีที่ดูค้าง, เกมจำด่านที่เล่นถึง — <strong>ทั้งหมดคือ save/load ที่ทำงานเงียบๆ ตลอดเวลา</strong> ความรู้สึก "แอปนี้เข้าใจฉัน" ของผู้ใช้ แท้จริงคือ persistence ที่ออกแบบมาดี</p>
+    </section>
+
+    <section id="clean">
+      <h2>6. 🧹 ตัวอย่าง Clean Code: ความรู้เรื่องสมุด อยู่ห้องเดียว</h2>
+      <pre><code class="language-dart">// ❌ หน้าจอคุยกับตู้เซฟเอง — ความรู้เรื่องสมุดกระจายทั่วแอป
+// ในหน้า HomeScreen...
+onPressed: () async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString('tasks');            // key เขียนสดตรงนี้
+  /* decode เอง 5 บรรทัด... เพิ่มงาน... encode กลับ 3 บรรทัด... setString */
+}
+
+// ในหน้า DetailScreen... ก็อปโค้ดชุดเดิมมาอีกรอบ (แต่พิมพ์ key เป็น 'task' — บั๊กเงียบ!)
+// วันที่เปลี่ยนไปใช้ฐานข้อมูล = ไล่แก้ทุกหน้าที่เคยก็อป</code></pre>
+      <pre><code class="language-dart">// ✅ หน้าจอไม่รู้จักคำว่า SharedPreferences เลย
+// หน้าจอทุกหน้า เห็นแค่นี้ — เหมือนเดิมตั้งแต่บทที่ 17 ไม่เคยเปลี่ยน:
+context.read&lt;TaskProvider&gt;().addTask(title);
+
+// เรื่องสมุด/ตู้เซฟ/JSON ทั้งหมด อยู่ใน TaskProvider ที่เดียว
+// วันที่ To-Do โตจนต้องย้ายไปฐานข้อมูลจริง:
+// แก้ไฟล์เดียว — หน้าจอ 10 หน้าไม่รู้ด้วยซ้ำว่ามีการย้ายบ้านเกิดขึ้น</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>Widget ที่ต้อง import shared_preferences คือสัญญาณเตือนภัย — คำถาม "ข้อมูลเก็บที่ไหน ยังไง" เป็นเรื่องของข้อมูล (provider) ไม่ใช่เรื่องของจอ เส้นแบ่งจากบทที่ 17 เส้นเดิม เข้มขึ้นอีกขั้น</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>7. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "type 'List&lt;dynamic&gt;' is not a subtype of type 'List&lt;Task&gt;'"</div>
+        <p><strong>สาเหตุ:</strong> jsonDecode ไม่รู้จักคลาสของเรา — มันคืน List&lt;dynamic&gt;/Map&lt;String, dynamic&gt; ดิบๆ เสมอ เอาไปใช้เป็น List&lt;Task&gt; ตรงๆ เลยชนกำแพงชนิดข้อมูล (บทที่ 4)<br>
+        <strong>วิธีแก้:</strong> แปลงทีละชิ้นผ่าน fromJson เสมอ: <code class="inline">list.map((e) =&gt; Task.fromJson(e as Map&lt;String, dynamic&gt;)).toList()</code> — jsonDecode ให้ "วัตถุดิบ" เรามีหน้าที่ปั้นเป็น object เอง</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② เปิดแอปมารายการว่างเปล่า ทั้งที่เคยบันทึกไว้</div>
+        <p><strong>สาเหตุ:</strong> ไล่ 3 จุดตามลำดับ: ① ลืมเรียก loadTasks ตอนเปิดแอป (ขั้นที่ 4) ② loadTasks ทำงานแต่ลืม notifyListeners ท้ายฟังก์ชัน (โหลดขึ้นกระดานแล้วแต่ไม่ประกาศ — จอเลยไม่วาด) ③ key ไม่ตรงกันระหว่าง save กับ load<br>
+        <strong>วิธีแก้:</strong> นักสืบบทที่ 14 ทำงาน: breakpoint ใน loadTasks ดูว่า jsonString เป็น null หรือมีของ → รู้ทันทีว่าปัญหาอยู่ฝั่ง save หรือฝั่ง load</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ "FormatException: Unexpected character" ตอน jsonDecode</div>
+        <p><strong>สาเหตุ:</strong> ข้อความในล็อกเกอร์ไม่ใช่ JSON ที่ถูกต้อง — มักเกิดตอน dev: เคยเก็บรูปแบบเก่าไว้ แล้วเราแก้โครงสร้างข้อมูล ของเก่าค้างในเครื่องเลยอ่านไม่ออก<br>
+        <strong>วิธีแก้:</strong> ระหว่าง dev: ลบของเก่าทิ้ง (<code class="inline">prefs.remove('tasks')</code> ครั้งเดียว หรือถอนแอปแล้วลงใหม่) · ในแอปจริง: ครอบ load ด้วย try-catch กันแอปเปิดไม่ขึ้นเพราะข้อมูลเสีย — บทที่ 20 จะสอนจัดการ error แบบเต็มระบบพอดี</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>8. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ความจำถาวรครั้งแรก</div>
+        <p>ทำครบ 4 ขั้น แล้วพิสูจน์: เพิ่มงาน + ติ๊ก → ปิดแอปจริง (ปัดทิ้ง ไม่ใช่ hot restart) → เปิดใหม่ ทุกอย่างอยู่ครบ — โบนัสให้เข้าใจลึก: <code class="inline">debugPrint(jsonString)</code> ใน _saveTasks แล้วอ่าน JSON ของตัวเองให้ออกทุกตัวอักษร (นี่คือหน้าตาข้อมูลที่บทหน้าเซิร์ฟเวอร์จะส่งมา)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — แอปจำธีมได้</div>
+        <p>สร้าง SettingsProvider ใหม่ (แยกโดเมนตามเทคนิคบทที่ 17 — ใช้ MultiProvider ครอบสองตัว) เก็บ isDarkMode ลง shared_preferences + ปุ่มสลับธีมบน AppBar + MaterialApp เลือก ThemeData ตามค่า — ปิดเปิดแอปแล้วธีมต้องจำได้ commit ด้วย <code class="inline">feat: persistent dark mode setting</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — ซ้อมรับมือข้อมูลต่างเวอร์ชัน (migration drill)</div>
+        <p>เพิ่มฟิลด์ createdAt (วันที่สร้างงาน) ใน Task: (1) toJson เก็บเป็น <code class="inline">createdAt.toIso8601String()</code> (2) fromJson ต้องเปิด<strong>ข้อมูลเก่าที่ไม่มีฟิลด์นี้</strong>ได้โดยไม่พัง (ใช้ <code class="inline">??</code> + <code class="inline">DateTime.tryParse</code>) (3) แสดงวันที่ในหน้ารายละเอียด — <strong>ห้ามลบข้อมูลเก่าตอนทดสอบ</strong>: ต้องเห็นงานเก่า (ไม่มีวันที่) อยู่ร่วมกับงานใหม่ (มีวันที่) ได้จริง — commit ด้วย <code class="inline">feat: task creation date with backward compatibility</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>9. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายภาพ "กระดานไวท์บอร์ด vs สมุดในตู้เซฟ" และกติกา 2 ข้อ (save ทุกการแก้ / load ตอนเปิด) ได้</li>
+        <li>เขียน toJson / fromJson ให้ model ได้เอง และอ่าน JSON ที่ตัวเองเก็บออก</li>
+        <li>อธิบายได้ว่าทำไม ?? ใน fromJson คือเกราะข้ามเวอร์ชัน</li>
+        <li>ตอบได้ว่างานแบบไหนใช้ shared_preferences / ฐานข้อมูล / secure storage</li>
+        <li>หน้าจอทุกหน้าไม่มี import shared_preferences — ทุกอย่างจบใน provider</li>
+        <li>ปิดแอปจริงแล้วเปิดใหม่ ข้อมูลอยู่ครบ (ทดสอบแล้วกับตา)</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>persistence</td><td>ข้อมูลอยู่รอดข้ามการปิด-เปิดแอป</td><td>หมึกถาวรในตู้เซฟ</td></tr>
+        <tr><td><code class="inline">shared_preferences</code></td><td>ที่เก็บ key-value ขนาดเล็กในเครื่อง</td><td>สมุดบัญชีของแอป</td></tr>
+        <tr><td>key-value storage</td><td>เก็บแบบ ป้าย→ค่า</td><td>ตู้ล็อกเกอร์หมึกถาวร (Map บทที่ 7)</td></tr>
+        <tr><td><code class="inline">toJson</code> / <code class="inline">fromJson</code></td><td>object → Map / Map → object</td><td>ถ่ายรูปเก็บ / คืนชีพจากรูป</td></tr>
+        <tr><td><code class="inline">jsonEncode</code> / <code class="inline">jsonDecode</code></td><td>Map/List ↔ ข้อความ JSON</td><td>เครื่องแบน / เครื่องพองกลับ</td></tr>
+        <tr><td><code class="inline">getInstance</code></td><td>ขอตัวเชื่อมต่อที่เก็บ (ต้อง await)</td><td>ขอกุญแจตู้เซฟ</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>state ใน RAM คือหมึกลบได้ — ปิดแอปแล้วหาย · กติกา 2 ข้อ: แก้แล้วจดทันที, เปิดแล้วอ่านกลับ · serialization = ถ่ายรูปเก็บ (toJson→jsonEncode) แล้วคืนชีพ (jsonDecode→fromJson) · การเก็บข้อมูลจบใน provider ที่เดียว — หน้าจอไม่ต้องรู้เลยว่าสมุดอยู่ไหน</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่17_Provider.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 17: State Management ด้วย Provider</div>
+        </a>
+        <a href="บทที่19_API_JSON.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 19: เรียก API + แปลง JSON</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 4 · บทที่ 18<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

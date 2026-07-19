@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 16 — Form และ TextField | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 3 · บทที่ 16 (บทปิดเฟส)</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: เคาน์เตอร์ธนาคาร</a>
+      <a href="#code" class="lvl1">2. หน้า "เพิ่มงานใหม่"</a>
+      <a href="#fullform" class="lvl2">— Form + validator</a>
+      <a href="#hookup" class="lvl2">— ต่อเข้าหน้าหลัก</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: ฟอร์มสมัคร</a>
+      <a href="#clean" class="lvl1">5. Clean Code: ฟอร์มที่โตได้</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 3 · บทที่ 16 — บทปิดเฟส!</span>
+      <h1>Form และ TextField: รับ input จากผู้ใช้</h1>
+      <p>สร้างหน้าเพิ่มงานที่ตรวจข้อมูลก่อนรับ — และประกอบทุกบทเป็น To-Do List ฉบับสมบูรณ์ ผลงานจบเฟส 3</p>
+      <div class="meta">
+        <span>⏱️ 2–2.5 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 15 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">ชิ้นสุดท้ายที่ขาด: ผู้ใช้ยังพิมพ์ชื่องานเองไม่ได้เลย! บทนี้สร้างฟอร์มที่รับ-ตรวจ-ส่งข้อมูลแบบมืออาชีพ แล้วผลงานเฟส 3 จะเสร็จเต็มตัว</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">TextField</span><span class="pill">TextEditingController</span><span class="pill">Form</span><span class="pill">TextFormField</span><span class="pill">validator</span><span class="pill">GlobalKey&lt;FormState&gt;</span><span class="pill">dispose</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: เคาน์เตอร์ธนาคาร</h2>
+      <p>การรับข้อมูลจากผู้ใช้ เหมือนเคาน์เตอร์ธนาคารรับแบบฟอร์มเปิดบัญชี — มีตัวละคร 3 ตัวทำงานร่วมกัน:</p>
+      <div class="ascii">        ลูกค้า (ผู้ใช้)          พนักงานจดบันทึก              พนักงานตรวจเอกสาร
+                              (TextEditingController)         (validator)
+
+    เขียนลงแบบฟอร์ม    ──►    จดทุกตัวอักษรที่ลูกค้า    ──►   ก่อนรับเรื่อง ตรวจทีละช่อง:
+    ทีละตัวอักษร               เขียนไว้ตลอดเวลา                · ช่องชื่อว่าง? ❌ วงแดง
+                              ถามเมื่อไหร่ก็ตอบได้ว่า            ส่งกลับไปแก้ พร้อมโน้ต
+                              "ตอนนี้เขียนว่าอะไร"              "กรุณากรอกชื่อ"
+                              (.text)                        · ครบถูกต้อง? ✓ รับเรื่อง
+
+   ┌─────────────────────────────────────────────────┐
+   │  📋 แบบฟอร์มเพิ่มงาน (Form)                        │
+   │  ┌───────────────────────────────┐              │
+   │  │ ชื่องาน: [ อ่านหนังสือ......... ] │ ← TextFormField (ช่องกรอก 1 ช่อง)
+   │  └───────────────────────────────┘              │
+   │  ⚠ กรุณากรอกชื่องาน   ← ข้อความจาก validator       │
+   │              [ บันทึก ]                          │
+   └─────────────────────────────────────────────────┘
+   Form = ทั้งแผ่นแบบฟอร์ม · TextFormField = ช่องกรอกแต่ละช่อง · validator = ผู้ตรวจประจำช่อง</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไมต้องตรวจก่อนรับ</div>
+        <p>ข้อมูลจากมนุษย์คือแหล่งความวุ่นวายอันดับหนึ่งของทุกระบบ — ช่องว่าง, เว้นวรรคล้วนๆ, ยาวเป็นกิโล, อีโมจิในช่องเบอร์โทร ล้วนเกิดจริงทุกวัน กฎเหล็กของ dev: <strong>อย่าเชื่อ input จากผู้ใช้ จนกว่าจะตรวจแล้ว</strong> (ธีมเดียวกับ normalize บทที่ 5 และ <code class="inline">??</code> บทที่ 4 — ระวังข้อมูลจากภายนอกเสมอ)</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: หน้า "เพิ่มงานใหม่"</h2>
+      <h3>ขั้นที่ 1 — เริ่มจากตัวเล็กสุด: TextField + Controller</h3>
+      <pre><code class="language-dart">// TextField เปล่าๆ พิมพ์ได้ แต่เราต้องมี "พนักงานจด" ถึงจะรู้ว่าพิมพ์อะไร
+final _titleController = TextEditingController();
+
+TextField(
+  controller: _titleController,            // ผูกพนักงานจดเข้ากับช่อง
+  decoration: const InputDecoration(
+    labelText: 'ชื่องาน',                   // ป้ายลอยเหนือช่องตอนพิมพ์
+    hintText: 'เช่น อ่านหนังสือ 30 นาที',    // ตัวอย่างจางๆ ในช่อง
+    border: OutlineInputBorder(),
+  ),
+)
+
+// อยากรู้ว่าผู้ใช้พิมพ์อะไร ถามพนักงานจดได้ทุกเมื่อ:
+print(_titleController.text);</code></pre>
+      <h3 id="fullform">ขั้นที่ 2 — หน้าเต็ม: Form + validator + ส่งค่ากลับด้วย pop</h3>
+      <p>สร้าง <code class="inline">lib/screens/add_task_screen.dart</code> — สังเกตว่าบทนี้ใช้ความรู้ทุกบทของเฟส 3 พร้อมกัน:</p>
+      <pre><code class="language-dart">import 'package:flutter/material.dart';
+
+/// หน้าเพิ่มงาน — Stateful เพราะถือ controller และสถานะฟอร์ม
+class AddTaskScreen extends StatefulWidget {
+  const AddTaskScreen({super.key});
+
+  @override
+  State&lt;AddTaskScreen&gt; createState() =&gt; _AddTaskScreenState();
+}
+
+class _AddTaskScreenState extends State&lt;AddTaskScreen&gt; {
+  // GlobalKey = "บัตรพนักงาน" ที่ทำให้เราสั่งงานแบบฟอร์มได้จากข้างนอก
+  final _formKey = GlobalKey&lt;FormState&gt;();
+  final _titleController = TextEditingController();
+
+  @override
+  void dispose() {
+    // พนักงานจดต้อง "เลิกงาน" เมื่อหน้าถูกทำลาย — ไม่งั้นกินแรมค้างไว้ (memory leak)
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    // สั่งผู้ตรวจทุกช่องทำงาน — ผ่านครบทุกช่องถึงได้ true
+    if (_formKey.currentState!.validate()) {
+      // trim() ก่อนใช้เสมอ — normalize จากบทที่ 5 อยู่ทุกที่จริงๆ
+      Navigator.pop(context, _titleController.text.trim());  // pop พร้อมพัสดุ (บทที่ 15)
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('เพิ่มงานใหม่')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,                    // ผูกบัตรพนักงานเข้ากับแบบฟอร์ม
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _titleController,
+                autofocus: true,            // เปิดหน้ามา คีย์บอร์ดเด้งพร้อมพิมพ์เลย
+                decoration: const InputDecoration(
+                  labelText: 'ชื่องาน',
+                  border: OutlineInputBorder(),
+                ),
+                // ผู้ตรวจประจำช่อง: คืน "ข้อความเตือน" = ไม่ผ่าน, คืน null = ผ่าน
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'กรุณากรอกชื่องาน';     // โผล่ใต้ช่องเป็นสีแดงอัตโนมัติ
+                  }
+                  if (value.trim().length &gt; 50) {
+                    return 'ชื่องานยาวเกิน 50 ตัวอักษร';
+                  }
+                  return null;                    // ✓ ผ่าน (guard clause บทที่ 5!)
+                },
+                onFieldSubmitted: (_) =&gt; _submit(), // กด Enter บนคีย์บอร์ด = ส่งเลย
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,           // ปุ่มกว้างเต็ม (บทที่ 11)
+                child: FilledButton(
+                  onPressed: _submit,
+                  child: const Text('บันทึก'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}</code></pre>
+      <h3 id="hookup">ขั้นที่ 3 — ฝั่งหน้าหลัก: เปลี่ยนปุ่ม + ให้เปิดฟอร์มจริง</h3>
+      <pre><code class="language-dart">floatingActionButton: FloatingActionButton(
+  onPressed: () async {
+    // ท่า "push แบบรอฟังคำตอบ" จากบทที่ 15 — คราวนี้พัสดุคือชื่องาน
+    final newTitle = await Navigator.push&lt;String&gt;(
+      context,
+      MaterialPageRoute(builder: (context) =&gt; const AddTaskScreen()),
+    );
+    if (newTitle != null) {                       // null = ผู้ใช้กด back เฉยๆ
+      setState(() =&gt; _tasks.add(Task(title: newTitle)));
+    }
+  },
+  child: const Icon(Icons.add),
+),</code></pre>
+      <p>รันแล้วลองครบวงจร: กด + → พิมพ์ชื่องาน → กดบันทึก → กลับหน้าหลักพร้อมงานใหม่ในรายการ — และลองกดบันทึกทั้งที่ช่องว่าง: ข้อความแดงเตือนใต้ช่อง ฟอร์มไม่ยอมผ่าน <strong>ผู้ใช้พิมพ์อะไรก็ได้ แต่ข้อมูลขยะเข้ากระดานกลางไม่ได้</strong></p>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — ทุก Controller ต้องมี dispose คู่กันเสมอ</h3>
+      <p>กฎท่องจำ: "จ้างพนักงานจด (สร้าง controller ใน State) = ต้องให้เลิกงาน (dispose)" — ลืมแล้วแอปไม่พังทันที แต่แรมรั่วสะสมทีละนิด นี่คือบั๊กแบบที่ตรวจเจอยากที่สุด สร้างนิสัยตั้งแต่ตัวแรก: พิมพ์ controller เสร็จ เขียน dispose ทันทีก่อนลืม</p>
+      <h3>เทคนิคที่ 2 — validator อ่านเป็น guard clause</h3>
+      <p>โครงเดียวกับบทที่ 5 เป๊ะ: เช็คเงื่อนไขไม่ผ่าน → return ข้อความ (= ส่งกลับไปแก้), ผ่านทุกด่าน → return null — เขียน validator กี่ช่องก็ใช้โครงนี้ และแยกเป็นฟังก์ชันตั้งชื่อได้เมื่อยาว: <code class="inline">validator: _validateTitle</code></p>
+      <h3>เทคนิคที่ 3 — keyboardType + textInputAction = ความใส่ใจที่ผู้ใช้รู้สึกได้</h3>
+      <p>ช่องเบอร์โทร → <code class="inline">keyboardType: TextInputType.phone</code> (คีย์บอร์ดตัวเลขเด้งแทน) · ช่องสุดท้ายของฟอร์ม → <code class="inline">textInputAction: TextInputAction.done</code> — รายละเอียดเล็กๆ ที่แยกแอปมือสมัครเล่นกับมืออาชีพออกจากกัน</p>
+      <h3>เทคนิคที่ 4 — อย่าเก็บค่าที่พิมพ์ลง state ซ้ำ</h3>
+      <p>controller คือแหล่งความจริงของข้อความในช่องอยู่แล้ว (single source of truth บทที่ 12!) — ไม่ต้อง <code class="inline">onChanged: (v) =&gt; setState(...)</code> ให้ rebuild ทุกตัวอักษร อ่านจาก <code class="inline">.text</code> ตอน submit ทีเดียวพอ (ยกเว้นต้องการ UI สดตามการพิมพ์ เช่น ตัวนับอักษร)</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "ฟอร์มสมัครสมาชิก — สนามรบ UX ที่ทีมจริงเถียงกันมากที่สุด"</div>
+        <p>ฟอร์มคือจุดที่ผู้ใช้ "ทิ้งแอป" มากที่สุด ทีมจริงจึงมีกติกาที่ตกผลึกจากข้อมูลผู้ใช้นับล้าน:</p>
+      </div>
+      <div class="ascii">   กติกาฟอร์มของทีมมืออาชีพ                        เหตุผล
+   ─────────────────────────────────────────────────────────────
+   ① error โผล่ "ใต้ช่อง" ไม่ใช่ popup            popup บังฟอร์ม ต้องกดปิด น่ารำคาญ
+   ② ข้อความ error บอก "วิธีแก้" ไม่ใช่ดุ           "กรุณากรอกอีเมล" ✓
+                                                 "ข้อมูลไม่ถูกต้อง!" ✗ (แก้ยังไงล่ะ?)
+   ③ ตรวจตอนกดส่ง ไม่ใช่ด่าตั้งแต่ยังพิมพ์ไม่เสร็จ      พิมพ์อีเมลได้ 3 ตัวอักษรแล้วขึ้นแดง
+                                                 = ประสบการณ์แย่มาก
+   ④ ปุ่มส่งกว้างเต็มจอ อยู่ท้ายฟอร์ม                 นิ้วโป้งเอื้อมถึงง่ายสุด</div>
+      <p>สังเกตว่า TextFormField + validator ที่คุณเพิ่งเขียน ให้ข้อ ①③ มาแล้วอัตโนมัติ — ทีม Flutter ฝังบทเรียน UX พวกนี้ไว้ในเครื่องมือ ส่วนข้อ ② คือหน้าที่ของเราตอนเขียนข้อความ validator ทุกครั้ง</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: ฟอร์มที่โตได้</h2>
+      <pre><code class="language-dart">// ❌ ตรวจข้อมูลด้วย if หลังกดปุ่ม + แจ้ง error ด้วย SnackBar
+onPressed: () {
+  // ตรวจเองนอกระบบฟอร์ม — ต้องจัดการเองทุกอย่าง
+  if (_titleController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('กรอกชื่องานด้วย!')),   // ผิดกติกาข้อ ①: error ลอยไปมา
+    );
+    return;
+  }
+  if (_titleController.text.length &gt; 50) { /* SnackBar อีกอัน... */ }
+  // เพิ่มช่องที่ 2, 3 เมื่อไหร่ = if กองพะเนิน + SnackBar รัวๆ
+},</code></pre>
+      <pre><code class="language-dart">// ✅ ใช้ระบบ Form — ผู้ตรวจประจำช่อง ขยายกี่ช่องก็โครงเดิม
+// แต่ละช่องถือ validator ของตัวเอง — เพิ่มช่องใหม่ = เพิ่ม TextFormField ใหม่ จบ
+TextFormField(validator: _validateTitle, ...),
+TextFormField(validator: _validateNote, ...),      // ช่องใหม่ ไม่กระทบช่องเดิม
+
+// จุดส่งมีบรรทัดเดียวตลอดกาล ไม่ว่าฟอร์มจะมีกี่ช่อง:
+if (_formKey.currentState!.validate()) { ... }
+
+// validator แยกเป็นฟังก์ชันชื่อชัด (บทที่ 6) — ทดสอบแยกได้ ใช้ซ้ำข้ามฟอร์มได้
+String? _validateTitle(String? value) {
+  if (value == null || value.trim().isEmpty) return 'กรุณากรอกชื่องาน';
+  if (value.trim().length &gt; 50) return 'ชื่องานยาวเกิน 50 ตัวอักษร';
+  return null;
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>ระบบ Form คือ "แต่ละช่องรับผิดชอบตัวเอง" — Single Responsibility (บทที่ 6) ในร่างของฟอร์ม เพิ่มช่องที่ 10 ก็ยังอ่านง่ายเท่าช่องแรก</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "A TextEditingController was used after being disposed"</div>
+        <p><strong>สาเหตุ:</strong> ใช้ controller หลังหน้าถูกทำลาย (มักคู่กับงาน async) หรือกลับกัน — ลืม dispose แล้ว Flutter เตือนตอน hot reload/ปิดหน้า<br>
+        <strong>วิธีแก้:</strong> ทุก controller ที่สร้างใน State ต้องมีคู่ dispose ใน dispose() เสมอ และงาน async ที่จะแตะ controller ให้เช็ค mounted ก่อน (บทที่ 15)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② กดปุ่มแล้ว validator ไม่ทำงาน — ฟอร์มผ่านทั้งที่ช่องว่าง</div>
+        <p><strong>สาเหตุ:</strong> มี 3 จุดที่ลืมได้: ① ลืมผูก <code class="inline">key: _formKey</code> ที่ตัว Form ② ใช้ TextField ธรรมดา (ไม่มีระบบ validator) แทน TextFormField ③ ลืมเรียก <code class="inline">validate()</code> ตอน submit<br>
+        <strong>วิธีแก้:</strong> เช็คสามจุดนี้ตามลำดับ — จำเป็นชุด: Form(key:) + TextFormField + validate() ขาดตัวไหน ระบบตรวจก็เงียบทั้งระบบ</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ คีย์บอร์ดเด้งขึ้นมาแล้วจอ overflow (แถบเหลือง-ดำโผล่)</div>
+        <p><strong>สาเหตุ:</strong> คีย์บอร์ดกินพื้นที่ครึ่งจอ — ฟอร์มที่เคยพอดีเลยล้น (เพื่อนเก่าจากบทที่ 11 ในเงื่อนไขใหม่: พื้นที่จอ "หดได้" เพราะคีย์บอร์ด)<br>
+        <strong>วิธีแก้:</strong> ครอบเนื้อหาฟอร์มด้วย SingleChildScrollView — ฟอร์มเลื่อนได้เมื่อที่ไม่พอ · ท่ามาตรฐาน: <code class="inline">body: SingleChildScrollView(child: Form(...))</code></p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — คุยกับพนักงานจด</div>
+        <p>สร้างหน้าทดลอง: TextField 1 ช่อง + ปุ่ม + Text แสดงผล — กดปุ่มแล้วเอาข้อความจาก controller มาแสดงใน Text (ผ่าน setState) แล้วทดลองต่อ: เพิ่ม onChanged ให้ Text อัปเดตสดทุกตัวอักษรที่พิมพ์ เทียบสองแบบว่าต่างกันยังไง</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — ฟอร์มเต็มระบบ</div>
+        <p>ทำ AddTaskScreen ตามหัวข้อ 2–3 ให้ครบวงจร: กด + → ฟอร์ม (autofocus + validator 2 กฎ) → บันทึก → งานใหม่โผล่ในรายการ — ทดสอบเคสพัง: ช่องว่าง, เว้นวรรคล้วนๆ, ยาวเกิน 50 — commit ด้วย <code class="inline">feat: add task form with validation</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — ผลงานจบเฟส 3! 🎉</div>
+        <p>เก็บงานสุดท้ายให้ To-Do สมบูรณ์: (1) เพิ่มโหมด "แก้ไขงาน" — ใช้ AddTaskScreen เดิมแต่รับ <code class="inline">Task?</code> เข้ามา (มีค่า = โหมดแก้ไข: ใส่ชื่อเดิมในช่องด้วย <code class="inline">TextEditingController(text: ...)</code>, null = โหมดเพิ่ม — nullable บทที่ 4 ทำงานอีกแล้ว) เปิดจากหน้ารายละเอียดบทที่ 15 (2) ครอบฟอร์มด้วย SingleChildScrollView กันคีย์บอร์ดดันจอ (3) อัปเดต README ของ repo ให้เล่าครบทุกฟีเจอร์ + โครงสร้างโฟลเดอร์ (แบบ README บทที่ 2) — commit ด้วย <code class="inline">feat: edit task mode — phase 3 complete</code> แล้ว push ขึ้น GitHub</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายหน้าที่ของ 3 ตัวละคร: TextField (ช่อง), Controller (พนักงานจด), validator (ผู้ตรวจ)</li>
+        <li>เขียนฟอร์มครบชุด Form + TextFormField + validate() ได้เอง</li>
+        <li>ทุก controller มี dispose คู่กัน และอธิบายได้ว่าทำไม</li>
+        <li>validator เขียนแบบ guard clause และข้อความ error บอกวิธีแก้</li>
+        <li>แก้ปัญหาคีย์บอร์ดดันจอด้วย SingleChildScrollView ได้</li>
+        <li><strong>To-Do List ฉบับสมบูรณ์อยู่บน GitHub: เพิ่ม/แก้/ติ๊ก/ลบ/ปัดลบ/หลายหน้า/ฟอร์ม validation ครบ</strong></li>
+      </ul>
+      <div class="box tip">
+        <div class="t">🎉🎉 จบเฟส 3!</div>
+        <p>ย้อนดูสิ่งที่คุณสร้างได้แล้ว: แอปหลายหน้าที่มี state จัดการเป็นระบบ, รายการเลื่อนลื่นระดับหมื่นรายการ, ฟอร์มที่ตรวจข้อมูลแบบมืออาชีพ — จาก "Hello World" ถึงตรงนี้ใช้เวลา 16 บท และครึ่งทางที่เหลือคือการทำให้มัน "จำข้อมูลได้และคุยกับโลกภายนอก"</p>
+      </div>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">TextField</code></td><td>ช่องพิมพ์ข้อความพื้นฐาน</td><td>ช่องกรอกในแบบฟอร์ม</td></tr>
+        <tr><td><code class="inline">TextEditingController</code></td><td>ตัวจดและอ่านข้อความในช่อง</td><td>พนักงานจดบันทึก</td></tr>
+        <tr><td><code class="inline">Form</code></td><td>กรอบรวมช่องกรอกทั้งชุด</td><td>แผ่นแบบฟอร์มทั้งใบ</td></tr>
+        <tr><td><code class="inline">TextFormField</code></td><td>ช่องกรอกที่มีระบบตรวจในตัว</td><td>ช่องกรอกที่มีผู้ตรวจประจำ</td></tr>
+        <tr><td>validator</td><td>ฟังก์ชันตรวจค่า: ข้อความ = ไม่ผ่าน, null = ผ่าน</td><td>พนักงานตรวจเอกสาร</td></tr>
+        <tr><td><code class="inline">GlobalKey&lt;FormState&gt;</code></td><td>กุญแจสั่งงานฟอร์มจากข้างนอก</td><td>บัตรพนักงานประจำฟอร์ม</td></tr>
+        <tr><td><code class="inline">dispose</code></td><td>คืนทรัพยากรเมื่อหน้าถูกทำลาย</td><td>ให้พนักงานเลิกงาน</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>input ผู้ใช้ = อย่าเชื่อจนกว่าจะตรวจ · สามตัวละคร: ช่องกรอก + พนักงานจด (controller) + ผู้ตรวจ (validator) · controller ต้องคู่กับ dispose เสมอ · error ที่ดีบอกวิธีแก้ ไม่ใช่ดุ — และเฟส 3 จบบริบูรณ์ 🎓</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่15_Navigation.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 15: Navigation</div>
+        </a>
+        <a href="บทที่17_Provider.html">
+          <div class="lbl">บทต่อไป (เริ่มเฟส 4!) →</div>
+          <div class="ttl">บทที่ 17: State Management ด้วย Provider</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 3 · บทที่ 16<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

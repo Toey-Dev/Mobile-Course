@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 13 — ListView: แสดงข้อมูลเป็นรายการ | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 3 · บทที่ 13</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ซูชิสายพาน</a>
+      <a href="#code" class="lvl1">2. อัปเกรดเป็น ListView</a>
+      <a href="#listtile" class="lvl2">— ListTile สำเร็จรูป</a>
+      <a href="#dismiss" class="lvl2">— ปัดเพื่อลบ + SnackBar</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: ห้องแชท</a>
+      <a href="#clean" class="lvl1">5. Clean Code: itemBuilder ผอม</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 3 · บทที่ 13</span>
+      <h1>ListView: แสดงข้อมูลเป็นรายการแบบมืออาชีพ</h1>
+      <p>รองรับงานหมื่นชิ้นได้ลื่นๆ ด้วย ListView.builder พร้อมท่าเด็ดของแอปมือถือ: ปัดเพื่อลบ</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 12 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">ตอนนี้เราวาดรายการด้วย Column ซึ่งมีจุดอ่อนร้ายแรง: งาน 100 ชิ้นก็วาด 100 ชิ้นทั้งที่จอแสดงได้ ~10 — บทนี้เจอ Widget ที่ฟีด Facebook, แชท Line และแอปดังทุกตัวใช้</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">ListView</span><span class="pill">ListView.builder</span><span class="pill">itemCount / itemBuilder</span><span class="pill">ListTile</span><span class="pill">Dismissible</span><span class="pill">Key</span><span class="pill">SnackBar</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: ร้านซูชิสายพาน</h2>
+      <p>ทำไมต้องมี ListView ในเมื่อ Column ก็แสดงรายการได้? — มาดูครัวของร้านอาหารสองแบบ:</p>
+      <div class="ascii">❌ ครัวแบบ Column                          ✅ ครัวแบบ ListView.builder
+   (ทำทุกจานทิ้งไว้ล่วงหน้า)                   (ร้านซูชิสายพาน — ทำเฉพาะที่กำลังจะถูกเห็น)
+
+   เมนู 10,000 จาน                           เมนู 10,000 จาน
+   → ทำครบ 10,000 จานตั้งแต่เปิดร้าน          → บนสายพานมีแค่ ~15 จาน
+   → โต๊ะลูกค้าวางได้แค่ 10 จาน                 (เท่าที่ลูกค้าเห็นตรงหน้า)
+   → อีก 9,990 จานเน่าอยู่หลังครัว             → จานไหนเลื่อนพ้นสายตา เชฟเก็บกลับ
+   😱 ครัวระเบิด (แอปค้าง/กินแรมมหาศาล)         แล้วปั้นจานใหม่แทนตำแหน่งที่กำลังจะโผล่
+                                             😎 ลูกค้ากี่หมื่นเมนูก็ลื่น
+
+        จอมือถือ = โต๊ะลูกค้า: แสดงของได้ทีละ ~10-15 ชิ้นเท่านั้น
+        จะทำของที่มองไม่เห็นไว้ทำไม?  ← นี่คือหัวใจของ builder</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไมเรื่องนี้สำคัญระดับ "ขาดไม่ได้"</div>
+        <p>ฟีด Facebook มีโพสต์เป็นล้าน แชท Line มีข้อความเป็นหมื่น — ทุกแอปดังใช้เทคนิค "ทำเฉพาะที่มองเห็น" นี้ (ศัพท์ทางการ: virtualization) ถ้าไม่มีมัน มือถือไม่มีทางแสดงรายการยาวๆ ได้เลย และ <code class="inline">ListView.builder</code> ให้เทคนิคนี้มาฟรีๆ</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: อัปเกรด To-Do เป็น ListView</h2>
+      <h3>ขั้นที่ 1 — เปลี่ยน Column → ListView.builder</h3>
+      <pre><code class="language-dart">// เดิม (บทที่ 12): Column + .map() — วาดทุกชิ้นเสมอ
+// ใหม่: ListView.builder — วาดเฉพาะที่เห็น + เลื่อนได้ในตัว
+
+body: ListView.builder(
+  itemCount: _tasks.length,              // บอกจำนวนจานทั้งหมดในเมนู
+  itemBuilder: (context, index) {        // สูตรปั้น "จานที่ index" เมื่อถึงคิวโผล่
+    final task = _tasks[index];          // ความรู้ index จากบทที่ 7 ตรงๆ
+    return TaskTile(
+      task: task,
+      onToggle: () =&gt; _toggleTask(task),
+    );
+  },
+),</code></pre>
+      <p>อ่านว่า: "รายการนี้มีของ itemCount ชิ้น — พอชิ้นที่ index กำลังจะปรากฏบนจอ ให้เรียกสูตร itemBuilder ปั้นมันขึ้นมา" — Flutter จัดการที่เหลือให้หมด: เลื่อน, รีไซเคิล, ประสิทธิภาพ</p>
+      <h3 id="listtile">ขั้นที่ 2 — รู้จัก ListTile: แถวรายการสำเร็จรูป</h3>
+      <p><code class="inline">CheckboxListTile</code> ที่ใช้บทที่แล้วคือญาติของ <code class="inline">ListTile</code> — แม่แบบแถวรายการมาตรฐานที่มี "ช่องเสียบ" ครบ:</p>
+      <pre><code class="language-dart">ListTile(
+  leading: const Icon(Icons.task_alt),   // ช่องซ้าย: ไอคอน/รูป
+  title: Text(task.title),               // ข้อความหลัก
+  subtitle: const Text('แตะเพื่อดูรายละเอียด'), // ข้อความรอง (บทที่ 15 จะกดได้จริง)
+  trailing: IconButton(                  // ช่องขวา: ปุ่ม/เวลา/ลูกศร
+    icon: const Icon(Icons.delete_outline),
+    onPressed: onDelete,
+  ),
+  onTap: () {},                          // แตะทั้งแถวได้ด้วย
+)</code></pre>
+      <p>ตำแหน่ง leading-title-subtitle-trailing ตรงกับแถวใน Line, Spotify, Gmail — เพราะทั้งวงการใช้แม่แบบเดียวกันนี้</p>
+      <h3 id="dismiss">ขั้นที่ 3 — ปัดเพื่อลบ ด้วย Dismissible + แจ้งผลด้วย SnackBar</h3>
+      <pre><code class="language-dart">itemBuilder: (context, index) {
+  final task = _tasks[index];
+  return Dismissible(
+    // Key = "ป้ายทะเบียน" ประจำแถว — Flutter ใช้แยกแยะว่าแถวไหนถูกปัดหาย
+    // ต้องไม่ซ้ำกัน: ใช้เนื้อหางาน ไม่ใช่ index (index ขยับได้เวลาลบ!)
+    key: ValueKey(task.title),
+    direction: DismissDirection.endToStart,      // ปัดจากขวาไปซ้ายเท่านั้น
+    background: Container(                       // พื้นหลังสีแดงตอนกำลังปัด
+      color: Colors.red,
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      child: const Icon(Icons.delete, color: Colors.white),
+    ),
+    onDismissed: (_) {
+      setState(() =&gt; _tasks.removeAt(index));    // ลบข้อมูลจริงจากกระดานกลาง!
+      // SnackBar = แถบแจ้งผลชั่วคราวด้านล่างจอ — UX ที่ดีต้องยืนยันผลการกระทำ
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ลบ "${task.title}" แล้ว')),
+      );
+    },
+    child: TaskTile(task: task, onToggle: () =&gt; _toggleTask(task)),
+  );
+},</code></pre>
+      <p>รันแล้ว<strong>ปัดแถวไปทางซ้าย</strong>: พื้นแดงโผล่ → แถวหายพร้อมแอนิเมชัน → แถบยืนยันเด้งขึ้น — ท่านี้แหละที่ทำให้แอปรู้สึก "เป็นแอปจริง"</p>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — เช็ค Empty State ก่อนเข้า ListView เสมอ</h3>
+      <p>เทคนิค isEmpty จากบทที่ 7 ถึงเวลาเปล่งประกาย: <code class="inline">body: _tasks.isEmpty ? const _EmptyState() : ListView.builder(...)</code> — หน้าจอ "ยังไม่มีงาน เพิ่มเลย! 🎉" ดูเป็นมิตรกว่าจอขาวโล่งมาก แอปดีๆ ทุกตัวทำ</p>
+      <h3>เทคนิคที่ 2 — คั่นแถวสวยๆ ด้วย ListView.separated</h3>
+      <p>พี่น้องของ builder ที่เพิ่มพารามิเตอร์ <code class="inline">separatorBuilder</code> — ใส่ <code class="inline">const Divider()</code> แล้วได้เส้นคั่นทุกแถวอัตโนมัติ ไม่ต้องคำนวณเองว่าแถวสุดท้ายไม่ควรมีเส้น</p>
+      <h3>เทคนิคที่ 3 — Key ใช้ค่าที่ "ติดตัวข้อมูล" ไม่ใช่ตำแหน่ง</h3>
+      <p><code class="inline">ValueKey(task.title)</code> ✓ เพราะติดตัวงานชิ้นนั้น · <code class="inline">ValueKey(index)</code> ✗ เพราะพอลบแถวแรก ทุกแถวขยับ index — Flutter จะสับสนว่าใครเป็นใคร (ในแอปจริง model มักมีฟิลด์ <code class="inline">id</code> ไว้เป็น Key โดยเฉพาะ)</p>
+      <h3>เทคนิคที่ 4 — ListView ใน Column ต้องครอบ Expanded</h3>
+      <p>บทที่ 11 สอนว่า Expanded = "ขอพื้นที่ที่เหลือ" — ListView ต้องรู้ขอบเขตความสูงของตัวเอง ถ้าวางใน Column เปล่าๆ มันไม่รู้ว่าสูงได้แค่ไหน (จะพังแบบ error ① ข้างล่าง) ครอบ <code class="inline">Expanded(child: ListView...)</code> = จบ</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "หน้าจอแชทที่มีข้อความสามหมื่นข้อความ"</div>
+        <p>ทีมแอปแชทแห่งหนึ่งเจอปัญหา: ห้องแชทกลุ่มใหญ่เปิดช้ามาก กินแรมจนแอปเด้ง — สาเหตุ: dev มือใหม่ในทีมใช้ Column + SingleChildScrollView แสดงข้อความทั้งหมด</p>
+      </div>
+      <div class="ascii">   ก่อนแก้: วาดข้อความทั้ง 30,000 bubble ตอนเปิดห้อง   → เปิดห้อง 8 วินาที, แรม 1.2GB
+   หลังแก้: ListView.builder                          → เปิดห้อง 0.3 วินาที, แรม 90MB
+            (วาดเฉพาะ ~20 bubble ที่อยู่บนจอ)</div>
+      <p>การแก้ครั้งนั้นเปลี่ยนโค้ดไม่ถึง 20 บรรทัด แต่เปลี่ยนรีวิวแอปจาก 3.1 → 4.4 ดาว — <strong>ความรู้เรื่อง builder ไม่ใช่ optional สำหรับแอปจริง</strong> และ interviewer ชอบถามเรื่องนี้ตอนสัมภาษณ์งาน Flutter มาก: "Column กับ ListView.builder ต่างกันยังไง เมื่อไหร่ใช้อะไร" — ตอนนี้คุณตอบได้แล้วพร้อมภาพร้านซูชิ</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: itemBuilder ผอมๆ</h2>
+      <pre><code class="language-dart">// ❌ ยัดทุกอย่างใน itemBuilder — 50 บรรทัดต่อแถว อ่านไม่ไหว
+itemBuilder: (context, index) {
+  final task = _tasks[index];
+  return Dismissible(
+    key: ValueKey(task.title),
+    background: Container( /* 8 บรรทัด */ ),
+    onDismissed: (_) { /* 10 บรรทัด */ },
+    child: ListTile(
+      leading: /* 5 บรรทัด */,
+      title: /* 6 บรรทัดพร้อมเงื่อนไขขีดฆ่า */,
+      trailing: /* 8 บรรทัด */,
+    ),
+  );  // ← itemBuilder เดียว 50 บรรทัด — จะหาอะไรเจอ
+},</code></pre>
+      <pre><code class="language-dart">// ✅ itemBuilder ทำหน้าที่เดียว: หยิบข้อมูล ส่งให้ Widget ที่มีชื่อ
+itemBuilder: (context, index) {
+  final task = _tasks[index];
+  return DismissibleTaskTile(          // ชื่อเล่าเรื่องครบ: ปัดได้ + แถวงาน
+    task: task,
+    onToggle: () =&gt; _toggleTask(task),
+    onDismissed: () =&gt; _removeTask(task),
+  );
+},
+// รายละเอียดทั้งหมดอยู่ใน lib/widgets/dismissible_task_tile.dart
+// — หนึ่งไฟล์ หนึ่งหน้าที่ (บทที่ 2) ในร่างของ Widget</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักการเดียว โผล่ทุกระดับ</div>
+        <p>สังเกตว่ากฎเดิมโผล่ซ้ำทุกระดับ: ฟังก์ชันผอม (บทที่ 6) → build ผอม (บทที่ 11) → itemBuilder ผอม (บทนี้) — <strong>หลักการเดียว ใช้ได้ทุกที่ นี่แหละที่บอกว่า "เข้าใจ &gt; จำ"</strong></p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "Vertical viewport was given unbounded height"</div>
+        <p><strong>สาเหตุ:</strong> วาง ListView ใน Column โดยไม่บอกขอบเขตความสูง — ListView ถามว่า "ฉันสูงได้แค่ไหน?" Column ตอบว่า "เท่าไหร่ก็ได้" → ตกลงกันไม่ได้ = พัง (error พี่น้องกับ overflow บทที่ 11)<br>
+        <strong>วิธีแก้:</strong> ครอบ ListView ด้วย Expanded เมื่ออยู่ใน Column: <code class="inline">Column(children: [ HeaderCard(), Expanded(child: ListView.builder(...)) ])</code></p>
+      </div>
+      <div class="box warn">
+        <div class="t">② "A dismissed Dismissible widget is still part of the tree"</div>
+        <p><strong>สาเหตุ:</strong> ปัดแถวหายไปจากจอ แต่ "ข้อมูลจริง" ยังอยู่ใน List — Flutter วาดรอบใหม่เจอของที่เพิ่งปัดทิ้งโผล่มาอีก เลยประท้วง (หรือ Key ซ้ำกันจนแยกแถวไม่ออก)<br>
+        <strong>วิธีแก้:</strong> ใน onDismissed ต้อง "ลบข้อมูลจริง" ใน setState เสมอ (จอคือเงาของข้อมูล!) และเช็คว่า Key ไม่ซ้ำ — สองแถวชื่อเดียวกันควรใช้ id ไม่ใช่ title</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ "RangeError (index): Invalid value: ... : 5"</div>
+        <p><strong>สาเหตุ:</strong> itemCount ไม่ตรงกับ List จริง — เช่น <code class="inline">itemCount: _tasks.length + 1</code> (เผื่อแถวพิเศษ) แต่ itemBuilder ลืมจัดการ index ตัวเกิน<br>
+        <strong>วิธีแก้:</strong> itemCount ต้องเท่ากับจำนวนแถวที่ itemBuilder รองรับจริงเป๊ะ — เพื่อนเก่าจากบทที่ 7 กลับมาทัก: ช่องสุดท้ายคือ length - 1 เสมอ</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — เข้าสายพาน</div>
+        <p>เปลี่ยนรายการงานจาก Column เป็น ListView.builder ตามขั้นที่ 1 แล้วพิสูจน์พลังของมัน: ใน initState เติมงานทดสอบ 1,000 ชิ้นด้วย for (บทที่ 5) — เลื่อนดูว่าลื่นไหม แล้วลองคิดว่าถ้าเป็น Column จะเกิดอะไรขึ้น (ลบงานทดสอบออกก่อน commit)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — ปัดเพื่อลบ</div>
+        <p>ใส่ Dismissible + พื้นหลังแดง + SnackBar ยืนยันตามขั้นที่ 3 และเพิ่ม Empty State ("ยังไม่มีงาน 🎉") เมื่อรายการว่าง — commit ด้วย <code class="inline">feat: swipe to delete with snackbar</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — แยกโซนเสร็จ/ค้าง</div>
+        <p>อัปเกรดหน้าหลัก: งานค้างอยู่บนสุด งานเสร็จแล้วอยู่ล่างใต้หัวข้อ "เสร็จแล้ว" — เทคนิค: สร้าง List ใหม่จาก <code class="inline">.where()</code> สองรอบ (ค้าง+เสร็จ) แล้วประกอบเป็นรายการเดียวส่งให้ builder, หัวข้อคั่นทำเป็นแถวพิเศษ (ระวัง itemCount!) — ติ๊กงานแล้วมันย้ายโซนเองทันที commit ด้วย <code class="inline">feat: separate pending and completed sections</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายได้ว่าทำไม Column ไม่เหมาะกับรายการยาว (ภาพร้านซูชิสายพาน)</li>
+        <li>เขียน ListView.builder พร้อม itemCount/itemBuilder ได้เอง</li>
+        <li>ใช้ ListTile ครบช่อง leading/title/subtitle/trailing</li>
+        <li>อธิบายได้ว่าทำไม Key ต้องใช้ค่าติดตัวข้อมูล ไม่ใช่ index</li>
+        <li>รู้ว่า ListView ใน Column ต้องครอบ Expanded และอธิบายได้ว่าทำไม</li>
+        <li>To-Do ปัดลบได้ มี SnackBar และ Empty State แล้ว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">ListView</code></td><td>รายการที่เลื่อนได้</td><td>สายพานซูชิ</td></tr>
+        <tr><td><code class="inline">ListView.builder</code></td><td>สร้างเฉพาะแถวที่กำลังจะถูกเห็น</td><td>เชฟปั้นจานเฉพาะที่จะโผล่</td></tr>
+        <tr><td><code class="inline">itemCount</code> / <code class="inline">itemBuilder</code></td><td>จำนวนจานทั้งเมนู / สูตรปั้นจานที่ index</td><td>เมนู / สูตรประจำจาน</td></tr>
+        <tr><td><code class="inline">ListTile</code></td><td>แถวรายการสำเร็จรูป (ซ้าย-กลาง-ขวา)</td><td>จานวางของมีช่องแบ่ง</td></tr>
+        <tr><td><code class="inline">Dismissible</code></td><td>ปัดแถวเพื่อลบ</td><td>ปัดจานออกจากสายพาน</td></tr>
+        <tr><td><code class="inline">Key</code></td><td>ป้ายทะเบียนประจำแถว ไม่ซ้ำกัน</td><td>ป้ายทะเบียนรถ</td></tr>
+        <tr><td><code class="inline">SnackBar</code></td><td>แถบแจ้งผลชั่วคราวล่างจอ</td><td>ป้ายไฟวิ่งบอกลูกค้า</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>จอมือถือแสดงของได้ทีละ ~15 ชิ้น — builder จึงปั้นเฉพาะที่เห็น (ร้านซูชิสายพาน) · ListTile คือแม่แบบแถวของทั้งวงการ · ปัดลบต้องลบ "ข้อมูลจริง" เสมอ เพราะจอคือเงาของข้อมูล · Key ใช้ค่าติดตัวข้อมูล</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่12_จัดการState.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 12: จัดการ State เชิงลึก</div>
+        </a>
+        <a href="บทที่14_Debugging.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 14: Debugging ด้วย print + DevTools</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 3 · บทที่ 13<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

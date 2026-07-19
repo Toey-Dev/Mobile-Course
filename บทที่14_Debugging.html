@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 14 — Debugging: ไล่ล่าบั๊กอย่างเป็นระบบ | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 3 · บทที่ 14</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: นักสืบสองแบบ</a>
+      <a href="#stacktrace" class="lvl2">— อ่าน stack trace</a>
+      <a href="#code" class="lvl1">2. หยุดเวลาด้วย Breakpoint</a>
+      <a href="#process" class="lvl1">3. ขั้นตอนไล่ล่า 4 ขั้น</a>
+      <a href="#techniques" class="lvl1">4. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">5. ตัวอย่างงานจริง: บั๊กจากรีวิว</a>
+      <a href="#clean" class="lvl1">6. Clean Code: โค้ดที่ debug ง่าย</a>
+      <a href="#errors" class="lvl1">7. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">8. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">9. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 3 · บทที่ 14</span>
+      <h1>Debugging: ไล่ล่าบั๊กอย่างเป็นระบบ ด้วย print, Breakpoint และ DevTools</h1>
+      <p>อ่าน stack trace เป็น หยุดเวลาดูค่าตัวแปรได้จริง — มีบั๊กที่ตั้งใจฝังไว้รอให้คุณล่า</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 13 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 6 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">เฟส 4 ข้างหน้าคือของจริง (ข้อมูลจากเน็ต, error ที่ควบคุมไม่ได้) — คนที่ไล่บั๊กเป็นระบบจะสนุกกับมัน คนที่ไล่แบบมั่วจะทรมาน ทักษะบทนี้คือเส้นแบ่งนั้น</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (6 คำ)</div>
+        <p><span class="pill">stack trace</span><span class="pill">breakpoint</span><span class="pill">debug session (F5)</span><span class="pill">Step Over / Step Into</span><span class="pill">Variables panel</span><span class="pill">DevTools</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: นักสืบสองแบบ</h2>
+      <p>บั๊กเกิดขึ้นแล้วในแอปของคุณ — คุณคือนักสืบที่ต้องหาตัวคนร้าย มีเครื่องมือสองระดับ:</p>
+      <div class="ascii">🔦 นักสืบสายสอบพยาน (print/debugPrint)        🕰️ นักสืบสายหยุดเวลา (debugger)
+
+   ถามพยานทีละคำถาม:                          กดปุ่มหยุดเวลา ณ จุดเกิดเหตุ:
+   "ตอนนั้น _tasks มีกี่ชิ้น?"                    ทุกอย่างค้างนิ่ง — แล้วเดินสำรวจ
+   → รันใหม่ → อ่านคำตอบ                       ได้ทั้งห้อง:
+   "แล้ว index เป็นเท่าไหร่?"                    · ตัวแปรทุกตัว มีค่าอะไร (Variables)
+   → เพิ่ม print → รันใหม่ → อ่านอีก             · โค้ดเดินมาทางไหน (Call Stack)
+                                              · สั่งเดินต่อทีละบรรทัด (Step)
+   เหมาะกับ: คำถามเล็กๆ เร็วๆ                   เหมาะกับ: คดีซับซ้อน ตัวแปรเยอะ
+   จุดอ่อน: ถามได้ทีละคำถาม ต้องรันใหม่เรื่อยๆ     ไม่ต้องรันใหม่ ไม่ต้องเดา — เห็นหมด</div>
+      <h3 id="stacktrace">และหลักฐานชิ้นแรกของทุกคดี: stack trace (รอยเท้าคนร้าย)</h3>
+      <div class="ascii">   ══ Exception caught by widgets library ═══════════════════
+   RangeError (index): Invalid value: Not in inclusive range 0..2: 3
+                          ▲ ① เกิดอะไร: หยิบช่อง 3 จาก List ที่มีถึงช่อง 2
+   #0  List.[] (dart:core-patch/array.dart)          ← ของ Dart เอง — ข้ามไป
+   #1  _HomeScreenState._removeTask (package:todo_app/main.dart:42)
+   #2  TaskTile.build.&lt;anonymous&gt; (...)               ▲ ② ที่เกิดเหตุ: ไฟล์เรา!
+   ...อีก 30 บรรทัด (ของ framework — ไม่ต้องอ่าน)        main.dart บรรทัด 42
+
+   วิธีอ่าน: ① บรรทัดบนสุด = เกิดอะไรขึ้น
+            ② ไล่หาบรรทัดแรกที่เป็น "ไฟล์ของเรา" (package:todo_app/...) = ไปดูตรงนั้น
+            ที่เหลือทั้งหมดข้ามได้ — อย่ายอมแพ้เพราะมันยาว มันยาวเพื่อคนอื่น ไม่ใช่เรา</div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: หยุดเวลาครั้งแรกด้วย Breakpoint</h2>
+      <h3>ขั้นที่ 1 — รันแบบ debug ด้วย F5 (ไม่ใช่ flutter run ธรรมดา)</h3>
+      <p>ใน VS Code เปิดโปรเจกต์ <code class="inline">todo_app</code> → กด <strong>F5</strong> (หรือเมนู Run → Start Debugging) — หน้าตาเหมือน flutter run แต่คราวนี้ VS Code "ถือกุญแจหยุดเวลา" อยู่</p>
+      <h3>ขั้นที่ 2 — วางกับดัก (breakpoint)</h3>
+      <p>คลิก<strong>ซ้ายสุดของบรรทัด</strong> <code class="inline">setState(() =&gt; task.toggle());</code> ใน <code class="inline">_toggleTask</code> → จุดแดง 🔴 ปรากฏ = กับดักพร้อม</p>
+      <h3>ขั้นที่ 3 — รอคนร้ายเหยียบกับดัก</h3>
+      <p>ไปที่แอป → <strong>ติ๊กงานหนึ่งชิ้น</strong> → เวลาหยุดทันที! VS Code เด้งกลับมาพร้อมไฮไลต์บรรทัดที่หยุด:</p>
+      <div class="ascii">   สิ่งที่เห็นตอนเวลาหยุด (Debug Sidebar ฝั่งซ้าย):
+
+   ▾ VARIABLES                        แถบควบคุมด้านบน:
+     task: Task                        ▶️ Continue (F5)   = ปล่อยเวลาเดินต่อ
+       title: "อ่านบทเรียนที่ 12"        ⤵️ Step Over (F10) = เดินทีละบรรทัด
+       isDone: false  ← ยังไม่ toggle!  ⤷ Step Into (F11) = มุดเข้าไปในฟังก์ชันที่กำลังเรียก
+     _tasks: List (2 items)
+   ▾ CALL STACK
+     _toggleTask        ← อยู่ตรงนี้
+     TaskTile.build     ← ถูกเรียกมาจากตรงนี้ (รอยเท้าย้อนกลับ!)</div>
+      <p>กด <strong>Step Over (F10)</strong> หนึ่งครั้ง → ดูค่า <code class="inline">isDone</code> ใน VARIABLES พลิกเป็น true ต่อหน้าต่อตา — <strong>คุณเพิ่งเห็นโค้ดทำงานทีละบรรทัดด้วยตาตัวเองครั้งแรก</strong> ไม่ต้องเดา ไม่ต้อง print</p>
+      <h3>ขั้นที่ 4 — DevTools: ศูนย์บัญชาการใหญ่</h3>
+      <p>ตอน debug อยู่ VS Code จะมีลิงก์ "Open DevTools" (หรือ Command Palette → "Open DevTools") — เครื่องมือชุดใหญ่ในเบราว์เซอร์: Widget Inspector (เพื่อนเก่าบทที่ 3), กราฟการใช้แรม/CPU, บันทึก network — ตอนนี้แค่เปิดดูให้รู้ว่ามีอะไร จะได้ใช้จริงหนักๆ ตอนเฟส 4</p>
+    </section>
+
+    <section id="process">
+      <h2>3. 🧠 คอนเซปต์: ขั้นตอนไล่ล่า 4 ขั้นของนักสืบมืออาชีพ</h2>
+      <p>การไล่บั๊กไม่ใช่ดวง — มันคือกระบวนการวิทยาศาสตร์ที่ทำซ้ำได้:</p>
+      <div class="ascii">   ① ทำให้เกิดซ้ำได้ (Reproduce)      "กดอะไร ตามลำดับไหน แล้วพังทุกครั้ง?"
+              │                       บั๊กที่ทำซ้ำได้ = จับได้แน่นอน
+              ▼
+   ② ตั้งสมมติฐาน (Hypothesize)       "น่าจะเป็นเพราะ index เกิน ตอนลบแถวสุดท้าย"
+              │                       ห้ามแก้อะไรก่อนมีสมมติฐาน!
+              ▼
+   ③ พิสูจน์ (Verify)                 วาง breakpoint / print ดูค่า ณ จุดสงสัย
+              │                       สมมติฐานผิด? → กลับไปข้อ ② (ปกติมาก)
+              ▼
+   ④ แก้ แล้วยืนยันว่าหายจริง (Fix)     แก้ที่ "สาเหตุ" ไม่ใช่กลบ "อาการ"
+                                      ทำซ้ำตามข้อ ① อีกรอบ — ต้องไม่พังแล้ว</div>
+      <div class="box warn">
+        <div class="t">⚠️ กับดักที่มือใหม่ตกบ่อยที่สุด</div>
+        <p>ข้ามข้อ ②③ ไป "ลองแก้ตรงนั้นตรงนี้ดู" จนบั๊กหายไปเอง — อันตรายที่สุด เพราะไม่รู้ว่าหายเพราะอะไร บั๊กแบบนี้จะกลับมาตอนสำคัญเสมอ (มักเป็นคืนก่อนส่งงาน)</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>4. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — เลือกเครื่องมือตามขนาดคดี</h3>
+      <p>คำถามเล็ก ("ค่านี้เป็นอะไร") → <code class="inline">debugPrint</code> เร็วสุด · คดีใหญ่ (ค่าหลายตัว, โค้ดวิ่งงงๆ, ลูปพิลึก) → breakpoint คุ้มกว่าเพราะเห็นทุกอย่างในรอบเดียว — มือโปรใช้ทั้งคู่สลับกัน ไม่มีอันไหน "เก่งกว่า"</p>
+      <h3>เทคนิคที่ 2 — เทคนิคผ่าครึ่ง (binary search) หาที่เกิดเหตุ</h3>
+      <p>โค้ดยาวไม่รู้พังตรงไหน: วาง <code class="inline">debugPrint('ถึงจุด A')</code> กลางทาง — ถ้าพิมพ์ออกมา แปลว่าพังหลังจุด A → ย้ายไปกลางครึ่งหลัง ทำซ้ำ — หาจุดพังในโค้ด 1,000 บรรทัดได้ใน ~10 รอบ</p>
+      <h3>เทคนิคที่ 3 — Conditional breakpoint: กับดักที่เลือกเหยื่อ</h3>
+      <p>บั๊กเกิดเฉพาะแถวที่ 57 จาก 100? คลิกขวาที่จุดแดง → Edit Breakpoint → ใส่เงื่อนไข <code class="inline">index == 57</code> — เวลาจะหยุดเฉพาะตอนเงื่อนไขจริง ไม่ต้องกด Continue 56 รอบ</p>
+      <h3>เทคนิคที่ 4 — จดสมุดบั๊ก (bug journal)</h3>
+      <p>เจอบั๊กที่ใช้เวลาเกิน 30 นาที ให้จดสั้นๆ: อาการ / สาเหตุจริง / วิธีเจอ — ผ่านไป 3 เดือนสมุดนี้คือคลังความรู้เฉพาะตัวที่หาจากไหนไม่ได้ และบั๊กหน้าตาเดิมจะจบใน 5 นาที</p>
+    </section>
+
+    <section id="prod">
+      <h2>5. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "บั๊กจากรีวิวผู้ใช้ — ทีมจริงไล่ยังไง"</div>
+        <p>รีวิว 1 ดาวเข้ามา: <em>"กดลบงานแล้วแอปเด้งตลอด!"</em> — แต่ทีมลองกดลบแล้ว...ปกติดี?? นี่คือสถานการณ์จริงที่เจอทุกสัปดาห์ และขั้นตอน ①②③④ ทำงานแบบนี้:</p>
+      </div>
+      <div class="ascii">① Reproduce: ทีมไล่ถามเงื่อนไข — ผู้ใช้ลบ "แถวสุดท้าย" ขณะที่เปิดตัวกรอง
+   "เฉพาะงานเสร็จ" อยู่ → ลองตาม = เด้งจริง! (บั๊กเกิดเฉพาะเงื่อนไขซ้อนกัน)
+② Hypothesize: "ตัวกรองทำให้ index บนจอ ≠ index ใน List จริง
+   → removeAt(index) เลยลบผิดช่อง/เกินช่วง"
+③ Verify: วาง conditional breakpoint ที่ removeAt → ค่า index = 3
+   แต่ List จริงหลังกรองมี 2 ชิ้น → สมมติฐานถูก ✓
+④ Fix: เปลี่ยนจากลบด้วย index → ลบด้วยตัว object (_tasks.remove(task))
+   แล้วทำซ้ำข้อ ① — ไม่เด้งแล้ว + เขียนกันไว้ไม่ให้ใครพลาดซ้ำ</div>
+      <p>สังเกตว่าเครื่องมือทุกตัวในเรื่องนี้ คุณมีครบแล้วในบทนี้ — ต่างแค่ประสบการณ์ ซึ่งสร้างได้ด้วยการฝึกล่าจริงในแบบฝึกหัด</p>
+    </section>
+
+    <section id="clean">
+      <h2>6. 🧹 ตัวอย่าง Clean Code: โค้ดที่ debug ง่าย คือโค้ดที่เขียนดีมาแต่แรก</h2>
+      <p>บั๊กเดียวกัน ในโค้ดสองแบบ — ดูว่า stack trace ช่วยเราได้ต่างกันแค่ไหน:</p>
+      <pre><code class="language-dart">// ❌ โค้ดก้อนยักษ์ — stack trace ชี้ได้แค่ "พังในก้อนนี้แหละ 80 บรรทัด"
+void _handleEverything(int index, bool? value, String? action) {
+  // ...ติ๊กก็ทำ ลบก็ทำ เพิ่มก็ทำ กรองก็ทำ ปนกัน 80 บรรทัด...
+  // stack trace บอกแค่: _handleEverything (main.dart:57)
+  // → ยังต้องไล่อ่านทั้ง 80 บรรทัดว่าเส้นทางไหนพัง
+}</code></pre>
+      <pre><code class="language-dart">// ✅ ฟังก์ชันเล็ก หน้าที่เดียว — stack trace กลายเป็นลายแทงชี้จุด
+void _toggleTask(Task task) { ... }     // พังที่นี่ = เรื่องติ๊กเท่านั้น
+void _removeTask(Task task) { ... }     // พังที่นี่ = เรื่องลบเท่านั้น
+List&lt;Task&gt; _visibleTasks() { ... }      // พังที่นี่ = เรื่องกรองเท่านั้น
+
+// stack trace: _removeTask (main.dart:42) → รู้ทันทีว่าคดีอยู่หมวดไหน
+// ฟังก์ชัน 5 บรรทัด อ่านแป๊บเดียวเจอ — ชื่อฟังก์ชันคือหมวดคดีในตัวเอง</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>ทุกเทคนิค clean code ที่เรียนมา (ฟังก์ชันเล็ก บทที่ 6, ชื่อสื่อความหมาย บทที่ 4, Widget ย่อย บทที่ 11) ล้วนจ่ายดอกเบี้ยตอน debug — โค้ดที่อ่านง่าย คือโค้ดที่บั๊กซ่อนตัวยาก</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>7. ⚠️ ข้อผิดพลาดที่เจอบ่อย (ของการ debug เอง)</h2>
+      <div class="box warn">
+        <div class="t">① Breakpoint ไม่ยอมหยุด (จุดแดงกลายเป็นวงกลมโปร่ง)</div>
+        <p><strong>สาเหตุ:</strong> แอปรันด้วย flutter run ใน terminal ธรรมดา — VS Code ไม่ได้ "ถือกุญแจ" เลยสั่งหยุดเวลาไม่ได้<br>
+        <strong>วิธีแก้:</strong> หยุดแอปเดิม แล้วรันใหม่ด้วย <strong>F5</strong> (Start Debugging) เท่านั้น — จำง่ายๆ: อยากใช้กับดัก ต้องเข้าเกมผ่านประตู F5</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② อ่าน stack trace แล้วเจอแต่ไฟล์แปลกๆ ไม่ใช่โค้ดเรา</div>
+        <p><strong>สาเหตุ:</strong> 90% ของบรรทัดใน stack trace คือทางผ่านของ framework — มือใหม่อ่าน 3 บรรทัดแรกไม่เข้าใจแล้วยอมแพ้<br>
+        <strong>วิธีแก้:</strong> สแกนหาคำว่า <code class="inline">package:ชื่อแอปเรา/</code> (เช่น <code class="inline">package:todo_app/</code>) บรรทัดแรกที่เจอ = ที่เกิดเหตุ — ใน VS Code บรรทัดพวกนี้เป็นลิงก์ คลิกเด้งไปถึงที่</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ แก้แล้ว "เหมือนหาย" แต่ไม่รู้เพราะอะไร</div>
+        <p><strong>สาเหตุ:</strong> ข้ามขั้นตั้งสมมติฐาน ไปสุ่มแก้จนอาการหาย — บั๊กตัวจริงยังอยู่ แค่หลบฉาก<br>
+        <strong>วิธีแก้:</strong> บังคับตัวเองตอบ 2 คำถามก่อนปิดคดีเสมอ: "สาเหตุจริงคืออะไร?" และ "ทำไมการแก้นี้ถึงตรงสาเหตุ?" — ตอบไม่ได้ = คดียังไม่ปิด (ย้อนดูบทที่ 3: แก้จุดเดียวต่อรอบ คือวินัยเดียวกันนี้)</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>8. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — หยุดเวลาครั้งแรก</div>
+        <p>ทำตามหัวข้อ 2 ครบทุกขั้น: F5 → breakpoint ใน _toggleTask → ติ๊กงาน → ดู task.isDone พลิกค่าใน VARIABLES ด้วย Step Over — แล้วลองวาง breakpoint ใน build() ดูว่าถูกเรียกบ่อยแค่ไหน (คำตอบจะทำให้เข้าใจ rebuild จากบทที่ 10 ลึกขึ้นมาก)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — คดีฝังไว้ 3 คดี</div>
+        <p>โค้ดข้างล่างมีบั๊ก 3 ตัว (ตั้งใจฝัง!) — คัดลอกไปวางในโปรเจกต์ทดลอง แล้วไล่ล่าด้วยขั้นตอน ①②③④ ให้ครบทุกคดี ห้ามเดา ต้องพิสูจน์ด้วย breakpoint หรือ print ก่อนแก้:</p>
+      </div>
+      <pre><code class="language-dart">// 🐛 มีบั๊ก 3 ตัวซ่อนอยู่ — ล่าให้เจอ!
+final List&lt;String&gt; items = ['งาน A', 'งาน B', 'งาน C'];
+
+void removeLast() {
+  items.removeAt(items.length);          // คดีที่ 1: กดแล้วเด้งทันที ทำไม?
+}
+
+void addItem(String name) {
+  items.add(name);                       // คดีที่ 2: เพิ่มแล้วจอไม่เปลี่ยน ทำไม?
+}                                        //           (สมมติว่านี่อยู่ใน State class)
+
+int countLong() {
+  int count = 0;
+  for (int i = 1; i &lt; items.length; i++) {   // คดีที่ 3: นับขาดไป 1 เสมอ ทำไม?
+    if (items[i].length &gt; 4) count++;
+  }
+  return count;
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — ล่าโดยไม่ใช้ print เลย</div>
+        <p>กลับไปทำแบบฝึกหัดระดับ 3 ของบทที่ 13 (แยกโซนเสร็จ/ค้าง) ถ้ายังไม่ได้ทำ — คราวนี้<strong>ห้ามใช้ print/debugPrint ตลอดงาน</strong> ทุกข้อสงสัยต้องตอบด้วย breakpoint + Variables + Step เท่านั้น จบแล้วจดสมุดบั๊ก: เจอบั๊กกี่ตัว สาเหตุอะไร รู้ได้ยังไง — commit ด้วย <code class="inline">docs: add bug journal</code> (สร้างไฟล์ <code class="inline">BUGS.md</code> ใน repo)</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>9. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อ่าน stack trace แล้วชี้ "บรรทัดของเรา" ได้ใน 10 วินาที</li>
+        <li>วาง breakpoint, Step Over, อ่านค่าใน Variables ได้คล่อง</li>
+        <li>ท่องขั้นตอน 4 ขั้นได้: Reproduce → Hypothesize → Verify → Fix</li>
+        <li>อธิบายได้ว่าทำไม "สุ่มแก้จนหาย" อันตรายกว่าบั๊กเอง</li>
+        <li>ปิดคดีฝังไว้ครบ 3 คดี พร้อมบอกสาเหตุจริงของแต่ละคดีได้</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>stack trace</td><td>รายงานเส้นทางโค้ด ณ จุดพัง</td><td>รอยเท้าคนร้ายย้อนกลับ</td></tr>
+        <tr><td>breakpoint</td><td>จุดสั่งหยุดเวลาในโค้ด</td><td>กับดักนักสืบ 🔴</td></tr>
+        <tr><td>debug session (F5)</td><td>การรันแบบที่ VS Code ควบคุมได้</td><td>เข้าเกมผ่านประตูที่ถือกุญแจ</td></tr>
+        <tr><td>Step Over / Step Into</td><td>เดินทีละบรรทัด / มุดเข้าไปในฟังก์ชัน</td><td>เดินสำรวจที่เกิดเหตุ</td></tr>
+        <tr><td>Variables panel</td><td>หน้าต่างดูค่าตัวแปรทุกตัวตอนหยุด</td><td>ห้องหลักฐาน</td></tr>
+        <tr><td>DevTools</td><td>ชุดเครื่องมือวิเคราะห์ครบวงจร</td><td>ศูนย์บัญชาการนักสืบ</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>print = สอบพยาน, breakpoint = หยุดเวลาดูทั้งห้อง · stack trace ยาวเพื่อคนอื่น — หาแค่บรรทัด package: ของเรา · ไล่บั๊ก 4 ขั้น: ทำซ้ำ → สมมติฐาน → พิสูจน์ → แก้ที่สาเหตุ · ห้ามปิดคดีถ้ายังตอบไม่ได้ว่า "ทำไมถึงพัง"</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่13_ListView.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 13: ListView</div>
+        </a>
+        <a href="บทที่15_Navigation.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 15: Navigation — เปลี่ยนหน้า</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 3 · บทที่ 14<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

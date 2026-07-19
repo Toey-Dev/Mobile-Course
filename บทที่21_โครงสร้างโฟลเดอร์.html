@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 21 — จัดโครงสร้างโฟลเดอร์อย่างมืออาชีพ | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 4 · บทที่ 21 (บทปิดเฟส)</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ครัวมีสถานี</a>
+      <a href="#direction" class="lvl2">— ทิศทางการไหลของจาน</a>
+      <a href="#code" class="lvl1">2. จัดบ้าน weather_app</a>
+      <a href="#constants" class="lvl2">— constants.dart</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: PR แรก</a>
+      <a href="#clean" class="lvl1">5. แล้ว Clean Architecture ล่ะ?</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 4 · บทที่ 21 — บทปิดเฟส!</span>
+      <h1>จัดโครงสร้างโฟลเดอร์อย่างมืออาชีพ</h1>
+      <p>จัดบ้าน weather_app ให้ทีมหลายคนทำงานร่วมกันได้ — ปิดเฟส 4 ด้วยแอป portfolio ที่โครงสร้างสวยไม่แพ้หน้าตา</p>
+      <div class="meta">
+        <span>⏱️ 2 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 20 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 6 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">weather_app มีครบทุกอย่างแล้ว: model, service, error handling — บทนี้คือการจัดบ้านครั้งใหญ่: วางทุกอย่างเข้าที่ ตั้งชื่อให้สิ่งที่คุณทำมาตลอด และเข้าใจกฎที่อยู่เบื้องหลังสถาปัตยกรรมทุกแบบในโลก</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (6 คำ)</div>
+        <p><span class="pill">layer-first</span><span class="pill">feature-first</span><span class="pill">separation of concerns</span><span class="pill">dependency direction</span><span class="pill">constants.dart</span><span class="pill">Clean Architecture</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: ครัวมั่ว กับครัวที่มีสถานี</h2>
+      <p>ร้านอาหารของเราขายดีขึ้นเรื่อยๆ ต้องจ้างเชฟเพิ่ม — และนี่คือจุดที่ครัวสองแบบให้ผลต่างกันคนละโลก:</p>
+      <div class="ascii">   🌪️ ครัวมั่ว (โค้ดกองใน main.dart)             👨‍🍳 ครัวมืออาชีพ (มีสถานีชัดเจน)
+
+   มีด กระทะ ผัก เนื้อ ซอส จานชาม               ┌─────────────────────────────┐
+   กองรวมกันบนโต๊ะเดียว...                      │ 🥬 สถานีวัตถุดิบ   (models/)    │
+   เชฟเก่าคนเดียวรู้ว่าอะไรอยู่ไหน                │ 🔥 สถานีปรุง      (services/)  │
+   (เพราะจำเอา)                                │ 📢 ผู้จัดการครัว   (providers/) │
+                                              │ 🍽️ เคาน์เตอร์เสิร์ฟ (screens/)   │
+   เชฟใหม่เข้ามาวันแรก:                         │ 🧂 อุปกรณ์กลาง    (widgets/)   │
+   "มีดอยู่ไหนครับ?" "ใต้กองผักมั้ง..."           └─────────────────────────────┘
+   สองสัปดาห์ผ่านไป ยังไม่กล้าหยิบอะไร            เชฟใหม่เข้ามาวันแรก:
+                                              มองป้ายสถานี 30 วินาที → เริ่มงานได้เลย
+
+        โครงสร้างโฟลเดอร์ = ป้ายสถานีของครัว: มันไม่ได้ทำให้อาหารอร่อยขึ้น
+        แต่ทำให้ "หลายคนทำอาหารพร้อมกันได้ โดยไม่ชนกัน" — นั่นคือหัวใจของแอปที่โต</div>
+      <h3 id="direction">ฉากที่ 2 — กฎที่สำคัญกว่าชื่อโฟลเดอร์: ทิศทางการไหลของจาน (dependency direction)</h3>
+      <div class="ascii">   🍽️ screens/widgets  ──►  📢 providers  ──►  🔥 services  ──►  🥬 models
+      (เสิร์ฟ)              (ผู้จัดการ)          (ปรุง)            (วัตถุดิบ)
+
+   จานไหลจากซ้ายไปขวาเท่านั้น: ชั้นซ้าย "รู้จัก" ชั้นขวาได้ แต่ขวาห้ามรู้จักซ้าย!
+
+   · สถานีวัตถุดิบ (models) ไม่รู้จักโต๊ะลูกค้า — Task ไม่ import อะไรของ Flutter เลย
+   · สถานีปรุง (services) ไม่รู้ว่าจานจะไปเสิร์ฟหน้าไหน — ใช้ซ้ำได้ทุกหน้า
+   · เพราะงี้ตอนบท 18 เราเปลี่ยนวิธีเก็บข้อมูลได้โดยหน้าจอไม่สะเทือนแม้บรรทัดเดียว!</div>
+      <div class="box tip">
+        <div class="t">💡 ความจริงที่ควรรู้</div>
+        <p>คุณจัดครัวแบบนี้มาตั้งนานแล้ว — models/ เกิดบทที่ 12, services/ บทที่ 19, providers/ บทที่ 17, screens/ บทที่ 15, widgets/ บทที่ 12 — บทนี้ไม่ได้สอนของใหม่ แต่<strong>ตั้งชื่อให้สิ่งที่คุณทำมาตลอด แล้วขัดให้เป็นระบบเดียวกันทั้งแอป</strong> (หลักการนี้มีชื่อว่า separation of concerns: หนึ่งสถานี หนึ่งหน้าที่ — ญาติผู้ใหญ่ของ "หนึ่งฟังก์ชันหนึ่งงาน" บทที่ 6)</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: จัดบ้าน weather_app ครั้งใหญ่</h2>
+      <h3>ขั้นที่ 1 — ดูของก่อนจัด แล้ว commit จุดเซฟ!</h3>
+      <pre><code class="language-bash">git add . &amp;&amp; git commit -m "chore: checkpoint before restructure"
+# refactor ใหญ่ = สู้บอส → เซฟก่อนเสมอ (เทคนิคที่ 3 ของบทที่ 2 — วันนี้ใช้จริง)</code></pre>
+      <h3>ขั้นที่ 2 — ผังเป้าหมาย (มาตรฐาน layer-first ที่ทีมส่วนใหญ่ใช้เริ่มต้น)</h3>
+      <div class="ascii">   ก่อน (บท 19–20):                    หลัง (บทนี้):
+   lib/                               lib/
+   ├── main.dart  ← หน้าจอ + วิว        ├── main.dart              ← เหลือจุดสตาร์ท ~20 บรรทัด
+   │   ทั้งหมดยัดรวมในนี้                ├── constants.dart         ← ค่ากลางของทั้งแอป (ใหม่!)
+   ├── models/                        ├── models/
+   │   └── weather.dart               │   ├── weather.dart
+   └── services/                      │   └── city.dart
+       └── weather_service.dart       ├── services/
+                                      │   └── weather_service.dart
+                                      ├── screens/
+                                      │   └── weather_screen.dart  ← ย้ายหน้าจอมาบ้านตัวเอง
+                                      └── widgets/
+                                          ├── weather_view.dart    ← _WeatherView เดิม
+                                          └── error_view.dart      ← _ErrorView เดิม (ตัด _ ออก
+                                                                      เพราะจะใช้ข้ามไฟล์แล้ว)</div>
+      <div class="box why">
+        <div class="t">🤔 วิธีย้ายอย่างปลอดภัย</div>
+        <p>ลากไฟล์ใน VS Code (Explorer ฝั่งซ้าย) → VS Code ถามว่า "อัปเดต import ให้ไหม" → <strong>Yes เสมอ</strong> — ย้ายทีละไฟล์ รันเช็ค แล้วค่อยย้ายตัวถัดไป (จังหวะ Dev Loop บทที่ 3 ใช้กับ refactor ด้วย)</p>
+      </div>
+      <h3 id="constants">ขั้นที่ 3 — เกิดไฟล์ใหม่: lib/constants.dart — บอร์ดค่ากลางของร้าน</h3>
+      <p>ค่าที่กระจายอยู่ทั่วแอป (URL, timeout, ระยะห่าง) ย้ายมารวมที่เดียว:</p>
+      <pre><code class="language-dart">/// ค่ากลางของทั้งแอป — แก้ที่นี่ที่เดียว มีผลทุกจุด (DRY บทที่ 6 ระดับทั้งแอป)
+class AppConstants {
+  AppConstants._();   // constructor ปิดตาย — คลาสนี้มีไว้เก็บค่า ไม่ให้ใครสร้าง object
+
+  static const apiBaseUrl = 'https://api.open-meteo.com/v1';
+  static const requestTimeout = Duration(seconds: 10);
+}
+
+class AppSpacing {
+  AppSpacing._();
+  static const s = 8.0;    // ชุดระยะห่าง 8/16/24 จากบทที่ 11
+  static const m = 16.0;   // — วันนี้ได้บ้านถาวรสักที
+  static const l = 24.0;
+}</code></pre>
+      <p>ฝั่ง service เปลี่ยนเป็น:</p>
+      <pre><code class="language-dart">final url = Uri.parse('${AppConstants.apiBaseUrl}/forecast?latitude=$lat&amp;...');
+final response = await http.get(url).timeout(AppConstants.requestTimeout);</code></pre>
+      <h3>ขั้นที่ 4 — ตรวจรับงานด้วย "การทดสอบคนใหม่"</h3>
+      <p>จัดเสร็จแล้ว วัดผลด้วยคำถามเดียว: <strong>ถ้าเพื่อนที่เขียน Flutter เป็น เปิดโปรเจกต์คุณ 30 วินาที เขาตอบได้ไหมว่า — แอปนี้มีกี่หน้า? ข้อมูลหน้าตาเป็นยังไง? คุยกับ API ที่ไหน?</strong> — ถ้าคำตอบคือ "เปิดโฟลเดอร์ screens/models/services ก็เห็นเลย" = ผ่าน</p>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — บรรทัด import คือใบตรวจสุขภาพของโครงสร้าง</h3>
+      <p>เปิดไฟล์ไหนก็ได้ ดูหัวไฟล์: models/ ที่มี <code class="inline">import 'package:flutter/...'</code> = วัตถุดิบแอบรู้จักโต๊ะลูกค้า ผิดสถานี! · services/ ที่ import ไฟล์ใน screens/ = จานไหลย้อนทาง — นิสัยสแกน import 5 วินาทีก่อน commit จับโครงสร้างเสื่อมได้ตั้งแต่เนิ่นๆ</p>
+      <h3>เทคนิคที่ 2 — layer-first ตอนเล็ก, feature-first ตอนโต</h3>
+      <p>ผังของเรา (จัดตาม "ประเภทสถานี") เหมาะกับแอปเล็ก-กลาง — แอปใหญ่ระดับ 20+ หน้าจอนิยม <strong>feature-first</strong>: จัดตาม "เมนู" แทน (<code class="inline">lib/features/weather/</code> ที่มี models/services/screens ของตัวเองครบในนั้น) — หลักการเดียวกัน แค่หั่นคนละแกน รู้ไว้จะได้ไม่งงตอนเปิดโปรเจกต์คนอื่น</p>
+      <h3>เทคนิคที่ 3 — ตั้งชื่อไฟล์ให้ตะโกนหน้าที่ตัวเอง</h3>
+      <p><code class="inline">weather_service.dart</code>, <code class="inline">error_view.dart</code>, <code class="inline">task_provider.dart</code> — ลงท้ายด้วยประเภทเสมอ (_service, _view, _provider, _screen) เห็นชื่อในผล search ก็รู้สถานีทันทีโดยไม่ต้องดู path (ต่อยอดกฎ snake_case บทที่ 2)</p>
+      <h3>เทคนิคที่ 4 — README ต้องมีผังครัวเสมอ</h3>
+      <p>เพิ่มหัวข้อ "โครงสร้างโปรเจกต์" ใน README: ผัง tree + หนึ่งบรรทัดต่อโฟลเดอร์ว่าเก็บอะไร (แบบที่ my_first_app ทำตั้งแต่บทที่ 1!) — นี่คือสิ่งแรกที่ dev ใหม่และ<strong>ตัวคุณเองในอีก 6 เดือน</strong>จะอ่าน</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "PR แรกของ dev ใหม่ — ตัววัดสุขภาพของโครงสร้าง"</div>
+        <p>ทีมจริงมีตัวชี้วัดที่พูดถึงกันบ่อย: <strong>dev ใหม่ใช้เวลากี่วันกว่าจะส่งงานชิ้นแรกได้</strong> — และโครงสร้างโปรเจกต์คือตัวแปรใหญ่ที่สุด:</p>
+      </div>
+      <div class="ascii">   ทีม A (โครงสร้างมั่ว):                     ทีม B (โครงสร้างดี):
+   วันที่ 1-3: ไล่อ่าน main.dart 4,000 บรรทัด   วันที่ 1 เช้า: อ่าน README + ผังโฟลเดอร์
+   วันที่ 4-7: ถามรุ่นพี่วันละสิบรอบ              วันที่ 1 บ่าย: ได้งาน "เพิ่ม field ใน
+   วันที่ 8:   แก้จุดเดียว แต่พังอีกสามจุด               โปรไฟล์" → รู้ทันทีว่าแตะ 3 ไฟล์:
+              (เพราะทุกอย่างพันกันหมด)                 models/user.dart, services/user_
+   วันที่ 14:  ส่ง PR แรก... ที่แก้ผิดที่             service.dart, screens/profile_screen
+                                             วันที่ 2:  PR แรกผ่านรีวิว ✓
+
+   และปัญหาแบบทีม A ไม่ได้เจ็บแค่คนใหม่ — ทุกคนในทีมจ่ายภาษีนี้ทุกวัน:
+   งานสองคนชนกันใน main.dart ตลอด (merge conflict), แก้บั๊กหนึ่งตัวต้องอ่านทั้งไฟล์,
+   ประเมินเวลางานไม่ได้เพราะไม่รู้ว่าจะไปพันกับอะไร</div>
+      <p>โครงสร้างที่ดีจึงไม่ใช่เรื่อง "ความสวยงาม" — มันคือ<strong>ต้นทุนต่อวันของทั้งทีม</strong> และเป็นเหตุผลว่าทำไมคำถามสัมภาษณ์ยอดฮิตคือ "โปรเจกต์ของคุณจัดโครงสร้างยังไง เพราะอะไร" — ตอนนี้คุณมีคำตอบพร้อมเหตุผลครบทุกชั้นแล้ว</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 และแล้ว Clean Architecture ล่ะ?</h2>
+      <p>คุณอาจได้ยินคำว่า <strong>Clean Architecture</strong> จากประกาศรับสมัครงานหรือบทความ — มันคืออะไร แล้วเราต้องใช้ไหม?</p>
+      <div class="ascii">   สิ่งที่เราทำวันนี้ (พอดีตัวสำหรับแอปเล็ก-กลาง):
+   screens → providers → services → models          (4 ชั้น กฎไหลทางเดียว)
+
+   Clean Architecture เต็มรูปแบบ (ครัวโรงแรมห้าดาว — สำหรับแอปองค์กรขนาดใหญ่):
+   UI → Controllers → Use Cases → Repositories → Entities  (ชั้นละเอียดกว่า
+   + กฎเหล็กเพิ่ม: ชั้นในสุดห้ามรู้จักโลกภายนอกสิ้นเชิง + สลับ "ครัวทั้งครัว" ได้ผ่านสัญญากลาง)</div>
+      <p><strong>หัวใจของทั้งสองแบบคือประโยคเดียวกันเป๊ะ:</strong> แยกหน้าที่เป็นชั้น + การพึ่งพาไหลทางเดียว — ที่คุณเข้าใจแล้ววันนี้คือ <strong>แก่นแท้</strong> ส่วน Clean Architecture เต็มรูปแบบคือแก่นเดิมที่เพิ่มพิธีการสำหรับทีมใหญ่/แอปใหญ่</p>
+      <div class="box concept">
+        <div class="t">📎 กล่อง "เมื่อพร้อม"</div>
+        <p>อย่าเพิ่งเอา Clean Architecture เต็มรูปแบบมาใส่แอป 5 หน้า — พิธีการที่เกินขนาดงานคือความซับซ้อนฟรี (over-engineering) เหมือนสร้างครัวโรงแรมห้าดาวเพื่อขายข้าวมันไก่หน้าปากซอย เรียนรู้เพิ่มเมื่อ (1) เข้าทีมที่ใช้อยู่ หรือ (2) แอปโตจนชั้น service เริ่มพันกันเอง — ถึงวันนั้น พื้นฐานวันนี้จะทำให้เข้าใจมันในไม่กี่ชั่วโมง (อยู่ในบทเสริมท้ายหลักสูตร)</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย (ของการจัดบ้านครั้งใหญ่)</h2>
+      <div class="box warn">
+        <div class="t">① ย้ายไฟล์รวดเดียวทั้งโปรเจกต์ แล้ว import แดงทั้งจอ</div>
+        <p><strong>สาเหตุ:</strong> ลากย้ายทุกไฟล์พร้อมกัน / ย้ายนอก VS Code (ผ่าน File Explorer) — ไม่มีใครอัปเดต import ให้ → error หลายสิบจุดพร้อมกัน มือใหม่ตกใจ undo รัวจนโปรเจกต์พังหนักกว่าเดิม<br>
+        <strong>วิธีแก้:</strong> ย้ายทีละไฟล์ผ่าน VS Code (ตอบ Yes ให้อัปเดต import) → รันเช็ค → ย้ายต่อ · ถ้าพลาดไปแล้ว: อ่าน error ทีละบรรทัด — ทุกตัวคือ "หา path ไม่เจอ" แก้ตรงไปตรงมา (และถ้าทำขั้นที่ 1 ไว้ git checkout กลับได้เสมอ)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② จัดบ้านไป เพิ่มฟีเจอร์ไป — จบวันไม่รู้ว่าพังเพราะอะไร</div>
+        <p><strong>สาเหตุ:</strong> refactor (จัดของเดิม) ปนกับ feature (เพิ่มของใหม่) ใน commit เดียว — พอพังไม่รู้ว่าพังจากการย้าย หรือจากของใหม่ (ผิดกฎ "เปลี่ยนทีละอย่าง" บท 3)<br>
+        <strong>วิธีแก้:</strong> กฎเหล็กของมืออาชีพ: refactor คือ commit ของมันเอง — "จัดบ้านเสร็จ รันผ่าน commit ก่อน แล้วค่อยเริ่มของใหม่" ประวัติ git จะเล่าเรื่องชัดเจนด้วย</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ จัดเกินขนาดงาน (over-engineering)</div>
+        <p><strong>สาเหตุ:</strong> อ่านบทความมาเยอะ เลยสร้าง 12 โฟลเดอร์ให้แอป 3 หน้า — ทุกฟีเจอร์ใหม่ต้องแตะ 6 ไฟล์ งานช้าลงเปล่าๆ<br>
+        <strong>วิธีแก้:</strong> หลักจากบทที่ 18 ใช้ได้เสมอ: "เริ่มจากเล็กสุดที่พอ อัปเกรดเมื่อเจ็บจริง" — 5 โฟลเดอร์ของวันนี้รองรับแอปได้ถึงหลักสิบหน้า สัญญาณว่าถึงเวลาขยับ: โฟลเดอร์เดียวมีไฟล์เกิน ~10 ตัว หรือหาไฟล์ไม่เจอบ่อยขึ้น</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — จัดบ้าน</div>
+        <p>ทำขั้นที่ 1–4 ให้ครบกับ weather_app: commit จุดเซฟ → ย้ายทีละไฟล์ตามผัง → สร้าง constants.dart → แอปรันได้เหมือนเดิมทุกฟีเจอร์ (4 หน้าจากบท 20 ต้องยังครบ!) — commit ด้วย <code class="inline">refactor: organize into layered folder structure</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — ผู้ตรวจการโครงสร้าง</div>
+        <p>(1) ไล่เปิดทุกไฟล์เช็คกฎ import: models/ ต้องไม่มี import ของ Flutter, services/ ต้องไม่ import จาก screens/ — เจอผิดที่ไหนแก้ให้ถูกทิศ (2) เพิ่มหัวข้อ "โครงสร้างโปรเจกต์" (ผัง tree + คำอธิบายบรรทัดเดียวต่อโฟลเดอร์) ลง README ของ<strong>ทั้ง 3 repo</strong> (my_first_app มีเป็นแบบอยู่แล้ว — ดูบทที่ 2) — commit ด้วย <code class="inline">docs: add architecture section to README</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — ผลงานปิดเฟส 4! 🎉</div>
+        <p>รวมทุกบทของเฟสให้ weather_app เป็นแอป portfolio เต็มตัว: (1) สร้าง WeatherProvider ย้าย state ทั้งหมด (ViewState, weather, เมืองที่เลือก) ออกจาก screen — screen กลายเป็น Stateless ที่ watch (ท่าบท 17 กับแอปที่สอง คราวนี้ทำเองทั้งหมด) (2) จำเมืองล่าสุดที่เลือกด้วย shared_preferences (บท 18) — ปิดแอปเปิดใหม่ต้องจำได้ (3) เช็คว่า 4 หน้า (บท 20) + หลายเมือง (บท 19) ครบ (4) README เต็มรูปแบบ + push — commit สุดท้ายของเฟส: <code class="inline">feat: weather app phase 4 complete</code> ✨</p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>บอกหน้าที่ของ 5 โฟลเดอร์ (models/services/providers/screens/widgets) ได้ในประโยคเดียวต่อโฟลเดอร์</li>
+        <li>วาดลูกศร dependency direction และอธิบายได้ว่าทำไมห้ามไหลย้อน</li>
+        <li>ใช้ "บรรทัด import" ตรวจสุขภาพโครงสร้างเป็น</li>
+        <li>อธิบายความต่าง layer-first กับ feature-first และรู้ว่าตัวเองใช้แบบไหนเพราะอะไร</li>
+        <li>รู้จัก Clean Architecture ในระดับ "แก่นเดียวกัน เพิ่มพิธีการ" และรู้ว่าเมื่อไหร่ค่อยไปต่อ</li>
+        <li>weather_app โครงสร้างครบ + provider + จำเมืองได้ + 4 หน้า + README — อยู่บน GitHub</li>
+      </ul>
+      <div class="box tip">
+        <div class="t">🎉🎉 จบเฟส 4!</div>
+        <p>มองย้อนกลับไป: คุณมีแอปที่<strong>จัดการ state เป็นระบบ (Provider), จำข้อมูลได้ (Storage), คุยกับอินเทอร์เน็ตจริง (API), สุภาพเมื่อพัง (Error/Loading) และโครงสร้างระดับทีม (บทนี้)</strong> — นี่คือทักษะครบชุดของ Flutter dev ระดับเริ่มงานได้จริง เหลือด่านสุดท้าย: ส่งแอปขึ้น Store ให้โลกเห็น</p>
+      </div>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>layer-first</td><td>จัดโฟลเดอร์ตามประเภทหน้าที่</td><td>จัดครัวตามประเภทสถานี</td></tr>
+        <tr><td>feature-first</td><td>จัดโฟลเดอร์ตามฟีเจอร์</td><td>จัดครัวตามเมนู</td></tr>
+        <tr><td>separation of concerns</td><td>หนึ่งส่วน หนึ่งหน้าที่ ไม่ปนกัน</td><td>หนึ่งสถานี หนึ่งงาน</td></tr>
+        <tr><td>dependency direction</td><td>ชั้นซ้ายรู้จักชั้นขวา ห้ามย้อน</td><td>จานไหลทางเดียว ห้ามไหลกลับครัว</td></tr>
+        <tr><td><code class="inline">constants.dart</code></td><td>ค่ากลางของทั้งแอปรวมที่เดียว</td><td>บอร์ดประกาศค่ากลางของร้าน</td></tr>
+        <tr><td>Clean Architecture</td><td>แก่นเดิม + พิธีการสำหรับแอปใหญ่</td><td>ครัวโรงแรมห้าดาว (ไว้วันหน้า)</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>โครงสร้างดี = หลายคนทำงานพร้อมกันได้โดยไม่ชนกัน · จำ 5 สถานี + จานไหลทางเดียว · import คือใบตรวจสุขภาพ · refactor แยก commit เสมอ · แก่นของทุกสถาปัตยกรรมคือประโยคเดียว: แต่ละเรื่องมีบ้านของมัน</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่20_Error_Loading.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 20: จัดการ Error และ Loading State</div>
+        </a>
+        <a href="บทที่22_Testing.html">
+          <div class="lbl">บทต่อไป (เริ่มเฟส 5!) →</div>
+          <div class="ttl">บทที่ 22: ทดสอบโค้ด (Unit &amp; Widget Test)</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 4 · บทที่ 21<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

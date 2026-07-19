@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 17 — State Management ด้วย Provider | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 4 · บทที่ 17 (เปิดเฟส)</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: เสียงตามสาย</a>
+      <a href="#code" class="lvl1">2. ย้ายเข้าระบบ 4 ขั้น</a>
+      <a href="#watchread" class="lvl2">— watch vs read</a>
+      <a href="#concept" class="lvl1">3. แล้ว pop(ค่า) ล่ะ?</a>
+      <a href="#techniques" class="lvl1">4. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">5. ตัวอย่างงานจริง: ตะกร้า 5 จุด</a>
+      <a href="#clean" class="lvl1">6. Clean Code: แสดงกับสั่ง</a>
+      <a href="#errors" class="lvl1">7. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">8. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">9. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 4 · บทที่ 17 — เริ่มแอปจริง!</span>
+      <h1>State Management ด้วย Provider</h1>
+      <p>ย้าย "กระดานกลาง" ไปไว้ที่ศูนย์กลางที่ทุกหน้าเข้าถึงได้เอง — เลิกส่ง callback ทะลุหลายชั้น</p>
+      <div class="meta">
+        <span>⏱️ 2.5–3 ชั่วโมง (บทสำคัญที่สุดของครึ่งหลัง)</span>
+        <span>📋 ต้องจบเฟส 3 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">คำถามท้ายบทที่ 16: "ถ้าแอปมี 10 หน้า และ 8 หน้าต้องใช้ <code class="inline">_tasks</code> ล่ะ? ส่ง callback ทะลุ 5 ชั้น?" — บทนี้คือคำตอบ และข่าวดีคือ <strong>คุณเข้าใจหัวใจของมันแล้วตั้งแต่บทที่ 12</strong></p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">Provider</span><span class="pill">ChangeNotifier</span><span class="pill">notifyListeners</span><span class="pill">ChangeNotifierProvider</span><span class="pill">context.watch</span><span class="pill">context.read</span><span class="pill">Consumer</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: จากส่งเอกสารมือต่อมือ สู่เสียงตามสายโรงเรียน</h2>
+      <h3>ฉากที่ 1 — ปัญหาที่เราแบกมาตั้งแต่เฟส 3 (แค่ยังไม่เจ็บ เพราะแอปยังเล็ก)</h3>
+      <div class="ascii">   วิธีปัจจุบัน: กระดานกลางอยู่ที่ HomeScreen — ใครอยากใช้ต้องส่ง "มือต่อมือ"
+
+        HomeScreen (ถือ _tasks)
+        │  ส่ง tasks + ส่ง callback ลงไป...
+        ├──► TaskListSection
+        │      │  ...ส่งต่ออีกชั้น...
+        │      └──► TaskTile
+        │             │  ...ส่งต่ออีกชั้น!
+        │             └──► Checkbox
+        └──► Navigator.push + await + pop(ค่า) เพื่อคุยกับหน้ารายละเอียด
+
+   แอป 2 หน้า: พอไหว 😅   แอป 10 หน้าที่ 8 หน้าต้องใช้ _tasks:
+   ทุกชั้นที่คั่นกลาง ต้องรับของที่ "ตัวเองไม่ได้ใช้ แค่ส่งต่อ" — ฝันร้ายของการแก้โค้ด
+   (ปัญหานี้มีชื่อเล่นในวงการว่า prop drilling — เจาะอุโมงค์ส่งของ)</div>
+      <h3>ฉากที่ 2 — วิธีใหม่: ย้ายกระดานไปห้องประชาสัมพันธ์ แล้วติดเสียงตามสายทั้งอาคาร</h3>
+      <div class="ascii">                  📢 ห้องประชาสัมพันธ์ (TaskProvider)
+                  · ถือกระดานกลาง _tasks ตัวจริง
+                  · มีปุ่มประกาศ notifyListeners()
+                          │
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+   🔊 HomeScreen     🔊 หน้ารายละเอียด    🔊 header card
+   (ติดลำโพง watch)   (ติดลำโพง watch)    (ติดลำโพง watch)
+
+   · ห้องไหนอยากรู้ข้อมูล → ฟังลำโพง (watch) — ประกาศเมื่อไหร่ วาดใหม่ทันที
+   · ห้องไหนอยากสั่งแก้ข้อมูล → โทรศัพท์ภายใน (read) ไปสั่งห้องประชาสัมพันธ์
+   · ไม่มีการส่งมือต่อมืออีกต่อไป — ทุกห้องต่อตรงถึงศูนย์กลางเอง</div>
+      <div class="box tip">
+        <div class="t">💡 ข่าวดีที่สุดของบทนี้</div>
+        <p>คุณเข้าใจหัวใจของ Provider แล้วตั้งแต่บทที่ 12 — มันคือ <strong>"กระดานกลาง + single source of truth"</strong> ตัวเดิมเป๊ะ แค่ย้ายที่อยู่จาก Widget ไปเป็นคลาสอิสระ แล้วเปลี่ยนวิธีกระจายข่าวจาก callback มือต่อมือ เป็นเสียงตามสาย — แนวคิดไม่ใหม่เลย ใหม่แค่ "ท่อส่ง"</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: ย้าย To-Do เข้าระบบเสียงตามสาย (4 ขั้น)</h2>
+      <h3>ขั้นที่ 1 — ติดตั้ง package (บทที่ 2 สอนไว้แล้ว)</h3>
+      <pre><code class="language-bash">flutter pub add provider</code></pre>
+      <h3>ขั้นที่ 2 — สร้างห้องประชาสัมพันธ์: lib/providers/task_provider.dart</h3>
+      <pre><code class="language-dart">import 'package:flutter/foundation.dart';
+import '../models/task.dart';
+
+/// ห้องประชาสัมพันธ์ของข้อมูลงานทั้งแอป
+/// extends ChangeNotifier = "คลาสนี้มีระบบเสียงตามสายในตัว" (inheritance บทที่ 8!)
+class TaskProvider extends ChangeNotifier {
+  // กระดานกลางตัวจริง — private (_) คนนอกแก้ตรงๆ ไม่ได้ (บทที่ 10)
+  final List&lt;Task&gt; _tasks = [];
+
+  // ประตูอ่านอย่างเดียว: ห้องอื่นดูได้ แต่แก้ต้องผ่าน method ข้างล่างเท่านั้น
+  List&lt;Task&gt; get tasks =&gt; List.unmodifiable(_tasks);
+
+  // ค่าที่คำนวณได้ ไม่เก็บซ้ำ — กฎเดิมจากบทที่ 10 ยังศักดิ์สิทธิ์
+  int get doneCount =&gt; _tasks.where((t) =&gt; t.isDone).length;
+
+  void addTask(String title) {
+    _tasks.add(Task(title: title));
+    notifyListeners();          // 📢 กดปุ่มประกาศ: "ข้อมูลเปลี่ยนแล้ว ทุกลำโพงวาดใหม่!"
+  }
+
+  void toggleTask(Task task) {
+    task.toggle();
+    notifyListeners();          // ญาติแท้ๆ ของ setState — แค่ประกาศทั้งอาคารแทนห้องเดียว
+  }
+
+  void removeTask(Task task) {
+    _tasks.remove(task);
+    notifyListeners();
+  }
+}</code></pre>
+      <p>สังเกตให้ดี: <strong>ไฟล์นี้ไม่มี Widget ไม่มี BuildContext เลย</strong> — เป็น Dart ล้วนแบบเฟส 2 นี่คือความงามข้อแรก: ตรรกะธุรกิจแยกขาดจากหน้าจอ (จะสำคัญมากตอนเขียนเทสต์บทที่ 22)</p>
+      <h3>ขั้นที่ 3 — ติดตั้งระบบทั้งอาคาร: ครอบแอปใน main.dart</h3>
+      <pre><code class="language-dart">import 'package:provider/provider.dart';
+import 'providers/task_provider.dart';
+
+void main() {
+  runApp(
+    // ครอบ "นอกสุด" — ทุก Widget ใต้ร่มนี้เข้าถึง TaskProvider ได้หมด
+    ChangeNotifierProvider(
+      create: (context) =&gt; TaskProvider(),
+      child: const TodoApp(),
+    ),
+  );
+}</code></pre>
+      <h3>ขั้นที่ 4 — เปลี่ยนหน้าจอจาก "ถือกระดาน" เป็น "ฟังลำโพง"</h3>
+      <pre><code class="language-dart">/// 🤯 HomeScreen กลายเป็น StatelessWidget ได้แล้ว!
+/// เพราะมันไม่ถือ state เองอีกต่อไป — แค่ฟังลำโพงแล้ววาดตาม
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // 🔊 watch = ติดลำโพง: อ่านค่า + สมัครรับประกาศ (ประกาศเมื่อไหร่ build ใหม่)
+    final provider = context.watch&lt;TaskProvider&gt;();
+
+    return Scaffold(
+      appBar: AppBar(title: Text('งาน ${provider.doneCount}/${provider.tasks.length}')),
+      body: ListView.builder(
+        itemCount: provider.tasks.length,
+        itemBuilder: (context, index) {
+          final task = provider.tasks[index];
+          return TaskTile(
+            task: task,
+            // ☎️ read = โทรศัพท์ภายใน: สั่งงานเฉยๆ ไม่สมัครรับประกาศ
+            onToggle: () =&gt; context.read&lt;TaskProvider&gt;().toggleTask(task),
+          );
+        },
+      ),
+    );
+  }
+}</code></pre>
+      <h3 id="watchread">กฎจำง่ายที่ครอบคลุม 95% ของการใช้งาน</h3>
+      <div class="ascii">   ใน build (อยากให้จอตามข้อมูล)      →  context.watch&lt;T&gt;()   🔊 ลำโพง
+   ใน onPressed/callback (สั่งงาน)    →  context.read&lt;T&gt;()    ☎️ โทรศัพท์</div>
+      <p>รันแล้วลองครบ: เพิ่ม/ติ๊ก/ลบ — ทุกอย่างทำงานเหมือนเดิม แต่เบื้องหลังเปลี่ยนไปสิ้นเชิง: <strong>ไม่มี setState เหลืออยู่เลย และตัวเลขบน AppBar อัปเดตเองทุกครั้งที่ประกาศ</strong></p>
+    </section>
+
+    <section id="concept">
+      <h2>3. 🧠 คอนเซปต์: แล้ว pop(ค่า) จากบทที่ 15 ล่ะ?</h2>
+      <p>จำท่า "pop พร้อมพัสดุ" ที่หน้ารายละเอียดต้องส่ง true กลับมาบอกหน้าหลักให้ลบไหมครับ — ดูสิ่งที่เกิดขึ้นเมื่อทั้งสองหน้าต่อสายตรงถึงห้องประชาสัมพันธ์:</p>
+      <div class="ascii">   แบบเดิม (บท 15):                          แบบใหม่ (Provider):
+
+   หน้ารายละเอียด ── pop(true) ──►            หน้ารายละเอียด ── read().removeTask() ──► 📢
+   หน้าหลัก await → เช็ค → setState                                                    │
+                                             หน้าหลัก (watch) ◄── ประกาศถึงเอง ────────┘
+   หน้าหลักต้อง "รอฟังคำตอบ" ทุกครั้ง           ลบเสร็จ กด back กลับมา — รายการหายไปแล้ว
+                                             โดยหน้าหลักไม่ต้องรู้เลยว่าเกิดอะไรที่ไหน</div>
+      <p><code class="inline">pop(ค่า)</code> ยังมีที่ใช้ (เช่น ฟอร์มที่ผลลัพธ์เป็นเรื่องเฉพาะของหน้าที่เรียก) แต่ <strong>ข้อมูลกลางของแอปไม่ต้องเดินทางแบบนั้นอีกแล้ว</strong> — นี่แหละคือคำว่า "จัดการข้อมูลทั้งแอปอย่างเป็นระบบ" ใน Roadmap</p>
+    </section>
+
+    <section id="techniques">
+      <h2>4. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — เปิดประตูอ่านอย่างเดียวเสมอ (getter + unmodifiable)</h3>
+      <p><code class="inline">_tasks</code> เป็น private แล้ว expose ผ่าน <code class="inline">List.unmodifiable(_tasks)</code> — ใครแอบ <code class="inline">provider.tasks.add(...)</code> จะ crash ทันทีแทนที่จะแก้กระดานเงียบๆ โดยไม่ประกาศ (บั๊กเงียบที่ตามยากที่สุด) — กติกาเดียวกับ "ลูกห้ามถือสำเนา" บทที่ 12 แต่บังคับด้วยโค้ดจริง</p>
+      <h3>เทคนิคที่ 2 — แยก provider ตามโดเมน ไม่ใช่ยำรวมก้อนเดียว</h3>
+      <p><code class="inline">TaskProvider</code> ดูแลงาน, <code class="inline">SettingsProvider</code> ดูแลธีม/ภาษา — provider ละเรื่อง เหมือนโรงเรียนมีทั้งเสียงตามสายฝ่ายวิชาการและฝ่ายกิจกรรม (ใช้ <code class="inline">MultiProvider</code> ครอบหลายตัว) — อย่าสร้าง AppProvider ก้อนยักษ์ที่รู้ทุกเรื่อง มันคือ main() ยักษ์ (บทที่ 6) กลับชาติมาเกิด</p>
+      <h3>เทคนิคที่ 3 — Consumer&lt;T&gt; เมื่ออยากประหยัดการวาด</h3>
+      <p>watch ใน build ทำให้ <strong>ทั้งหน้า</strong> วาดใหม่ทุกประกาศ — ถ้าหน้าใหญ่แต่มีจุดเดียวที่เปลี่ยน (เช่น badge ตัวเลข) ครอบเฉพาะจุดนั้นด้วย <code class="inline">Consumer&lt;TaskProvider&gt;(builder: ...)</code> = วาดใหม่แค่ตรงนั้น (ตอนนี้แอปเราเล็ก watch ทั้งหน้าไปก่อนได้ รู้ไว้เพื่อวันที่แอปโต)</p>
+      <h3>เทคนิคที่ 4 — เมื่อพร้อมแล้ว: Riverpod คือรุ่นถัดไปของแนวคิดนี้</h3>
+      <p>ในตลาดงานคุณจะได้ยินชื่อ Riverpod บ่อย — มันคือวิวัฒนาการของ Provider จากผู้สร้างคนเดียวกัน (ปลอดภัยกว่าเรื่อง compile-time, ไม่ผูกกับ BuildContext) แนวคิด "ศูนย์กลาง + ประกาศ + ฟัง" เหมือนกันทุกประการ — <strong>เรียน Provider ให้แน่นก่อน แล้ว Riverpod จะใช้เวลาเรียนแค่ครึ่งวัน</strong> อย่าเพิ่งกระโดดไปตอนนี้</p>
+    </section>
+
+    <section id="prod">
+      <h2>5. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "ตะกร้าสินค้าที่โผล่ 5 จุดในแอป"</div>
+        <p>แอปช้อปปิ้งทุกเจ้ามีข้อมูลตะกร้าปรากฏพร้อมกันหลายจุด — นี่คืองานที่ Provider เกิดมาเพื่อทำ:</p>
+      </div>
+      <div class="ascii">                    📢 CartProvider (ถือรายการ + ยอดรวม)
+                                   │ notifyListeners ครั้งเดียว...
+      ┌──────────┬──────────┬─────┴────┬─────────────┐
+      ▼          ▼          ▼          ▼             ▼
+   🔊 badge   🔊 ปุ่ม     🔊 หน้า     🔊 แถบยอดรวม   🔊 หน้า
+   เลขบนไอคอน  "ใส่ตะกร้า"  ตะกร้า     ล่างจอ         checkout
+   ตะกร้า      (เปลี่ยนเป็น
+              "อยู่ในตะกร้า ✓")
+
+   ผู้ใช้กด "ใส่ตะกร้า" ที่หน้าสินค้า → ทั้ง 5 จุดอัปเดตพร้อมกันเป๊ะ ในบรรทัดเดียว:
+   context.read&lt;CartProvider&gt;().add(product);</div>
+      <p>ลองนึกภาพทำสิ่งนี้ด้วย callback มือต่อมือ: ปุ่มในหน้าสินค้า (ลึก 4 ชั้น) ต้องคุยกับ badge บน AppBar ของอีกหน้า — แทบเป็นไปไม่ได้ นี่คือเหตุผลที่ <strong>ทุกประกาศรับสมัครงาน Flutter เขียนคำว่า state management</strong> และคุณเพิ่งข้ามกำแพงนั้นแล้ว</p>
+    </section>
+
+    <section id="clean">
+      <h2>6. 🧹 ตัวอย่าง Clean Code: Widget มีหน้าที่เดียว — แสดงกับสั่ง</h2>
+      <pre><code class="language-dart">// ❌ ตรรกะธุรกิจฝังในหน้าจอ — แก้กฎทีต้องคุ้ยหา Widget
+onPressed: () async {
+  final title = await Navigator.push&lt;String&gt;(...);
+  if (title != null) {
+    if (_tasks.any((t) =&gt; t.title == title)) {        // กฎธุรกิจข้อ 1
+      /* SnackBar เตือนซ้ำ */
+    } else if (_tasks.length &gt;= 50) {                 // กฎธุรกิจข้อ 2
+      /* SnackBar เตือนเต็ม */
+    } else {
+      setState(() =&gt; _tasks.add(Task(title: title))); // ปนกับเรื่องจอ
+    }
+  }
+}
+// หน้าอื่นอยากเพิ่มงานบ้าง? ก็อปกฎพวกนี้ไปอีกชุด → ความจริงสองชุดภาคตรรกะ!</code></pre>
+      <pre><code class="language-dart">// ✅ กฎธุรกิจอยู่ที่ provider — Widget เหลือแค่ "แสดงผล + ส่งคำสั่ง"
+
+// ── ใน TaskProvider: กฎอยู่บ้านเดียว ทุกหน้าได้กฎเดียวกันอัตโนมัติ ──
+/// เพิ่มงานใหม่ — คืนข้อความ error ถ้าเพิ่มไม่ได้, null ถ้าสำเร็จ (ท่า validator บทที่ 16!)
+String? addTask(String title) {
+  if (_tasks.any((t) =&gt; t.title == title)) return 'มีงานชื่อนี้อยู่แล้ว';
+  if (_tasks.length &gt;= 50) return 'งานเต็ม 50 รายการแล้ว';
+  _tasks.add(Task(title: title));
+  notifyListeners();
+  return null;
+}
+
+// ── ในหน้าจอ: สั้น อ่านออก และหน้าไหนๆ ก็เขียนเหมือนกัน ──
+final error = context.read&lt;TaskProvider&gt;().addTask(title);
+if (error != null &amp;&amp; context.mounted) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+}</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>ถามตัวเองว่า "กฎนี้เป็นเรื่องของ <strong>ข้อมูล</strong> หรือเรื่องของ <strong>จอ</strong>?" — ห้ามซ้ำ/จำกัดจำนวน = เรื่องข้อมูล → อยู่ใน provider · สีแดง/ขีดฆ่า/SnackBar = เรื่องจอ → อยู่ใน Widget เส้นแบ่งนี้คือรากของ "สถาปัตยกรรม" ที่จะเรียนต่อในบทที่ 21</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>7. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "Could not find the correct Provider&lt;TaskProvider&gt; above this Widget"</div>
+        <p><strong>สาเหตุ:</strong> Widget ที่เรียก watch/read อยู่ "นอกร่ม" ของ ChangeNotifierProvider — มักเกิดจากครอบไว้ต่ำเกินไป (ครอบแค่หน้าแรก แล้วหน้าที่ push มาทีหลังหาไม่เจอ) หรือลืมครอบเลย<br>
+        <strong>วิธีแก้:</strong> ครอบที่ "นอกสุด" ใน main() ตามขั้นที่ 3 — ทุกหน้ารวมถึงหน้าที่ push มาจะอยู่ใต้ร่มเดียวกันเสมอ (error message ของ provider เขียนดีมาก มีคำอธิบาย+วิธีแก้ยาวเหยียด — ฝึกอ่าน error บทที่ 1 ใช้ได้เต็มที่)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② เรียก method แล้วจอไม่เปลี่ยน</div>
+        <p><strong>สาเหตุ:</strong> ลืม notifyListeners() ท้าย method — ญาติแท้ๆ ของ "ลืม setState" บทที่ 10: กระดานถูกแก้แล้วจริง แต่ไม่มีใครกดปุ่มประกาศ ลำโพงทุกตัวเลยเงียบ<br>
+        <strong>วิธีแก้:</strong> ทุก method ใน provider ที่แก้ข้อมูล ต้องจบด้วย notifyListeners() เสมอ · เช็คลิสต์เร็ว: จอนิ่งผิดปกติ → ① method มี notifyListeners ไหม ② หน้าจอใช้ watch (ไม่ใช่ read) ใน build ไหม</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ ใช้ watch/read สลับที่กัน</div>
+        <p><strong>อาการ 1:</strong> ใช้ read ใน build → จอแสดงค่าเก่าตลอด ไม่เคยอัปเดต (โทรศัพท์ถามครั้งเดียวแล้ววางสาย — ไม่ได้สมัครรับประกาศ)<br>
+        <strong>อาการ 2:</strong> ใช้ watch ใน onPressed → Flutter โยน error ทันที ("Tried to listen to a value... outside of the widget tree")<br>
+        <strong>วิธีแก้:</strong> ท่องสูตรจากหัวข้อ 2: build → watch 🔊 · callback → read ☎️ — สลับเมื่อไหร่ อาการโผล่ทันทีทั้งสองทาง</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>8. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — เปิดห้องประชาสัมพันธ์</div>
+        <p>ทำขั้นที่ 1–4 ให้ครบ: ติดตั้ง package, สร้าง TaskProvider, ครอบ main, HomeScreen อ่านผ่าน watch — ทดสอบว่าเพิ่ม/ติ๊ก/ลบยังทำงานครบ แล้วลอง<strong>ตั้งใจลบ notifyListeners() ออกหนึ่งจุด</strong> ดูอาการ "กระดานเปลี่ยนแต่ลำโพงเงียบ" ด้วยตาตัวเอง (แล้วใส่กลับ)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — รื้อ setState ทิ้งทั้งแอป</div>
+        <p>ย้ายทุก action เข้า provider จน HomeScreen เป็น StatelessWidget เต็มตัว (ห้ามเหลือ setState เกี่ยวกับ tasks แม้แต่ตัวเดียว — ค้นทั้งโปรเจกต์ด้วย Ctrl+Shift+F) ฟอร์มเพิ่มงานจากบทที่ 16 ต่อเข้า addTask ของ provider — commit ด้วย <code class="inline">refactor: migrate task state to Provider</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — พลังเสียงตามสายเต็มระบบ</div>
+        <p>(1) หน้ารายละเอียด (บทที่ 15) เปลี่ยนมาใช้ provider: ปุ่มติ๊ก/ลบเรียก read ตรงๆ — สังเกตว่ากลับมาหน้าหลักแล้วทุกอย่างตรงกันเอง <strong>โดยไม่ต้องใช้ pop(ค่า) อีกแล้ว</strong> (2) header card แสดง "เสร็จ x/y" ผ่าน Consumer เฉพาะจุด (3) ย้ายกฎธุรกิจ "ห้ามชื่อซ้ำ" เข้า addTask ตามหัวข้อ 6 พร้อมแสดง error ที่ฟอร์ม — commit ด้วย <code class="inline">feat: provider everywhere with business rules</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>9. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายได้ว่า Provider แก้ปัญหาอะไร (prop drilling) ด้วยภาพเสียงตามสาย</li>
+        <li>เขียน ChangeNotifier + notifyListeners ได้เอง และรู้ว่ามันคือญาติของ setState</li>
+        <li>ท่องสูตรได้: build → watch · callback → read และอธิบายอาการเมื่อสลับกัน</li>
+        <li>อธิบายได้ว่าทำไม getter ควรคืน List.unmodifiable</li>
+        <li>แยกได้ว่ากฎไหนควรอยู่ใน provider กฎไหนควรอยู่ใน Widget</li>
+        <li>todo_app ไม่มี setState เกี่ยวกับ tasks เหลืออยู่ และหน้ารายละเอียดเลิกใช้ pop(ค่า) แล้ว</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>Provider</td><td>ระบบแจกจ่าย state ให้ทั้งแอป</td><td>ระบบเสียงตามสายทั้งอาคาร</td></tr>
+        <tr><td><code class="inline">ChangeNotifier</code></td><td>คลาสที่มีความสามารถ "ประกาศ" ในตัว</td><td>ห้องประชาสัมพันธ์</td></tr>
+        <tr><td><code class="inline">notifyListeners</code></td><td>ประกาศว่าข้อมูลเปลี่ยน ทุกผู้ฟังวาดใหม่</td><td>กดปุ่มประกาศ 📢</td></tr>
+        <tr><td><code class="inline">ChangeNotifierProvider</code></td><td>ติดตั้งระบบไว้เหนือสุดของแอป</td><td>เดินสายลำโพงทั้งอาคาร</td></tr>
+        <tr><td><code class="inline">context.watch</code></td><td>อ่านค่า + สมัครรับประกาศ (ใช้ใน build)</td><td>ลำโพงประจำห้อง 🔊</td></tr>
+        <tr><td><code class="inline">context.read</code></td><td>สั่งงานครั้งเดียว ไม่สมัครรับ (ใช้ใน callback)</td><td>โทรศัพท์ภายใน ☎️</td></tr>
+        <tr><td><code class="inline">Consumer</code></td><td>ฟังประกาศเฉพาะจุด ประหยัดการวาด</td><td>ลำโพงเฉพาะมุมห้อง</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>Provider = กระดานกลาง (บท 12) ที่ย้ายไปอยู่ห้องประชาสัมพันธ์ + เสียงตามสาย · notifyListeners คือ setState ระดับทั้งแอป · build → watch, callback → read · กฎของข้อมูลอยู่ใน provider — Widget แค่แสดงกับสั่ง</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่16_Form_TextField.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 16: Form และ TextField</div>
+        </a>
+        <a href="บทที่18_LocalStorage.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 18: เก็บข้อมูลในเครื่อง (Local Storage)</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 4 · บทที่ 17<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

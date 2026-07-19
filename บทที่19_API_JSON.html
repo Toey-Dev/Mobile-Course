@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 19 — เรียก API + แปลง JSON | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 4 · บทที่ 19</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ครัวของคนอื่น</a>
+      <a href="#endpoint" class="lvl2">— กายวิภาคของ endpoint</a>
+      <a href="#code" class="lvl1">2. แอปสภาพอากาศ 5 ขั้น</a>
+      <a href="#service" class="lvl2">— service สั่งอาหาร</a>
+      <a href="#screen" class="lvl2">— หน้าจอแสดงผล</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: API contract</a>
+      <a href="#clean" class="lvl1">5. Clean Code: สามชั้น</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 4 · บทที่ 19</span>
+      <h1>เรียก API: ดึงข้อมูลจริงจากอินเทอร์เน็ต + แปลง JSON</h1>
+      <p>บทที่ทุกอย่างมาบรรจบ: async จากบท 9 + JSON จากบท 18 — และจุดเริ่มของแอปสภาพอากาศ โปรเจกต์เด่นใน portfolio</p>
+      <div class="meta">
+        <span>⏱️ 2.5–3 ชั่วโมง (ให้เวลาเต็มที่ ทำทีละขั้น)</span>
+        <span>📋 ต้องผ่านบทที่ 18 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">ข้อมูลบางอย่างแอปเราทำเองไม่ได้: สภาพอากาศ ราคาหุ้น ข่าวสด — ของพวกนี้อยู่ใน "ครัวของคนอื่น" (เซิร์ฟเวอร์) บทนี้เรียนวิธีสั่งอาหารข้ามอินเทอร์เน็ต และนี่คือบทที่มือใหม่ติดมากที่สุดของเฟส — เราเลยให้เวลาเต็มบท ทำทีละขั้น</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">API</span><span class="pill">endpoint</span><span class="pill">HTTP GET</span><span class="pill">status code</span><span class="pill">package http</span><span class="pill">Uri.parse</span><span class="pill">response.body</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: สั่งอาหารจากครัวของคนอื่น</h2>
+      <div class="ascii">        📱 แอปเรา (ลูกค้า)                          🌐 เซิร์ฟเวอร์ (ครัวของเขา)
+             │                                            │
+             │  ① สั่งอาหารตามเมนู (HTTP GET request)       │
+             │  "ขอสภาพอากาศ กรุงเทพฯ 1 ที่ครับ"            │
+             ├──────────────► 🤵 API ────────────────────►│
+             │              (พนักงานเสิร์ฟ                  │ ② ครัวปรุง
+             │               รับออเดอร์ตามเมนูเท่านั้น)       │ (ดึงจากฐานข้อมูล)
+             │                                            │
+             │◄───────────── 🤵 ◄───────────────────────┤
+             │  ③ จานอาหารมาส่ง (response)                 │
+             │     พร้อมใบเสร็จบอกผล (status code):        │
+             │     200 = ได้จานครบ ✓                       │
+             │     404 = เมนูนี้ไม่มีนะครับ                  │
+             │     500 = ขอโทษครับ ครัวไฟไหม้ 🔥            │
+             ▼
+        จานที่ได้ = ข้อความ JSON (เพื่อนเก่าจากบทที่ 18!)</div>
+      <h3 id="endpoint">แล้ว "เมนู" อยู่ไหน? — กายวิภาคของ endpoint</h3>
+      <div class="ascii">   https://api.open-meteo.com/v1/forecast?latitude=13.75&amp;longitude=100.5&amp;current_weather=true
+   ─────────┬──────────────  ────┬────── ─────────────────────┬─────────────────────────
+        ที่อยู่ร้าน              ชื่อเมนู                รายละเอียดออเดอร์ (query parameters)
+        (โดเมนของเซิร์ฟเวอร์)   (endpoint)             "พิกัดนี้นะ ขอสภาพอากาศปัจจุบันด้วย"
+
+   ทั้งเส้นนี้เรียกว่า URL — เหมือนสั่ง: "ร้าน open-meteo ครับ เมนู forecast
+   พิกัด 13.75, 100.5 เอาแบบ current weather" — เปลี่ยนพิกัด = ได้เมืองอื่น</div>
+      <div class="box why">
+        <div class="t">🤔 ระหว่างรอจานมาส่ง แอปทำอะไร</div>
+        <p>นี่แหละที่สัญญากันไว้ตั้งแต่บทที่ 9 — การสั่งอาหารข้ามอินเทอร์เน็ตใช้เวลา 0.2–3 วินาที (นานมากในโลกโปรแกรม!) ถ้ายืนเฝ้าเคาน์เตอร์ = แอปค้างทั้งแอป จึงต้องรับ<strong>บัตรคิว (Future)</strong> แล้ว await — ระหว่างรอ ผู้ใช้ยังเลื่อนจอ กดปุ่มอื่นได้ปกติ วันนี้คุณจะได้เห็นมันทำงานกับการรอ "ของจริง" ครั้งแรก</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: แอปสภาพอากาศตัวแรก (5 ขั้น)</h2>
+      <p>เราใช้ <strong>Open-Meteo</strong> — API สภาพอากาศจริงที่ฟรีและ<strong>ไม่ต้องสมัคร/ไม่ต้องมี key</strong> (ศูนย์อุปสรรค เริ่มได้เลย)</p>
+      <h3>ขั้นที่ 0 — กฎเหล็ก: เปิด URL ในเบราว์เซอร์ก่อนเสมอ!</h3>
+      <p>ก่อนเขียนโค้ดแม้แต่บรรทัดเดียว วางลิงก์นี้ในเบราว์เซอร์:</p>
+      <pre><code class="language-bash">https://api.open-meteo.com/v1/forecast?latitude=13.75&amp;longitude=100.5&amp;current_weather=true</code></pre>
+      <p>คุณจะเห็น JSON สดๆ จากเซิร์ฟเวอร์ (พิกัดกรุงเทพฯ):</p>
+      <pre><code class="language-json">{
+  "latitude": 13.75,
+  "longitude": 100.5,
+  "current_weather": {
+    "temperature": 32.5,
+    "windspeed": 8.4,
+    "weathercode": 1,
+    "time": "2026-07-19T10:00"
+  }
+}</code></pre>
+      <p><strong>อ่านออกใช่ไหมครับ</strong> — นี่คือผลของการบ้านบทที่ 18: <code class="inline">{}</code> คือ Map, ข้างในมี key <code class="inline">current_weather</code> ที่เป็น Map ซ้อนอีกชั้น (JSON ซ้อนกันได้เหมือน Map ซ้อน Map บทที่ 7) — การเห็นโครงจริงก่อน คือเข็มทิศของทุกบรรทัดที่กำลังจะเขียน</p>
+      <h3>ขั้นที่ 1 — สร้างโปรเจกต์ + ติดตั้งโทรศัพท์สั่งอาหาร</h3>
+      <pre><code class="language-bash">flutter create weather_app
+cd weather_app
+flutter pub add http</code></pre>
+      <h3>ขั้นที่ 2 — สร้าง model จากโครง JSON ที่เห็น (lib/models/weather.dart)</h3>
+      <pre><code class="language-dart">/// พิมพ์เขียวสภาพอากาศ — สร้างจากการ "อ่านโครง JSON จริง" ในขั้นที่ 0
+class Weather {
+  const Weather({required this.temperature, required this.windSpeed});
+
+  final double temperature;
+  final double windSpeed;
+
+  factory Weather.fromJson(Map&lt;String, dynamic&gt; json) {
+    // JSON ซ้อนชั้น: เปิดล็อกเกอร์ current_weather ก่อน แล้วค่อยหยิบของข้างใน
+    final current = json['current_weather'] as Map&lt;String, dynamic&gt;;
+    return Weather(
+      // (as num).toDouble() = ท่ากันกับดักตัวเลข JSON (ดูหัวข้อข้อผิดพลาด ②)
+      temperature: (current['temperature'] as num).toDouble(),
+      windSpeed: (current['windspeed'] as num).toDouble(),
+    );
+  }
+}</code></pre>
+      <p>ทักษะเดิมจากบทที่ 18 เป๊ะ — ต่างแค่คราวนี้ <strong>เราไม่ได้เป็นคนเขียน JSON เอง</strong> เลยต้องอ่านโครงจากของจริงก่อน (ขั้นที่ 0 สำคัญด้วยเหตุนี้)</p>
+      <h3 id="service">ขั้นที่ 3 — ฟังก์ชันสั่งอาหาร (lib/services/weather_service.dart)</h3>
+      <pre><code class="language-dart">import 'dart:convert';
+import 'package:http/http.dart' as http;   // as http = ตั้งชื่อเล่นให้ package
+import '../models/weather.dart';
+
+/// โทรสั่ง "สภาพอากาศปัจจุบัน" จากครัว Open-Meteo
+Future&lt;Weather&gt; fetchWeather({required double lat, required double lon}) async {
+  // Uri.parse = จดที่อยู่ร้านให้ถูกรูปแบบ (http ต้องการ Uri ไม่ใช่ String ดิบ)
+  final url = Uri.parse(
+    'https://api.open-meteo.com/v1/forecast'
+    '?latitude=$lat&amp;longitude=$lon&amp;current_weather=true',   // interpolation บท 4!
+  );
+
+  final response = await http.get(url);   // ☎️ สั่ง → รับบัตรคิว → รอจานมาส่ง
+
+  // เช็คใบเสร็จก่อนกินเสมอ! 200 = สำเร็จ (guard clause บท 5)
+  if (response.statusCode != 200) {
+    throw Exception('เซิร์ฟเวอร์ตอบ ${response.statusCode}');
+  }
+
+  // จานอาหาร (response.body) คือ "ข้อความ JSON" → พองกลับ → ปั้นเป็น object
+  final json = jsonDecode(response.body) as Map&lt;String, dynamic&gt;;
+  return Weather.fromJson(json);
+}</code></pre>
+      <p>อ่านไล่ดูสิครับ — ทุกบรรทัดคือความรู้เก่า: Future+async+await (บท 9), interpolation (บท 4), guard clause (บท 5), jsonDecode+fromJson (บท 18) — <strong>บทนี้ไม่ได้สอนของใหม่มาก มันคือสนามที่ของเก่าทุกชิ้นมาเล่นด้วยกัน</strong></p>
+      <h3 id="screen">ขั้นที่ 4 — หน้าจอแสดงผล (lib/main.dart — ใช้ Stateful ที่คุ้นมือ)</h3>
+      <pre><code class="language-dart">class WeatherScreen extends StatefulWidget {
+  const WeatherScreen({super.key});
+  @override
+  State&lt;WeatherScreen&gt; createState() =&gt; _WeatherScreenState();
+}
+
+class _WeatherScreenState extends State&lt;WeatherScreen&gt; {
+  Weather? _weather;   // null = ยังไม่มีข้อมูล (nullable บท 4 — ตรงตามความหมายเป๊ะ)
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWeather();    // เปิดหน้าปุ๊บ สั่งอาหารเลย (initState บท 12)
+  }
+
+  Future&lt;void&gt; _loadWeather() async {
+    final weather = await fetchWeather(lat: 13.75, lon: 100.5);  // กรุงเทพฯ
+    if (!mounted) return;               // ผู้ใช้อาจปิดหน้าไปแล้วระหว่างรอ (บท 15)
+    setState(() =&gt; _weather = weather);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('อากาศกรุงเทพฯ')),
+      body: Center(
+        child: _weather == null
+            ? const CircularProgressIndicator()          // ยังไม่มา = วงกลมหมุน
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('${_weather!.temperature} °C',
+                      style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold)),
+                  Text('ลม ${_weather!.windSpeed} กม./ชม.',
+                      style: const TextStyle(fontSize: 18, color: Colors.grey)),
+                ],
+              ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _loadWeather,                          // กดรีเฟรชได้
+        child: const Icon(Icons.refresh),
+      ),
+    );
+  }
+}</code></pre>
+      <div class="box tip">
+        <div class="t">🎉 รัน flutter run</div>
+        <p>วงกลมหมุนแวบหนึ่ง แล้ว<strong>อุณหภูมิจริงของกรุงเทพฯ ณ วินาทีนี้</strong>ขึ้นจอ — นี่ไม่ใช่ข้อมูลปลอมอีกแล้ว <strong>แอปของคุณเพิ่งคุยกับโลกภายนอกสำเร็จเป็นครั้งแรก</strong></p>
+      </div>
+      <div class="box warn">
+        <div class="t">📌 หมายเหตุสำคัญ</div>
+        <p><code class="inline">_weather == null ? หมุน : แสดงผล</code> เป็นการจัดการ loading แบบ "พอใช้ได้" — ถ้าเน็ตหลุดตอนนี้แอปจะพังเงียบๆ ซึ่งยังไม่ดีพอ บทที่ 20 ทั้งบทอุทิศให้เรื่องนี้โดยเฉพาะ</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — เบราว์เซอร์ก่อนโค้ดเสมอ (ขั้นที่ 0 คือนิสัย ไม่ใช่ขั้นตอนครั้งเดียว)</h3>
+      <p>ทุกครั้งที่จะใช้ endpoint ใหม่: วางใน browser → อ่านโครง → ค่อยเขียน model — เดาโครง JSON เอาเองคือสาเหตุอันดับหนึ่งของการนั่งงมครึ่งวัน (มืออาชีพใช้เครื่องมืออย่าง Postman/Bruno แต่ browser ก็พอสำหรับ GET)</p>
+      <h3>เทคนิคที่ 2 — แปลงเป็น model ทันทีที่ "ชายแดน" — Map ห้ามเดินทางเข้าแอป</h3>
+      <p>jsonDecode เกิดที่ service แล้ว fromJson ทันที — ห้ามส่ง <code class="inline">Map&lt;String, dynamic&gt;</code> ดิบๆ ให้หน้าจอเด็ดขาด (เหตุผลเต็มๆ อยู่บทที่ 8: สะกด key ผิด = บั๊กเงียบ) ทีมจริงเรียกจุดนี้ว่า boundary: ข้อมูลข้ามชายแดนเข้าประเทศเมื่อไหร่ ต้องแปลงสัญชาติเป็น object ทันที</p>
+      <h3>เทคนิคที่ 3 — (as num).toDouble() คือท่าประจำกับตัวเลขจาก JSON</h3>
+      <p>JSON ไม่แยก int/double — 32.5 มาเป็น double แต่ 32 (เลขกลมพอดี) มาเป็น int! โค้ดที่เขียน as double ตรงๆ จะผ่านตอนทดสอบ แล้วพังกลางคืนวันที่อุณหภูมิ 32° พอดี — บั๊กตามฤดูกาลของแท้ ปิดประตูด้วย <code class="inline">(x as num).toDouble()</code> เสมอ</p>
+      <h3>เทคนิคที่ 4 — query parameters คือ "ช่องปรับแต่งออเดอร์"</h3>
+      <p>ลอง <code class="inline">&amp;current_weather=true</code> เอาออก, เปลี่ยน latitude — แล้วดูผลใน browser เอกสารของ API (API docs) คือเมนูเล่มเต็มที่บอกว่าปรับอะไรได้บ้าง — ทักษะ "อ่าน docs แล้วประกอบ URL" นี้ใช้กับ API ทุกตัวในโลก</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "วันแรกของ Flutter dev ในทีม — สิ่งแรกที่ได้ไม่ใช่โค้ด แต่คือเมนู"</div>
+        <p>ในบริษัทจริง แอปมือถือกับเซิร์ฟเวอร์เขียนโดย<strong>คนละทีม</strong> — สิ่งที่เชื่อมสองทีมคือเอกสารที่เรียกว่า <strong>API contract</strong> (สัญญาเมนู):</p>
+      </div>
+      <div class="ascii">   ทีม Backend (ครัว)                       ทีม Mobile (เรา)
+        │                                       │
+        └────── 📋 API Contract ────────────────┘
+                "GET /orders/{id}
+                 ตอบ 200 พร้อม JSON:
+                 { id, status, total, items: [...] }"
+
+   · สองทีมทำงาน "พร้อมกัน" ได้เพราะตกลงเมนูก่อน — mobile เขียน model จาก
+     contract ได้เลยโดยครัวจริงยังสร้างไม่เสร็จ (ระหว่างรอ ใช้ข้อมูลปลอมที่หน้าตาตรง contract)
+   · ครัวอยากเปลี่ยนเมนู (เพิ่ม/ลบ field)? ต้องแจ้งก่อน — ไม่งั้นแอปที่อยู่ในมือ
+     ผู้ใช้ล้านคนพังพร้อมกัน (นี่คือเหตุผลที่ fromJson ต้องมีเกราะ ?? จากบทที่ 18)</div>
+      <p>การประชุมที่คุณจะเข้าบ่อยที่สุดในชีวิตการทำงานสาย mobile คือ "คุย API กับทีม backend" — และภาษาที่ใช้คุยกันคือทุกคำที่คุณเรียนวันนี้: endpoint, GET, status code, response body</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: สามชั้นที่แยกกันชัด</h2>
+      <pre><code class="language-dart">// ❌ สั่งอาหาร + แกะจาน + จัดจาน ปนกันในหน้าจอ
+// ทุกอย่างยัดใน onPressed — ทดสอบไม่ได้ ใช้ซ้ำไม่ได้ อ่านยาก
+onPressed: () async {
+  final res = await http.get(Uri.parse('https://api.open-meteo.com/v1/...'));
+  final data = jsonDecode(res.body);
+  setState(() {
+    _temp = data['current_weather']['temperature'];   // Map ดิบวิ่งเข้า UI!
+  });                                                 // สะกด key ผิด = พังตอนรัน
+},
+// อยากใช้ข้อมูลอากาศอีกหน้า? ก็อปทั้งก้อนนี้ไปอีกชุด...</code></pre>
+      <div class="ascii">✅ สามชั้น: model / service / หน้าจอ — แต่ละชั้นมีหน้าที่เดียว
+
+   lib/
+   ├── models/weather.dart      ① รูปร่างข้อมูล + วิธีปั้นจาก JSON (fromJson)
+   ├── services/weather_service.dart  ② วิธีสั่งจากครัวไหน เมนูอะไร เช็คใบเสร็จยังไง
+   └── main.dart                ③ หน้าจอ: ขอข้อมูลจาก ② แล้วแสดง — ไม่รู้จัก http เลย
+
+   · หน้าจอทดสอบได้โดยไม่ต้องมีเน็ต (ส่ง Weather ปลอมให้)
+   · เปลี่ยนเจ้า API (ย้ายครัว)? แก้ไฟล์ ② ไฟล์เดียว — หน้าจอไม่สะเทือน
+   · โครงนี้คือตัวอย่างแรกของ "สถาปัตยกรรม" ที่บทที่ 21 จะจัดเต็มทั้งแอป</div>
+      <div class="box concept">
+        <div class="t">🧠 เส้นเรื่องยาวของหลักสูตร</div>
+        <p>ความรู้อยู่กับข้อมูล (บท 8) → กฎอยู่ใน provider (บท 17) → การเก็บอยู่ใน provider (บท 18) → <strong>การสั่งจากเน็ตอยู่ใน service (บทนี้)</strong> — ทุกบทคือประโยคเดียวกัน: <em>แต่ละเรื่องมีบ้านของมัน</em></p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "SocketException: Failed host lookup" / ClientException</div>
+        <p><strong>สาเหตุ:</strong> ติดต่อเซิร์ฟเวอร์ไม่ได้ — เน็ตหลุด, พิมพ์ URL ผิด (โดเมนสะกดผิด), หรือ (เจอบ่อยตอน build จริง) Android ฉบับ release ไม่ได้ประกาศขอสิทธิ์อินเทอร์เน็ตใน AndroidManifest.xml (ตอน debug ได้สิทธิ์ฟรี)<br>
+        <strong>วิธีแก้:</strong> ไล่ตามลำดับ: เปิด URL เดียวกันใน browser ของเครื่อง/emulator ได้ไหม → ได้ = โค้ดเราผิด (เทียบ URL ทีละตัวอักษร) · ไม่ได้ = เน็ต/เครื่องมีปัญหา (การจัดการ "เน็ตหลุดกลางทาง" แบบสุภาพ = เนื้อหาเต็มบทของบทที่ 20)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② "type 'int' is not a subtype of type 'double'"</div>
+        <p><strong>สาเหตุ:</strong> กับดักตัวเลข JSON — อุณหภูมิ 32 (เลขกลม) ถูกแปลงเป็น int แต่ model ประกาศ double ไว้ → พังเฉพาะ "บางวัน" ตามค่าจริงของข้อมูล! (บั๊กที่ทดสอบผ่านแต่พังในมือผู้ใช้ — ตระกูลที่เจ็บที่สุด)<br>
+        <strong>วิธีแก้:</strong> ตัวเลขจาก JSON ใช้ <code class="inline">(json['x'] as num).toDouble()</code> เสมอ — num คือแม่ของทั้ง int และ double (inheritance บท 8!) เลยรับได้ทั้งคู่</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ "NoSuchMethodError: '[]' was called on null" ตอนแกะ JSON</div>
+        <p><strong>สาเหตุ:</strong> เส้นทางเจาะ JSON ผิดชั้น — เช่น <code class="inline">json['current']['temperature']</code> แต่ของจริงชื่อ 'current_weather' → ชั้นแรกได้ null แล้วชั้นสองพยายามเปิดล็อกเกอร์บนความว่างเปล่า (เพื่อนเก่า null บท 4)<br>
+        <strong>วิธีแก้:</strong> กลับไปขั้นที่ 0: <code class="inline">debugPrint(response.body)</code> แล้วอ่านโครงจริงทีละชั้นเทียบกับโค้ด — 90% คือสะกดชื่อ key ผิดหรือนับชั้นผิด อย่าเดา ให้ดูของจริง</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — จานแรกจากอินเทอร์เน็ต</div>
+        <p>ทำครบ 5 ขั้นจนเห็นอุณหภูมิจริงบนจอ — แล้วพิสูจน์ความเข้าใจ: <code class="inline">debugPrint(response.body)</code> ใน service เทียบกับที่เห็นใน browser ว่าตรงกัน, ลองปิด WiFi แล้วกดรีเฟรชดูว่าเกิดอะไร (อ่าน error ให้ออก — บทหน้าเราจะจัดการมันอย่างสุภาพ)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — ปรับแต่งออเดอร์</div>
+        <p>(1) เปลี่ยนพิกัดเป็นเมืองของคุณ (หา lat/lon จาก Google Maps — กดขวาบนแผนที่) (2) อ่าน docs ของ Open-Meteo แล้วเพิ่มข้อมูลอีก 1 อย่างที่สนใจลงจอ เช่น weathercode แปลงเป็นอีโมจิสภาพอากาศด้วย switch (บท 5): แดด ☀️ เมฆ ☁️ ฝน 🌧️ (3) แสดงเวลาอัปเดตล่าสุดใต้ตัวเลข — commit ด้วย <code class="inline">feat: my city weather with condition emoji</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — หลายเมือง (โครงโปรเจกต์ portfolio)</div>
+        <p>สร้าง City model (name, lat, lon) + List เมือง 4–5 เมือง (กรุงเทพฯ เชียงใหม่ ภูเก็ต โตเกียว ลอนดอน) → ผู้ใช้เลือกเมืองจาก DropdownButton หรือแถบ chip แล้วแอปโหลดอากาศเมืองนั้นใหม่ — โครงสร้างต้องเป็นสามชั้นตามหัวข้อ 5 (models/ services/ screens/) — git init + commit + push ขึ้น GitHub เป็น repo ที่สามของคุณ ด้วยข้อความ <code class="inline">feat: multi-city weather app</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อธิบายภาพ "พนักงานเสิร์ฟ API" ครบวงจร: request → status code → response ได้</li>
+        <li>แยกส่วนประกอบของ URL ได้: โดเมน / endpoint / query parameters</li>
+        <li>มีนิสัย "เปิด URL ใน browser ก่อนเขียนโค้ด" แล้ว</li>
+        <li>เขียน service ที่ get → เช็ค statusCode → decode → fromJson ได้เอง</li>
+        <li>อธิบายกับดัก int/double ของ JSON และท่า (as num).toDouble() ได้</li>
+        <li>แอปสภาพอากาศแสดงข้อมูลจริง และโครงเป็นสามชั้น model/service/หน้าจอ</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>API</td><td>ช่องทางที่เซิร์ฟเวอร์เปิดให้แอปขอข้อมูล/สั่งงาน</td><td>พนักงานเสิร์ฟรับออเดอร์ 🤵</td></tr>
+        <tr><td>endpoint</td><td>ที่อยู่ของบริการหนึ่งรายการบนเซิร์ฟเวอร์</td><td>เมนูแต่ละจาน</td></tr>
+        <tr><td>HTTP <code class="inline">GET</code></td><td>คำขอแบบ "ขอดูข้อมูล" (ไม่แก้อะไร)</td><td>ตะโกนสั่ง "ขอดูหน่อยครับ"</td></tr>
+        <tr><td>status code</td><td>รหัสผลลัพธ์: 200 สำเร็จ / 404 ไม่พบ / 500 ครัวพัง</td><td>ใบเสร็จ+คำตอบพนักงาน</td></tr>
+        <tr><td>package <code class="inline">http</code></td><td>เครื่องมือยิง request ของ Dart</td><td>โทรศัพท์สั่งอาหาร</td></tr>
+        <tr><td><code class="inline">Uri.parse</code></td><td>แปลง String เป็นที่อยู่ที่ถูกรูปแบบ</td><td>จดที่อยู่ร้านให้ถูกฟอร์ม</td></tr>
+        <tr><td><code class="inline">response.body</code></td><td>เนื้อหาที่เซิร์ฟเวอร์ตอบกลับ (ข้อความ JSON)</td><td>จานอาหารที่มาส่ง</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>API = พนักงานเสิร์ฟระหว่างแอปกับครัวคนอื่น · เปิด URL ใน browser ก่อนโค้ดเสมอ · เช็ค statusCode ก่อนกิน, แปลงเป็น model ทันทีที่ชายแดน · (as num).toDouble() กันบั๊กตามฤดูกาล · async บทที่ 9 วันนี้ได้ทำงานจริงแล้ว</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่18_LocalStorage.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 18: Local Storage</div>
+        </a>
+        <a href="บทที่20_Error_Loading.html">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 20: จัดการ Error และ Loading State</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 4 · บทที่ 19<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

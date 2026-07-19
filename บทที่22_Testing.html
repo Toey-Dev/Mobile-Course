@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 22 — ทดสอบโค้ด: Unit &amp; Widget Test | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 5 · บทที่ 22 (เปิดเฟส)</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: พนักงานชิม</a>
+      <a href="#twolevels" class="lvl2">— เทสต์สองระดับ</a>
+      <a href="#code" class="lvl1">2. เขียนเทสต์ 3 ระดับ</a>
+      <a href="#aaa" class="lvl2">— โครง Arrange-Act-Assert</a>
+      <a href="#widget" class="lvl2">— Widget Test</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: ยาม CI</a>
+      <a href="#clean" class="lvl1">5. Clean Code: ทดสอบพฤติกรรม</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 5 · บทที่ 22 — ออกสู่ตลาด!</span>
+      <h1>ทดสอบโค้ด: Unit &amp; Widget Test</h1>
+      <p>ไขปริศนา widget_test.dart ที่ค้างมาตั้งแต่บทที่ 1 — และมั่นใจว่าแอปไม่พังก่อนปล่อยขึ้น Store</p>
+      <div class="meta">
+        <span>⏱️ 2.5 ชั่วโมง</span>
+        <span>📋 ต้องจบเฟส 4 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">เฟสสุดท้ายเริ่มแล้ว! ก่อนส่งแอปให้คนทั้งโลกโหลด เราต้องมั่นใจว่ามันไม่พัง — และข่าวดีคือ โครงสร้างแยกชั้นที่จัดไว้ในบทที่ 21 ทำให้บทนี้ง่ายกว่าที่คิดมาก</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">unit test</span><span class="pill">widget test</span><span class="pill">test() / expect()</span><span class="pill">testWidgets</span><span class="pill">pumpWidget / pump</span><span class="pill">find</span><span class="pill">Arrange-Act-Assert</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: พนักงานชิมอาหารที่ทำงาน 24 ชั่วโมง</h2>
+      <p>ร้านของเราจะเปิดสาขาแล้ว (ปล่อยแอปขึ้น Store) — คำถามคือ <strong>ก่อนเสิร์ฟทุกจาน ใครชิม?</strong></p>
+      <div class="ascii">   👅 ชิมเองทุกจาน (ทดสอบด้วยมือ)              🤖 พนักงานชิมอัตโนมัติ (เขียนเทสต์)
+
+   แก้สูตรน้ำจิ้ม 1 อย่าง                       แก้สูตรน้ำจิ้ม 1 อย่าง
+   → ต้องชิมใหม่ทั้ง 30 เมนู                     → กดปุ่มเดียว: flutter test
+   → ใช้เวลา 2 ชั่วโมง                          → 30 เมนูถูกชิมใน 3 วินาที
+   → วันหลังขี้เกียจ ชิมแค่ 5 เมนู                 → เมนูที่ 17 รสเพี้ยน! แจ้งทันที
+   → เมนูที่ 17 เพี้ยน... ลูกค้าเจอก่อน 😱          → แก้ก่อนลูกค้าเห็น ✓
+
+        ยิ่งร้านมีเมนูเยอะ (แอปมีฟีเจอร์เยอะ) ช่องว่างนี้ยิ่งถ่างขึ้นทุกวัน
+        และวันที่เจ็บที่สุดคือวันที่คุณ "แก้จุดเดียว" แล้วอีก 3 จุดพังโดยไม่รู้ตัว</div>
+      <h3 id="twolevels">เทสต์มีสองระดับ เหมือนการชิมสองแบบ</h3>
+      <div class="ascii">   🥄 Unit Test — ชิมวัตถุดิบทีละอย่าง        📱 Widget Test — ชิมทั้งจานที่จัดเสร็จ
+      "น้ำจิ้มถ้วยนี้เผ็ดถูกสูตรไหม?"              "จานนี้หน้าตาถูกต้อง กินได้จริงไหม?"
+
+   ทดสอบ: ฟังก์ชัน/model/provider           ทดสอบ: หน้าจอจริง (แต่ในหน่วยความจำ
+   (Dart ล้วน ไม่มีหน้าจอ)                     ไม่ต้องเปิดมือถือ!)
+   เช่น: task.toggle() แล้ว isDone            เช่น: กดปุ่ม + แล้วมีรายการเพิ่มบนจอไหม
+        กลับด้านจริงไหม
+   ⚡ เร็วมาก (มิลลิวินาที)                    🐢 ช้ากว่า (แต่ก็ยังวินาที)
+   ✍️ เขียนง่าย                               ✍️ เขียนยากกว่านิดหน่อย
+
+        กฎทองของทีมจริง: เขียน unit test เยอะๆ (ถูกและเร็ว)
+        + widget test เฉพาะจอสำคัญ (แพงกว่า แต่ครอบคลุมกว่า)</div>
+      <div class="box tip">
+        <div class="t">💡 ข่าวดีจากบทที่ 21</div>
+        <p>จำได้ไหมว่าเราแยก logic ออกจากหน้าจอ (models/, services/, providers/ ไม่รู้จัก Flutter)? — <strong>นั่นคือเหตุผลที่บทนี้จะง่ายกว่าที่คิดมาก</strong> เพราะ unit test ต้องการโค้ดที่ "ทดสอบได้โดยไม่ต้องเปิดหน้าจอ" ซึ่งคุณเผลอเตรียมไว้ให้ตัวเองแล้วตั้งแต่บทที่แล้ว</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: เขียนเทสต์ 3 ระดับ</h2>
+      <h3>ขั้นที่ 0 — ไขปริศนาที่ค้างมา 21 บท</h3>
+      <p>เปิด <code class="inline">my_first_app/test/widget_test.dart</code> — ไฟล์ที่คุณเห็นตั้งแต่วันแรกแต่ยังไม่เคยเข้าใจ:</p>
+      <pre><code class="language-dart">testWidgets('หน้าแรกแสดงข้อความทักทาย', (WidgetTester tester) async {
+  await tester.pumpWidget(const MyApp());              // ① สร้างแอปในหน่วยความจำ
+  expect(find.text('สวัสดีชาวโลก! 🌏'), findsOneWidget); // ② ตรวจว่ามีข้อความนี้บนจอ
+});</code></pre>
+      <p><strong>อ่านออกแล้วใช่ไหมครับ:</strong> <code class="inline">pumpWidget</code> = "ปั๊มแอปขึ้นมาในหน่วยความจำ" (ไม่ต้องเปิด emulator!) · <code class="inline">find.text(...)</code> = "หาข้อความนี้บนจอ" · <code class="inline">expect(สิ่งที่เจอ, findsOneWidget)</code> = "คาดหวังว่าต้องเจอ 1 อัน" — และจำหมายเหตุบทที่ 1 ได้ไหมที่บอกว่า "ถ้าแก้ข้อความบนจอ ต้องแก้ในเทสต์ด้วย"? <strong>นั่นแหละคือเทสต์ทำหน้าที่: ฟ้องทันทีเมื่อหน้าจอเปลี่ยนไปจากที่ตกลงกันไว้</strong></p>
+      <h3>ขั้นที่ 1 — Unit Test ตัวแรก: ทดสอบ model</h3>
+      <p>สร้าง <code class="inline">todo_app/test/task_test.dart</code>:</p>
+      <pre><code class="language-dart">import 'package:flutter_test/flutter_test.dart';
+import 'package:todo_app/models/task.dart';
+
+void main() {
+  // group = จัดหมวดเทสต์ที่เกี่ยวข้องกัน (เหมือนหมวดในเมนู)
+  group('Task', () {
+    test('งานใหม่ต้องเริ่มด้วยสถานะยังไม่เสร็จ', () {
+      final task = Task(title: 'อ่านหนังสือ');       // 🅰️ Arrange: เตรียมของ
+      expect(task.isDone, false);                   // 🅾️ Assert: ตรวจผล
+    });
+
+    test('toggle ต้องสลับสถานะเสร็จ/ไม่เสร็จ', () {
+      final task = Task(title: 'อ่านหนังสือ');       // 🅰️ Arrange
+      task.toggle();                                // 🅱️ Act: ลงมือทำ
+      expect(task.isDone, true);                    // 🅾️ Assert
+      task.toggle();                                // ทำอีกครั้ง
+      expect(task.isDone, false);                   // ต้องกลับมาเหมือนเดิม
+    });
+
+    test('fromJson ต้องอ่านข้อมูลเก่าที่ไม่มี isDone ได้', () {
+      // เทสต์ "เกราะข้ามเวอร์ชัน" จากบทที่ 18 — พิสูจน์ว่าเกราะทำงานจริง!
+      final task = Task.fromJson({'title': 'งานเก่า'});
+      expect(task.isDone, false);                   // ต้องได้ค่าตั้งต้น ไม่ใช่ crash
+    });
+  });
+}</code></pre>
+      <p>รันด้วย:</p>
+      <pre><code class="language-bash">flutter test</code></pre>
+      <p>เห็น <code class="inline">All tests passed!</code> สีเขียว 🎉 — <strong>พนักงานชิมคนแรกของคุณเริ่มทำงานแล้ว</strong></p>
+      <h3 id="aaa">ขั้นที่ 2 — โครง Arrange-Act-Assert (AAA): สูตรเขียนเทสต์ที่ใช้ได้ทั้งชีวิต</h3>
+      <div class="ascii">   🅰️ Arrange (เตรียม)  — สร้างของที่จะทดสอบ + ตั้งสถานการณ์
+   🅱️ Act     (ลงมือ)   — เรียกสิ่งที่อยากทดสอบ 1 อย่าง
+   🅾️ Assert  (ตรวจ)    — เทียบผลลัพธ์กับสิ่งที่คาดหวัง
+
+   จำง่ายๆ: "เตรียมของ → ลงมือทำ → ตรวจผล" เหมือนการทดลองวิทยาศาสตร์</div>
+      <h3>ขั้นที่ 3 — ทดสอบ Provider (หัวใจของแอป — ตรงนี้คุ้มที่สุด)</h3>
+      <pre><code class="language-dart">// todo_app/test/task_provider_test.dart
+group('TaskProvider', () {
+  test('addTask ต้องเพิ่มงานเข้า list', () {
+    final provider = TaskProvider();                 // 🅰️
+    provider.addTask('งานใหม่');                     // 🅱️
+    expect(provider.tasks.length, 1);                // 🅾️
+    expect(provider.tasks.first.title, 'งานใหม่');
+  });
+
+  test('doneCount ต้องนับเฉพาะงานที่เสร็จแล้ว', () {
+    final provider = TaskProvider();                 // 🅰️
+    provider.addTask('งาน A');
+    provider.addTask('งาน B');
+    provider.toggleTask(provider.tasks.first);       // 🅱️ ติ๊กแค่ตัวแรก
+    expect(provider.doneCount, 1);                   // 🅾️
+  });
+
+  test('addTask ต้องปฏิเสธชื่อซ้ำ', () {
+    final provider = TaskProvider();                 // 🅰️
+    provider.addTask('งานซ้ำ');
+    final error = provider.addTask('งานซ้ำ');        // 🅱️ เพิ่มชื่อเดิมอีกครั้ง
+    expect(error, isNotNull);                        // 🅾️ ต้องได้ข้อความ error
+    expect(provider.tasks.length, 1);                //    และต้องไม่เพิ่มเข้าไปจริง
+  });
+});</code></pre>
+      <div class="box concept">
+        <div class="t">🎯 จุดที่การจัดโครงสร้างจ่ายเงินปันผลก้อนใหญ่</div>
+        <p>TaskProvider เป็น Dart ล้วน ทดสอบได้โดยไม่ต้องเปิดหน้าจอสักบรรทัด — ถ้าตรรกะพวกนี้ยังฝังอยู่ในปุ่มบนหน้าจอ (แบบ ❌ ของบทที่ 17) การทดสอบจะยากกว่านี้หลายเท่า</p>
+      </div>
+      <h3 id="widget">ขั้นที่ 4 — Widget Test: ทดสอบหน้าจอจริง</h3>
+      <pre><code class="language-dart">// todo_app/test/home_screen_test.dart
+testWidgets('กดปุ่ม + แล้วต้องมีรายการเพิ่มบนจอ', (tester) async {
+  // 🅰️ Arrange: ปั๊มแอปขึ้นมา (ต้องครอบ Provider เหมือนใน main.dart!)
+  await tester.pumpWidget(
+    ChangeNotifierProvider(
+      create: (_) =&gt; TaskProvider(),
+      child: const TodoApp(),
+    ),
+  );
+
+  expect(find.text('ยังไม่มีงาน 🎉'), findsOneWidget);  // เริ่มต้นต้องเป็น Empty State
+
+  // 🅱️ Act: กดปุ่มลอย
+  await tester.tap(find.byIcon(Icons.add));
+  await tester.pump();       // ⭐ สำคัญ! สั่งให้ Flutter วาดจอใหม่หลังเกิดเหตุ
+
+  // 🅾️ Assert: Empty State ต้องหายไป
+  expect(find.text('ยังไม่มีงาน 🎉'), findsNothing);
+});</code></pre>
+      <div class="box warn">
+        <div class="t">⭐ pump() คือหัวใจที่มือใหม่ลืมบ่อยที่สุด</div>
+        <p>ในเทสต์ <strong>เวลาไม่เดินเอง!</strong> หลังทุก action ที่ทำให้จอเปลี่ยน (tap, enterText) ต้องสั่ง <code class="inline">pump()</code> เพื่อบอกว่า "วาดเฟรมใหม่ทีนะ" ไม่งั้นคุณจะตรวจจอเก่าที่ยังไม่อัปเดต</p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — ชื่อเทสต์คือประโยคบอกเล่าที่คนอ่านเข้าใจ</h3>
+      <p><code class="inline">test('toggle ต้องสลับสถานะเสร็จ/ไม่เสร็จ')</code> ✓ ไม่ใช่ <code class="inline">test('test1')</code> ✗ — เพราะเวลาเทสต์แดง สิ่งแรกที่คุณเห็นคือชื่อมัน ชื่อที่ดีบอกทันทีว่า "พฤติกรรมอะไรพัง" โดยไม่ต้องเปิดโค้ด (หลักเดียวกับชื่อฟังก์ชันบทที่ 6)</p>
+      <h3>เทคนิคที่ 2 — เขียนเทสต์ที่ "เคยพัง" ก่อนเสมอ</h3>
+      <p>ไม่ต้องเทสต์ทุกบรรทัดในโลก — เริ่มจาก: (1) ตรรกะที่คำนวณอะไรสักอย่าง (doneCount, ราคารวม) (2) กฎธุรกิจ (ห้ามชื่อซ้ำ) (3) <strong>บั๊กที่เคยเจอจริง</strong> — เจอบั๊กแล้วแก้เสร็จ ให้เขียนเทสต์ปิดท้าย เพื่อรับประกันว่า "บั๊กตัวนี้จะไม่กลับมาอีกตลอดกาล" (ทีมจริงเรียกว่า regression test — คู่แฝดของ BUGS.md จากบทที่ 14)</p>
+      <h3>เทคนิคที่ 3 — find มีหลายวิธี เลือกให้เหมาะ</h3>
+      <p><code class="inline">find.text('บันทึก')</code> (หาจากข้อความ), <code class="inline">find.byIcon(Icons.add)</code> (หาจากไอคอน), <code class="inline">find.byType(TaskTile)</code> (หาจากชนิด Widget) — ตัวหลังทนต่อการเปลี่ยนข้อความมากที่สุด เหมาะกับเทสต์ที่ไม่อยากพังทุกครั้งที่แก้คำ</p>
+      <h3>เทคนิคที่ 4 — เทสต์ที่ดีคือเอกสารที่ไม่มีวันล้าสมัย</h3>
+      <p>README อาจเขียนไว้ผิดโดยไม่มีใครรู้ แต่เทสต์ที่บอกว่า "addTask ต้องปฏิเสธชื่อซ้ำ" <strong>ถูกเสมอ</strong> เพราะถ้าโค้ดเปลี่ยนพฤติกรรม เทสต์จะแดงทันที — dev ใหม่ในทีมมักอ่านเทสต์เพื่อทำความเข้าใจว่าระบบทำงานยังไง</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "ยามเฝ้าประตูที่ชื่อ CI"</div>
+        <p>ในทีมจริง เทสต์ไม่ได้รันด้วยมือ — มันรันอัตโนมัติทุกครั้งที่มีคนส่งโค้ด:</p>
+      </div>
+      <div class="ascii">   dev ส่ง Pull Request
+          │
+          ▼
+   🤖 CI (เครื่องอัตโนมัติบนคลาวด์) ทำงานทันที:
+      ① flutter analyze  (ตรวจ lint — กฎที่เราตั้งไว้ตั้งแต่บทที่ 2!)
+      ② flutter test     (ชิมทุกเมนู)
+          │
+    ┌─────┴─────┐
+   ✅ เขียว      ❌ แดง
+    │            │
+    │            └─► ปุ่ม "Merge" ถูกล็อก — เข้า main ไม่ได้จนกว่าจะแก้
+    │                (ยามไม่ปล่อยผ่าน ไม่ว่าคุณจะเป็นใครในทีม)
+    └─► เพื่อนรีวิว → merge เข้า main ได้
+
+   ผลลัพธ์: เส้น main "ใช้งานได้เสมอ" จริงตามที่บทที่ 2 บอกไว้
+   — เพราะมียามเฝ้า ไม่ใช่เพราะทุกคนระวังตัว</div>
+      <p>และนี่คือเหตุผลที่ dev มืออาชีพ<strong>ชอบ</strong>เขียนเทสต์ ทั้งที่มันเป็นงานเพิ่ม: มันคือสิ่งที่ทำให้คุณ <strong>กล้าแก้โค้ดเก่าที่ไม่ได้เขียนเอง</strong> — รื้อได้เต็มที่ ถ้าเทสต์ยังเขียว แปลว่าไม่พัง (เหมือนจุดเซฟในเกมจากบทที่ 2 แต่เป็นจุดเซฟของ "พฤติกรรมแอป")</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 Clean Code: เทสต์ที่ทดสอบ "พฤติกรรม" ไม่ใช่ "วิธีทำ"</h2>
+      <pre><code class="language-dart">// ❌ เทสต์ที่ผูกกับรายละเอียดภายใน — แก้โค้ดนิดเดียวก็แดงทั้งแถบ
+test('addTask', () {
+  final provider = TaskProvider();
+  provider.addTask('งาน');
+  // ผูกกับ "วิธีเก็บข้อมูลภายใน" — วันที่เปลี่ยนจาก List เป็น Map เทสต์แดงทันที
+  // ทั้งที่พฤติกรรมของแอปไม่ได้เปลี่ยนเลย!
+  expect(provider.internalList[0].title, 'งาน');
+  expect(provider.saveCallCount, 1);          // ยิ่งลึกเข้าไปใหญ่
+});</code></pre>
+      <pre><code class="language-dart">// ✅ เทสต์ที่ผูกกับพฤติกรรมที่ผู้ใช้สนใจ — ทนทานต่อการ refactor
+test('addTask ต้องทำให้งานใหม่ปรากฏในรายการ', () {
+  final provider = TaskProvider();
+  provider.addTask('งาน');
+  // สนใจแค่ "ผลลัพธ์ที่มองเห็นจากภายนอก" — ข้างในจะเปลี่ยนเป็นอะไรก็ได้
+  expect(provider.tasks.map((t) =&gt; t.title), contains('งาน'));
+});</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>ถามตัวเองว่า "ถ้าฉัน refactor ข้างในโดยที่แอปทำงานเหมือนเดิมทุกอย่าง เทสต์นี้ควรแดงไหม?" — ถ้าตอบว่า "ไม่ควร" แต่มันแดง = เทสต์ผูกลึกเกินไป · เทสต์ที่ดีคือ<strong>สัญญาว่าแอปจะทำอะไรได้</strong> ไม่ใช่บันทึกว่าโค้ดเขียนยังไง</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① "Could not find the correct Provider above this Widget" ในเทสต์</div>
+        <p><strong>สาเหตุ:</strong> pumpWidget แอปเปล่าๆ โดยลืมครอบ ChangeNotifierProvider — ในเทสต์เราสร้างต้นไม้ Widget เองทั้งหมด สิ่งที่ main.dart ครอบไว้ ไม่ได้ตามมาให้<br>
+        <strong>วิธีแก้:</strong> จำลองสภาพแวดล้อมให้เหมือน main.dart: ครอบ provider (และ MaterialApp ถ้าเทสต์หน้าจอย่อยที่ต้องใช้ Navigator/Theme) — เพื่อนเก่าจากบทที่ 17</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② เทสต์แดงทั้งที่โค้ดถูก — เพราะลืม pump()</div>
+        <p><strong>สาเหตุ:</strong> หลัง <code class="inline">tester.tap()</code> แล้วตรวจผลทันที — แต่ Flutter ยังไม่ได้วาดเฟรมใหม่ (ในเทสต์ เวลาไม่เดินเอง! เราต้องสั่งเดินเอง)<br>
+        <strong>วิธีแก้:</strong> ทุก action ที่ทำให้จอเปลี่ยน ต้องตามด้วย <code class="inline">await tester.pump();</code> ถ้ามีแอนิเมชัน/รอ Future ใช้ <code class="inline">await tester.pumpAndSettle();</code> (รอจนนิ่ง)</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ เทสต์ผ่านบ้างไม่ผ่านบ้าง (flaky test) หรือทดสอบของจริงบนเน็ต</div>
+        <p><strong>สาเหตุ:</strong> เทสต์ยิง API จริง — เน็ตช้า/เซิร์ฟเวอร์ล่ม = เทสต์แดงทั้งที่โค้ดเราถูก (และช้ามาก + ถ้าเป็น API ที่คิดเงิน คือจ่ายเงินทุกครั้งที่รันเทสต์!)<br>
+        <strong>วิธีแก้:</strong> เทสต์ต้อง "ปิดเกาะ" — ไม่พึ่งพาโลกภายนอก ให้ป้อนข้อมูลปลอมเข้าไปแทน (เทคนิคนี้เรียกว่า mocking — เนื้อหาระดับถัดไป ตอนนี้แค่รู้ว่า "เทสต์ที่ดีต้องรันได้แม้ปิดเน็ต" ก็พอ และเป็นเหตุผลที่เราเทสต์ provider/model ก่อน)</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — พนักงานชิมคนแรก</div>
+        <p>เขียน <code class="inline">test/task_test.dart</code> ตามขั้นที่ 1 ให้ครบ 3 เทสต์ แล้วรัน <code class="inline">flutter test</code> จนเขียว — จากนั้น<strong>ทำให้มันแดงโดยตั้งใจ</strong>: ไปแก้ toggle() ใน model ให้ผิด แล้วรันใหม่ อ่านรายงานที่บอกว่าเทสต์ไหนพัง คาดหวังอะไร ได้อะไร — แล้วแก้กลับ (การเห็นเทสต์แดงคือส่วนสำคัญของการเรียนรู้!)</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — ชิมหัวใจของแอป</div>
+        <p>เขียน <code class="inline">test/task_provider_test.dart</code> ตามขั้นที่ 3 ครบ 3 เทสต์ + เพิ่มอีก 2 เทสต์ของตัวเอง (เช่น removeTask ต้องลบออกจริง, งานเกิน 50 ต้องปฏิเสธ) — commit ด้วย <code class="inline">test: add unit tests for Task and TaskProvider</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — ชิมทั้งจาน + ยามเฝ้าประตู</div>
+        <p>(1) เขียน widget test อย่างน้อย 2 ตัวสำหรับ todo_app: กดปุ่มเพิ่มแล้วจอเปลี่ยน, ติ๊ก checkbox แล้วข้อความถูกขีดฆ่า (ใช้ find.byType) (2) เขียน unit test ให้ <code class="inline">Weather.fromJson</code> ใน weather_app โดยป้อน JSON ปลอมที่ก็อปมาจาก browser (บทที่ 19 ขั้นที่ 0!) — พิสูจน์ว่า <code class="inline">(as num).toDouble()</code> รับได้ทั้ง 32 และ 32.5 (3) เพิ่มหัวข้อ "การทดสอบ" ใน README ทั้ง 3 repo — commit ด้วย <code class="inline">test: widget tests and JSON parsing tests</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>อ่าน widget_test.dart ที่มีมาแต่แรกแล้วอธิบายได้ทุกบรรทัด</li>
+        <li>บอกความต่าง unit test กับ widget test และเลือกใช้ถูกสถานการณ์</li>
+        <li>เขียนเทสต์ตามโครง Arrange-Act-Assert ได้เอง</li>
+        <li>รู้ว่าต้อง pump() หลังทุก action ในเทสต์ และรู้ว่าทำไม</li>
+        <li>อธิบายได้ว่าเทสต์ควรผูกกับ "พฤติกรรม" ไม่ใช่ "วิธีทำข้างใน"</li>
+        <li>flutter test ผ่านเขียวทั้ง 3 repo และเคยเห็นเทสต์แดงจากการตั้งใจทำพัง</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td>unit test</td><td>ทดสอบชิ้นส่วนเล็ก (ฟังก์ชัน/model/provider)</td><td>ชิมวัตถุดิบทีละอย่าง 🥄</td></tr>
+        <tr><td>widget test</td><td>ทดสอบหน้าจอในหน่วยความจำ</td><td>ชิมทั้งจานที่จัดเสร็จ 📱</td></tr>
+        <tr><td><code class="inline">test()</code> / <code class="inline">expect()</code></td><td>ประกาศเทสต์ / ตรวจผลลัพธ์</td><td>ใบสั่งชิม / ใบตรวจรส</td></tr>
+        <tr><td><code class="inline">testWidgets</code></td><td>ประกาศเทสต์ที่มีหน้าจอ</td><td>ใบสั่งชิมทั้งจาน</td></tr>
+        <tr><td><code class="inline">pumpWidget</code> / <code class="inline">pump</code></td><td>สร้างแอปในหน่วยความจำ / สั่งวาดเฟรมใหม่</td><td>จัดจาน / กระตุ้นให้เวลาเดิน</td></tr>
+        <tr><td><code class="inline">find</code></td><td>ค้นหา Widget บนจอทดสอบ</td><td>แว่นขยายส่องจาน</td></tr>
+        <tr><td>Arrange-Act-Assert</td><td>โครง 3 ท่อนของทุกเทสต์</td><td>เตรียมของ → ลงมือ → ตรวจผล</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>เทสต์ = พนักงานชิมที่ทำงาน 24 ชม. · unit test ชิมวัตถุดิบ (เยอะๆ) widget test ชิมทั้งจาน (เฉพาะจอสำคัญ) · ทุกเทสต์คือ Arrange-Act-Assert · อย่าลืม pump() · ทดสอบพฤติกรรม ไม่ใช่วิธีทำ — และเทสต์คือสิ่งที่ทำให้คุณ<strong>กล้าแก้โค้ด</strong></p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่21_โครงสร้างโฟลเดอร์.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 21: จัดโครงสร้างโฟลเดอร์</div>
+        </a>
+        <a href="#" onclick="return false;">
+          <div class="lbl">บทต่อไป →</div>
+          <div class="ttl">บทที่ 23: ไอคอน, Splash Screen และชื่อแอป</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 5 · บทที่ 22<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>

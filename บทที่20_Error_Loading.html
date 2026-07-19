@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทที่ 20 — จัดการ Error และ Loading State | หลักสูตรพัฒนาแอป iOS + Android</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="progress"></div>
+<button id="menu-toggle" aria-label="เมนู">☰</button>
+
+<div class="wrap">
+  <aside id="sidebar">
+    <div class="brand">🐦 หลักสูตร Flutter</div>
+    <div class="sub">เฟส 4 · บทที่ 20</div>
+    <nav id="toc">
+      <a href="#intro" class="lvl1">ภาพรวมบทเรียน</a>
+      <a href="#story" class="lvl1">1. ภาพเล่าเรื่อง: ร้านที่สุภาพ</a>
+      <a href="#fourstates" class="lvl2">— 4 หน้าของทุกจอ</a>
+      <a href="#code" class="lvl1">2. อัปเกรดแอปให้สุภาพ 3 ขั้น</a>
+      <a href="#techniques" class="lvl1">3. เทคนิคการประยุกต์ใช้</a>
+      <a href="#prod" class="lvl1">4. ตัวอย่างงานจริง: คืนระบบล่ม</a>
+      <a href="#clean" class="lvl1">5. Clean Code: enum > bool×3</a>
+      <a href="#errors" class="lvl1">6. ข้อผิดพลาดที่เจอบ่อย</a>
+      <a href="#exercise" class="lvl1">7. แบบฝึกหัด 3 ระดับ</a>
+      <a href="#checklist" class="lvl1">8. เช็กลิสต์ + สรุป</a>
+    </nav>
+  </aside>
+
+  <main>
+  <div class="content">
+
+    <div class="hero">
+      <span class="week">📅 เฟส 4 · บทที่ 20</span>
+      <h1>จัดการ Error และ Loading State: แอปที่สุภาพกับผู้ใช้เสมอ</h1>
+      <p>เน็ตหลุด เซิร์ฟเวอร์ล่ม โหลดช้า — รับมืออย่างสุภาพด้วยกฎทอง: ทุกหน้าจอที่โหลดข้อมูล มี 4 หน้าเสมอ</p>
+      <div class="meta">
+        <span>⏱️ 2–2.5 ชั่วโมง</span>
+        <span>📋 ต้องผ่านบทที่ 19 แล้ว</span>
+        <span>🔤 ศัพท์ใหม่ 7 คำ</span>
+      </div>
+    </div>
+
+    <section id="intro">
+      <h2>🎯 ภาพรวมบทเรียน (อ่านก่อนเริ่ม)</h2>
+      <p class="lead">ตอนนี้ weather_app สวยเฉพาะวันที่เน็ตดี — WiFi หลุดเมื่อไหร่ พังเงียบเมื่อนั้น บทนี้ทำให้แอป "สุภาพ": บอกผู้ใช้เสมอว่ากำลังเกิดอะไร และไม่มีทางตันแม้ในวันที่ทุกอย่างพัง</p>
+      <div class="box concept">
+        <div class="t">🔤 ศัพท์ใหม่บทนี้ (7 คำ)</div>
+        <p><span class="pill">try / catch</span><span class="pill">throw</span><span class="pill">Exception</span><span class="pill">enum</span><span class="pill">UI state</span><span class="pill">timeout</span><span class="pill">RefreshIndicator</span></p>
+      </div>
+    </section>
+
+    <section id="story">
+      <h2>1. 🖼️ ภาพเล่าเรื่อง: ร้านที่เงียบหาย กับร้านที่สุภาพ</h2>
+      <p>วัตถุดิบหมด ไฟดับ ครัวล่ม — เกิดขึ้นได้กับทุกร้าน สิ่งที่แยกร้านดีออกจากร้านแย่ไม่ใช่ "ไม่มีปัญหา" แต่คือ <strong>วิธีบอกลูกค้าเมื่อมีปัญหา</strong>:</p>
+      <div class="ascii">   😶 ร้านที่เงียบหาย (แอปที่ไม่จัดการ error)      🙏 ร้านที่สุภาพ (แอปมืออาชีพ)
+
+   ลูกค้า: สั่งข้าวผัดครับ                        ลูกค้า: สั่งข้าวผัดครับ
+   ร้าน:   ...........                          ร้าน:   "กำลังปรุงครับ ⏳" (loading)
+   ลูกค้า: ยังอยู่ไหม?? สั่งติดหรือเปล่า?           ครัว:   น้ำมันหมด!
+   ร้าน:   ...........(ครัวไฟไหม้อยู่ข้างใน)        ร้าน:   "ขออภัยครับ วัตถุดิบขาด 🙏
+   ลูกค้า: เดินออกจากร้าน ไม่กลับมาอีก                     รับเป็นเมนูอื่น หรือรอ 5 นาที
+           (= ผู้ใช้ลบแอป)                               ให้เราลองใหม่ไหมครับ?" (error + retry)
+
+              กฎของร้านสุภาพ: ลูกค้าต้องรู้สถานะออเดอร์ตัวเอง "ตลอดเวลา"</div>
+      <h3 id="fourstates">และนี่คือความจริงที่ครอบทุกแอปในโลก — ทุกหน้าจอที่โหลดข้อมูล มีได้แค่ 4 หน้า</h3>
+      <div class="ascii">                       เริ่มโหลด
+                          │
+                          ▼
+                     ⏳ LOADING ◄──────────────────┐
+                    "กำลังปรุงครับ"                  │
+                          │                        │ กดปุ่ม "ลองอีกครั้ง"
+             ┌────────────┴────────────┐           │
+        สำเร็จ ✓                   ล้มเหลว ✗         │
+             │                         └─────► ❌ ERROR
+    ┌────────┴────────┐                       "ขออภัย + วิธีแก้ + ปุ่มลองใหม่"
+    ▼                 ▼
+✅ SUCCESS         📭 EMPTY
+(มีข้อมูล แสดงเลย)   (สำเร็จแต่ไม่มีของ เช่น
+                    "ยังไม่มีงาน 🎉" — คุณทำแล้วในบท 13!)</div>
+      <div class="box why">
+        <div class="t">🤔 ทำไมภาพนี้เปลี่ยนวิธีทำงานของคุณ</div>
+        <p>ต่อไปนี้เมื่อได้โจทย์ "ทำหน้าจอแสดง X" คำถามแรกคือ "ทั้ง 4 หน้าของจอนี้หน้าตาเป็นยังไง?" — ดีไซเนอร์มืออาชีพออกแบบครบ 4 หน้าเสมอ dev มืออาชีพเขียนครบ 4 หน้าเสมอ และคนสัมภาษณ์งานชอบถามเรื่องนี้มาก</p>
+      </div>
+    </section>
+
+    <section id="code">
+      <h2>2. 💻 ลงมือจริง: อัปเกรด weather_app ให้สุภาพ (3 ขั้น)</h2>
+      <h3>ขั้นที่ 1 — รู้จักตาข่ายนิรภัย: try / catch</h3>
+      <p>บทที่แล้ว service ของเรา <code class="inline">throw Exception(...)</code> เมื่อใบเสร็จไม่ใช่ 200 — คำถามคือ เผือกร้อนที่โยนขึ้นมา <strong>ใครรับ?</strong> ถ้าไม่มีใครรับ = แอปพัง try/catch คือมือที่รอรับ:</p>
+      <pre><code class="language-dart">try {
+  // "ลองทำดู" — โค้ดที่อาจโยนเผือกร้อน (เน็ตหลุด, เซิร์ฟเวอร์ล่ม, JSON เพี้ยน)
+  final weather = await fetchWeather(lat: 13.75, lon: 100.5);
+  print('ได้ข้อมูลแล้ว: ${weather.temperature}');
+} catch (e) {
+  // "ถ้าพลาด มาลงตรงนี้" — แอปไม่พัง เราได้ e มาดูว่าเกิดอะไร
+  print('พลาด: $e');   // เช่น SocketException: Failed host lookup
+}</code></pre>
+      <p>และเติมนาฬิกาจับเวลาให้ service (บทที่แล้วถ้าเน็ตอืด เราจะรอ...ตลอดกาล):</p>
+      <pre><code class="language-dart">// ใน weather_service.dart — รอเกิน 10 วิ = โยนเผือกร้อน TimeoutException เอง
+final response = await http.get(url).timeout(const Duration(seconds: 10));</code></pre>
+      <h3>ขั้นที่ 2 — ประกาศ 4 หน้าให้ชัดด้วย enum</h3>
+      <p>enum คือของใหม่ตัวเดียวของบทนี้ — การประกาศ "ชุดค่าที่เป็นไปได้ตายตัว" เหมือนสวิตช์ที่มีแค่ 3 ตำแหน่ง บิดไปตำแหน่งอื่นไม่ได้:</p>
+      <pre><code class="language-dart">/// สถานะของหน้าจอ — เป็นได้ทีละอย่างเท่านั้น ไม่มีทางกำกวม
+enum ViewState { loading, success, error }
+// (weather ไม่มีเคส empty เพราะอากาศมีค่าเสมอ — จอที่เป็น "รายการ" ถึงจะมีครบ 4)</code></pre>
+      <h3>ขั้นที่ 3 — ประกอบเข้า WeatherScreen</h3>
+      <pre><code class="language-dart">class _WeatherScreenState extends State&lt;WeatherScreen&gt; {
+  ViewState _state = ViewState.loading;   // เปิดหน้ามา = กำลังปรุง
+  Weather? _weather;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWeather();
+  }
+
+  Future&lt;void&gt; _loadWeather() async {
+    setState(() =&gt; _state = ViewState.loading);   // ⭐ ทุกครั้งที่เริ่มโหลด กลับสู่ "กำลังปรุง"
+    try {
+      final weather = await fetchWeather(lat: 13.75, lon: 100.5);
+      if (!mounted) return;
+      setState(() {
+        _weather = weather;
+        _state = ViewState.success;
+      });
+    } catch (e) {
+      debugPrint('โหลดอากาศพลาด: $e');            // 🔧 log ภาษา dev — ไว้ให้เราตามคดี (บท 14)
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'โหลดข้อมูลไม่สำเร็จ\nตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง';
+        _state = ViewState.error;                 // 🙏 จอภาษาคน — ไว้ให้ผู้ใช้เข้าใจ
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('อากาศกรุงเทพฯ')),
+      // switch expression (บท 5) เลือกหน้าตาม state — อ่านครบทุกหน้าในสายตาเดียว
+      body: switch (_state) {
+        ViewState.loading =&gt; const Center(child: CircularProgressIndicator()),
+        ViewState.error   =&gt; _ErrorView(message: _errorMessage, onRetry: _loadWeather),
+        ViewState.success =&gt; _WeatherView(weather: _weather!),
+        // _weather! ปลอดภัยตรงนี้ที่เดียว — เพราะเข้า success ได้ก็ต่อเมื่อมีข้อมูลแล้ว
+      },
+    );
+  }
+}
+
+/// หน้าตอนพลาด — ขอโทษ + บอกวิธีแก้ + "ทางไปต่อ" เสมอ (Widget ย่อย บท 11)
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;          // callback บท 12 — ปุ่มนี้สั่งโหลดใหม่
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.cloud_off, size: 72, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('ลองอีกครั้ง'),
+          ),
+        ],
+      ),
+    );
+  }
+}</code></pre>
+      <div class="box tip">
+        <div class="t">💡 ทดสอบให้ครบทุกหน้า</div>
+        <p>รันปกติ → เห็น loading แวบแล้ว success · <strong>ปิด WiFi/ข้อมูลมือถือ</strong> → กดรีเฟรช → เห็นหน้า error สุภาพพร้อมปุ่ม · เปิดเน็ตกลับ → กด "ลองอีกครั้ง" → กลับสู่ loading → success — <strong>แอปของคุณไม่มีทางตันอีกต่อไป</strong></p>
+      </div>
+    </section>
+
+    <section id="techniques">
+      <h2>3. 🔧 เทคนิคการประยุกต์ใช้</h2>
+      <h3>เทคนิคที่ 1 — สองภาษาเสมอ: จอพูดภาษาคน, log พูดภาษา dev</h3>
+      <p>ผู้ใช้เห็น "ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง" (ทำตามได้) — ไม่ใช่ SocketException (ตกใจเปล่าๆ) ส่วนของจริงเก็บลง debugPrint/ระบบ log ไว้ให้เราไล่คดี — จำหลักจากบทที่ 16: ข้อความ error ที่ดี "บอกวิธีแก้ ไม่ใช่ดุ" ตอนนี้ขยายผล: และต้องเป็นภาษาที่ผู้อ่านคนนั้นเข้าใจ</p>
+      <h3>เทคนิคที่ 2 — ทุกหน้า error ต้องมี "ทางไปต่อ"</h3>
+      <p>ปุ่มลองอีกครั้ง, ปุ่มกลับหน้าแรก, ลิงก์ติดต่อ — อะไรก็ได้ที่ไม่ใช่ทางตัน ผู้ใช้ที่เจอกำแพงแล้วไม่มีประตู = ผู้ใช้ที่ปิดแอปถาวร (สังเกตว่า _ErrorView เราบังคับ <code class="inline">required this.onRetry</code> — โครงสร้างบังคับให้ลืมไม่ได้)</p>
+      <h3>เทคนิคที่ 3 — timeout ทุกการรอเน็ต ไม่มีข้อยกเว้น</h3>
+      <p>การรอที่ไม่มีเส้นตาย = loading หมุนตลอดกาล = ทางตันแบบหนึ่ง — 10 วินาทีคือค่ามาตรฐานที่ดีสำหรับ GET ทั่วไป (เน็ตช้าจริงยังทัน แต่ไม่ปล่อยให้รอจนสิ้นหวัง)</p>
+      <h3>เทคนิคที่ 4 — RefreshIndicator: ดึงลงเพื่อโหลดใหม่ในบรรทัดเดียว</h3>
+      <p>ท่า "ดึงหน้าจอลงเพื่อรีเฟรช" ที่ผู้ใช้มือถือทุกคนคุ้นมือ — Flutter ให้ฟรี: ครอบเนื้อหาด้วย <code class="inline">RefreshIndicator(onRefresh: _loadWeather, child: ...)</code> (child ต้องเลื่อนได้ เช่น ListView/SingleChildScrollView) — ได้ UX ระดับแอปดังด้วยโค้ดหนึ่งบรรทัด</p>
+    </section>
+
+    <section id="prod">
+      <h2>4. 🏭 ตัวอย่างการเขียนจริงในงานจริง</h2>
+      <div class="box prod">
+        <div class="t">🏭 สถานการณ์จริง: "คืนที่ระบบธนาคารขัดข้อง — สองแอป สองชะตากรรม"</div>
+        <p>ระบบหลังบ้านของธนาคารขัดข้องพร้อมกันทั่วประเทศหนึ่งชั่วโมง — ดูสิ่งที่เกิดกับผู้ใช้ของสองแอป:</p>
+      </div>
+      <div class="ascii">   แอป A (ไม่ออกแบบ error state):            แอป B (ออกแบบมาดี):
+   วงกลมหมุน... หมุน... หมุนตลอดกาล            "ระบบขัดข้องชั่วคราว 🙏
+   ผู้ใช้: "เงินฉันหายหรือเปล่า?!"               ทีมงานกำลังเร่งแก้ไข
+   → โทรถล่ม call center                      ยอดเงินของคุณปลอดภัย
+   → ดราม่าในโซเชียล                           ตรวจสอบสถานะระบบได้ที่นี่"
+   → ข่าว "แอปธนาคารล่ม เงินหาย?"              ผู้ใช้: โอเค รอได้ ☕
+                                             → call center เงียบสงบ
+
+   ระบบหลังบ้าน "พังเท่ากัน" — แต่ความเชื่อมั่นของผู้ใช้ต่างกันคนละโลก
+   ความต่างทั้งหมดคือ "หน้า error ที่ออกแบบไว้ล่วงหน้า" ไม่กี่หน้าจอ</div>
+      <p>ในทีมจริง หน้า error/loading/empty ถูกออกแบบใน Figma ตั้งแต่วันแรกคู่กับหน้า success และมีการ<strong>ซ้อมสถานการณ์</strong>: ปิดเน็ตทดสอบ, จำลองเซิร์ฟเวอร์ตอบ 500 — แบบเดียวกับที่คุณเพิ่งปิด WiFi ทดสอบเมื่อครู่ (จำ Future.delayed จำลองเน็ตช้าจากบทที่ 9 ได้ไหมครับ — นี่คือเหตุผลที่มันเป็น "เพื่อนรักตอน dev")</p>
+    </section>
+
+    <section id="clean">
+      <h2>5. 🧹 ตัวอย่าง Clean Code: enum เดียว ดีกว่า bool สามตัว</h2>
+      <pre><code class="language-dart">// ❌ จัดการสถานะด้วย bool หลายตัว — เปิดประตูให้ "สถานะที่เป็นไปไม่ได้"
+bool _isLoading = false;
+bool _hasError = false;
+Weather? _weather;
+// 3 ตัวแปร = 8 ชุดค่าที่เป็นไปได้... แต่หลายชุด "ไม่มีจริงในโลก":
+//   _isLoading=true + _hasError=true พร้อมกัน?? (กำลังโหลดแต่พังแล้ว?)
+//   _hasError=true แต่ _weather มีค่า?? (พังแต่มีข้อมูล?)
+// วันไหนลืมรีเซ็ตตัวใดตัวหนึ่ง → จอแสดงสองอย่างซ้อนกัน → บั๊กที่งงที่สุดในโลก
+
+if (_isLoading) return Spinner();
+if (_hasError) return ErrorView();     // ← ลำดับ if ก็มีผลอีก... เปราะไปหมด
+return WeatherView(_weather!);</code></pre>
+      <pre><code class="language-dart">// ✅ enum เดียว — สถานะเดียวเสมอ สลับกันไม่ได้ ลืมเคสไม่ได้
+ViewState _state = ViewState.loading;   // เป็นได้ทีละอย่าง จบ
+
+body: switch (_state) {
+  ViewState.loading =&gt; ...,
+  ViewState.error   =&gt; ...,
+  ViewState.success =&gt; ...,
+  // ลืมเคสไหน คอมไพเลอร์เตือนทันที (switch expression บังคับครบทุกค่า!)
+},</code></pre>
+      <div class="box concept">
+        <div class="t">🧠 หลักทอง</div>
+        <p>นี่คือหลัก "state น้อยที่สุด" (บทที่ 10) ในร่างที่ลึกขึ้น — อย่าแค่ลดจำนวน state ให้<strong>ออกแบบชนิดของ state จนค่าที่เป็นไปไม่ได้ ไม่มีทางเขียนขึ้นมาได้เลย</strong> ประโยคติดปากของวงการคือ "make impossible states impossible"</p>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>6. ⚠️ ข้อผิดพลาดที่เจอบ่อย</h2>
+      <div class="box warn">
+        <div class="t">① catch แล้วเงียบ — บาปมหันต์ของการจัดการ error</div>
+        <p><strong>สาเหตุ:</strong> เขียน <code class="inline">catch (e) {}</code> ว่างเปล่า "กันแอปพังไว้ก่อน" — แอปไม่พังจริง แต่ปัญหาหายเข้ากลีบเมฆ: ผู้ใช้เห็นจอค้างเฉยๆ เราก็ไม่มี log ให้ไล่ (บั๊กที่มองไม่เห็น แก้ไม่ได้ตลอดกาล — แย่กว่าแอปพังตรงๆ เสียอีก)<br>
+        <strong>วิธีแก้:</strong> catch ทุกครั้งต้องทำอย่างน้อย 2 อย่าง: ① debugPrint/log ตัว e ② เปลี่ยน state ให้จอบอกผู้ใช้ — "รับเผือกร้อนแล้วต้องประกาศ ไม่ใช่ซุกทิ้ง"</p>
+      </div>
+      <div class="box warn">
+        <div class="t">② กด "ลองอีกครั้ง" แล้วจอค้างที่หน้า error เดิม</div>
+        <p><strong>สาเหตุ:</strong> ใน _loadWeather ลืมบรรทัด <code class="inline">setState(() =&gt; _state = ViewState.loading);</code> ตอนต้นฟังก์ชัน — โหลดรอบสองทำงานอยู่จริง แต่จอยังแสดง error เก่า ผู้ใช้คิดว่าปุ่มพัง กดรัวๆ (ยิงซ้ำหลาย request ฟรีๆ)<br>
+        <strong>วิธีแก้:</strong> กฎ: ทุกครั้งที่เริ่มโหลด กลับสู่ loading ก่อนเสมอ — วงจรต้องครบ: loading → success/error → (retry) → loading → ...</p>
+      </div>
+      <div class="box warn">
+        <div class="t">③ ใช้ _weather! นอกเคส success แล้ว crash</div>
+        <p><strong>สาเหตุ:</strong> เผลอเข้าถึง _weather! ในที่ที่ state อาจยังไม่ success — ตอน error _weather เป็น null → "Null check operator used on a null value" (เพื่อนเก่าบทที่ 4 ทวงหนี้ !)<br>
+        <strong>วิธีแก้:</strong> กติกาเดียว: แตะ _weather! ได้เฉพาะใน branch success ของ switch ที่อื่นถ้าจำเป็นใช้ <code class="inline">_weather?.x ?? ค่าสำรอง</code> — ! ทุกตัวต้องอธิบายได้ (บท 4)</p>
+      </div>
+    </section>
+
+    <section id="exercise">
+      <h2>7. 🏋️ แบบฝึกหัดท้ายบท (ลงมือทำจริง)</h2>
+      <div class="box concept">
+        <div class="t">🥉 ระดับ 1 — ครบทุกหน้า</div>
+        <p>อัปเกรด weather_app ตามหัวข้อ 2 ทั้ง 3 ขั้น แล้ว<strong>ทดสอบครบวงจรด้วยตัวเอง</strong>: เห็น loading → success, ปิด WiFi → เห็น error สุภาพ, เปิดเน็ต + กดลองใหม่ → กลับมา success — โบนัส: ใส่ Future.delayed 3 วินาทีใน service ชั่วคราว เพื่อดูหน้า loading ชัดๆ (เทคนิคบทที่ 9) แล้วเอาออก</p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥈 ระดับ 2 — error ที่ฉลาดขึ้น</div>
+        <p>(1) แยกประเภทเผือกร้อนด้วย <code class="inline">on ... catch</code>: on TimeoutException → "เครือข่ายช้า ลองใหม่อีกครั้ง" / อื่นๆ → ข้อความทั่วไป (แต่ละแบบ log ต่างกัน) (2) ครอบหน้า success ด้วย RefreshIndicator ให้ดึงลงรีเฟรชได้ (3) แสดงเวลา "อัปเดตล่าสุด" เพื่อให้ผู้ใช้รู้ว่าข้อมูลสดแค่ไหน — commit ด้วย <code class="inline">feat: typed errors and pull-to-refresh</code></p>
+      </div>
+      <div class="box concept">
+        <div class="t">🥇 ระดับ 3 — ย้อนเกล็ดปิดหนี้เก่า</div>
+        <p>กลับไป <strong>todo_app</strong>: (1) ครอบ loadTasks ด้วย try-catch — จำ error ③ ของบทที่ 18 ได้ไหม (FormatException จากข้อมูลเสีย)? ตอนนี้ปิดหนี้: ข้อมูลในเครื่องเสียหาย แอปต้อง<strong>เปิดขึ้น</strong>พร้อม SnackBar "ข้อมูลเดิมเสียหาย เริ่มรายการใหม่" แทนที่จะ crash (2) ทดสอบจริง: ใช้ <code class="inline">prefs.setString('tasks', 'ไม่ใช่ json!')</code> ชั่วคราวเพื่อจำลองข้อมูลเสีย (3) จดลง BUGS.md ว่าซ้อมเคสนี้แล้ว — commit ทั้งสอง repo ด้วย <code class="inline">fix: survive corrupted local data</code></p>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <h2>8. ✅ เช็กลิสต์และสรุปบทเรียน</h2>
+      <ul class="checklist">
+        <li>วาดผัง 4 หน้า (loading/success/empty/error) พร้อมลูกศร retry ได้จากความเข้าใจ</li>
+        <li>เขียน try-catch ที่ "ไม่เงียบ": log + เปลี่ยน state เสมอ</li>
+        <li>อธิบายได้ว่าทำไม enum เดียวดีกว่า bool หลายตัว (impossible states)</li>
+        <li>จอพูดภาษาคน log พูดภาษา dev — แยกสองภาษาเป็นนิสัยแล้ว</li>
+        <li>ทุกการรอเน็ตมี timeout และทุกหน้า error มีทางไปต่อ</li>
+        <li>ทดสอบด้วยการ "ทำให้พังจริง" (ปิด WiFi, ข้อมูลเสีย) แล้วแอปรอดทุกเคส</li>
+      </ul>
+      <h3>📖 สรุปศัพท์ใหม่บทนี้</h3>
+      <table>
+        <tr><th>ศัพท์</th><th>ความหมายสั้นๆ</th><th>ภาพจำ</th></tr>
+        <tr><td><code class="inline">try</code> / <code class="inline">catch</code></td><td>ลองทำ / รับปัญหาถ้าพลาด</td><td>ตาข่ายนิรภัยนักกายกรรม</td></tr>
+        <tr><td><code class="inline">throw</code></td><td>โยนปัญหาขึ้นไปให้คนที่จัดการได้</td><td>โยนเผือกร้อน</td></tr>
+        <tr><td><code class="inline">Exception</code></td><td>ก้อนปัญหาพร้อมคำอธิบาย</td><td>เผือกร้อนติดป้ายสาเหตุ</td></tr>
+        <tr><td><code class="inline">enum</code></td><td>ชุดค่าที่เป็นไปได้ตายตัว</td><td>สวิตช์ 3 ตำแหน่ง บิดนอกนั้นไม่ได้</td></tr>
+        <tr><td>UI state</td><td>4 หน้าของทุกจอโหลดข้อมูล</td><td>กำลังปรุง/ได้จาน/จานว่าง/ขอโทษ</td></tr>
+        <tr><td><code class="inline">timeout</code></td><td>เส้นตายของการรอ</td><td>นาฬิกาจับเวลาบนโต๊ะ</td></tr>
+        <tr><td><code class="inline">RefreshIndicator</code></td><td>ดึงจอลงเพื่อโหลดใหม่</td><td>ดึงกริ่งเรียกพนักงานมารับออเดอร์ใหม่</td></tr>
+      </table>
+      <div class="box tip">
+        <div class="t">🎓 สรุปบทนี้ใน 3 บรรทัด</div>
+        <p>ทุกจอโหลดข้อมูลมี 4 หน้า — ออกแบบครบก่อนเขียน · try-catch ต้องไม่เงียบ: log + บอกผู้ใช้เสมอ · enum เดียวปิดประตูสถานะที่เป็นไปไม่ได้ · error ทุกหน้าต้องมีทางไปต่อ — แอปที่สุภาพตอนพัง คือแอปที่ผู้ใช้ให้อภัย</p>
+      </div>
+      <div class="nav-next">
+        <a href="บทที่19_API_JSON.html">
+          <div class="lbl">← บทก่อนหน้า</div>
+          <div class="ttl">บทที่ 19: เรียก API + แปลง JSON</div>
+        </a>
+        <a href="บทที่21_โครงสร้างโฟลเดอร์.html">
+          <div class="lbl">บทต่อไป (ปิดเฟส 4!) →</div>
+          <div class="ttl">บทที่ 21: จัดโครงสร้างโฟลเดอร์อย่างมืออาชีพ</div>
+        </a>
+      </div>
+      <div class="footer">
+        หลักสูตรพัฒนาแอป iOS + Android ด้วย Flutter · เฟส 4 · บทที่ 20<br>
+        ใช้ได้กับ Flutter 3.x (ตรวจเวอร์ชันเครื่องคุณด้วย <code class="inline">flutter --version</code>) · ปรับปรุงล่าสุด กรกฎาคม 2026
+      </div>
+    </section>
+
+  </div>
+  </main>
+</div>
+
+<script src="assets/lesson.js"></script>
+</body>
+</html>
